@@ -21,7 +21,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 ### Code
 ```cpp
 // Single header...
-#include "fx/gltf.h"
+#include <fx/gltf.h>
 
 // Loading...
 fx::gltf::Document buggyModel = fx::gltf::LoadFromText("Buggy.gltf");
