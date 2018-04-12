@@ -1204,6 +1204,21 @@ namespace gltf
             std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
         }
     }
+
+    void SaveAsText(Document const & document, std::string const & documentFilePath)
+    {
+        nlohmann::json json = document;
+
+        std::ofstream file(documentFilePath);
+        if (!file.is_open())
+        {
+            throw std::system_error(std::make_error_code(std::errc::io_error));
+        }
+
+        file << json.dump(2);
+        file.flush();
+    }
+
 } // namespace gltf
 } // namespace fx
 

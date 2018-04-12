@@ -33,12 +33,7 @@ helmet.buffers.back().byteLength = 678;
 helmet.buffers.back().uri = "buffer.bin";
 
 // Saving...
-#include <nlohmann/json.hpp>
-
-nlohmann::json newModel = helmet;
-
-std::ofstream outputFile("example.gltf");
-outputFile << newModel;
+fx::gltf::SaveAsText(helmet, "example.gltf");
 ```
 
 ## Safety and Robustness
@@ -69,7 +64,6 @@ outputFile << newModel;
 * Saving: Data URIs
 
 ### General (future)
-* Add a convenience method for saving models (mirroring what is done for loading)
 * Make manipulation api a bit better by allowing easier creation of objects (C++20 will allow more intuitive aggregate struct initialization so maybe wait until then...)
 
 ## License
