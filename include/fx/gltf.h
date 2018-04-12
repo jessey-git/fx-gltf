@@ -273,6 +273,13 @@ namespace gltf
 
     struct Camera
     {
+        enum class Type
+        {
+            None,
+            Orthographic,
+            Perspective
+        };
+
         struct Orthographic
         {
             float xmag{ defaults::FloatSentinal };
@@ -300,7 +307,7 @@ namespace gltf
         };
 
         std::string name;
-        std::string type; // TODO Make enumeration
+        Type type;
 
         Orthographic orthographic;
         Perspective perspective;
@@ -660,6 +667,23 @@ namespace gltf
         detail::ReadOptionalField("target", json, bufferView.target);
     }
 
+    void from_json(nlohmann::json const & json, Camera::Type & cameraType)
+    {
+        std::string type = json.get<std::string>();
+        if (type == "orthographic")
+        {
+            cameraType = Camera::Type::Orthographic;
+        }
+        else if (type == "perspective")
+        {
+            cameraType = Camera::Type::Perspective;
+        }
+        else
+        {
+            throw invalid_gltf_document("Unknown camera.type value", type);
+        }
+    }
+
     void from_json(nlohmann::json const & json, Camera::Orthographic & camera)
     {
         detail::ReadRequiredField("xmag", json, camera.xmag);
@@ -682,17 +706,14 @@ namespace gltf
         detail::ReadRequiredField("type", json, camera.type);
 
         detail::ReadOptionalField("name", json, camera.name);
-        if (camera.type == "perspective")
+
+        if (camera.type == Camera::Type::Perspective)
         {
             detail::ReadRequiredField("perspective", json, camera.perspective);
         }
-        else if (camera.type == "orthographic")
+        else if (camera.type == Camera::Type::Orthographic)
         {
             detail::ReadRequiredField("orthographic", json, camera.orthographic);
-        }
-        else
-        {
-            throw invalid_gltf_document("Unknown camera.type value", camera.name);
         }
     }
 
@@ -968,6 +989,21 @@ namespace gltf
         detail::WriteField("target", json, bufferView.target, BufferView::TargetType::None);
     }
 
+    void to_json(nlohmann::json & json, Camera::Type const & cameraType)
+    {
+        switch (cameraType)
+        {
+        case Camera::Type::Orthographic:
+            json = "orthographic";
+            break;
+        case Camera::Type::Perspective:
+            json = "perspective";
+            break;
+        default:
+            throw invalid_gltf_document("Unknown camera.type value");
+        }
+    }
+
     void to_json(nlohmann::json & json, Camera::Orthographic const & camera)
     {
         detail::WriteField("xmag", json, camera.xmag, defaults::FloatSentinal);
@@ -987,19 +1023,15 @@ namespace gltf
     void to_json(nlohmann::json & json, Camera const & camera)
     {
         detail::WriteField("name", json, camera.name);
-        detail::WriteField("type", json, camera.type);
+        detail::WriteField("type", json, camera.type, Camera::Type::None);
 
-        if (camera.type == "perspective")
+        if (camera.type == Camera::Type::Perspective)
         {
             detail::WriteField("perspective", json, camera.perspective);
         }
-        else if (camera.type == "orthographic")
+        else if (camera.type == Camera::Type::Orthographic)
         {
             detail::WriteField("orthographic", json, camera.orthographic);
-        }
-        else
-        {
-            throw invalid_gltf_document("Unknown camera.type value", camera.name);
         }
     }
 
