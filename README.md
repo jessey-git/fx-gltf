@@ -11,7 +11,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 ## Usage and Integration
 
 ### Installation
-* [`gltf.h`](https://github.com/jessey-git/fx-gltf/blob/master/include/fx/gltf.h) is the single required file available in the [`include/fx`] repo path.
+* [`gltf.h`](https://github.com/jessey-git/fx-gltf/blob/master/include/fx/gltf.h) is the single required file available in the `include/fx` repo path.
 
 * Planned: get published to [vcpkg](https://github.com/Microsoft/vcpkg) for easy install with MSVC environments
 
