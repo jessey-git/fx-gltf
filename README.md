@@ -24,21 +24,16 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 #include <fx/gltf.h>
 
 // Loading...
-fx::gltf::Document buggyModel = fx::gltf::LoadFromText("Buggy.gltf");
+fx::gltf::Document helmet = fx::gltf::LoadFromText("DamagedHelmet.gltf");
 
 // Manipulation...
-buggyModel.asset.generator = "My cool generator";
-buggyModel.buffers.push_back(fx::gltf::Buffer{});
-buggyModel.buffers.back().byteLength = 678;
-buggyModel.buffers.back().uri = "buffer.bin";
+helmet.asset.generator = "My cool generator";
+helmet.buffers.push_back(fx::gltf::Buffer{});
+helmet.buffers.back().byteLength = 678;
+helmet.buffers.back().uri = "buffer.bin";
 
 // Saving...
-#include <nlohmann/json.hpp>
-
-nlohmann::json newModel = buggyModel;
-
-std::ofstream outputFile("example.gltf");
-outputFile << newModel;
+fx::gltf::SaveAsText(helmet, "example.gltf");
 ```
 
 ## Safety and Robustness
@@ -69,7 +64,6 @@ outputFile << newModel;
 * Saving: Data URIs
 
 ### General (future)
-* Add a convenience method for saving models (mirroring what is done for loading)
 * Make manipulation api a bit better by allowing easier creation of objects (C++20 will allow more intuitive aggregate struct initialization so maybe wait until then...)
 
 ## License
@@ -77,6 +71,7 @@ outputFile << newModel;
 <img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+
 Copyright (c) 2018 Jesse Yurkovich
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
