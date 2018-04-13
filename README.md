@@ -41,22 +41,39 @@ fx::gltf::SaveAsText(helmet, "example.gltf");
 * Strict required vs. optional element loading and saving
 * Zero clang-tidy and MSVC CppCoreCheck violations
 
-* Started: Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
+* Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
 
 ## Performance
 * Planned: compare with [TinyGLTF](https://github.com/syoyo/tinygltf)
 * Planned: show graph of improvement when compiling in C++17 mode (std::string_view etc.)
 
 ## Execute unit tests
-* Planned: show how to build and run the tests
+
+### Visual Studio
+
+* File->Open->CMake
+    * Point to the `test` repo path
+* CMake->Rebuild All
+* Inside Text Explorer -> Run All
+
+### Command line
+
+```sh
+$ cd test
+$ mkdir build
+$ cd build
+$ cmake ..
+$ cmake --build .
+$ ctest --output-on-failure -C [Debug or Release]
+```
 
 ## Supported Compilers
 * Microsoft Visual C++ 2017 15.6 (and possibly earlier)
 
 * Planned: Clang 6.0
 
-## Missing or Potential Features
-### glTF 2.0 support
+## Known Issues
+### glTF 2.0 missing support
 * Loading/Saving: Sparse Accessors
 * Loading/Saving: Base64 encoded data URIs
 * Loading/Saving: Binary .glb loading and processing
