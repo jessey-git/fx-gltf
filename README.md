@@ -19,7 +19,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 * [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp`)
 
 ### Code
-```cpp
+```c++
 // Single header...
 #include <fx/gltf.h>
 
@@ -42,9 +42,11 @@ fx::gltf::SaveAsText(helmet, "example.gltf");
 
 * Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
 
-  Files w/external resources: 100% complete and passing
+  .gltf files w/external resources: 100% complete and passing
 
-  Files w/embedded resources: In-progress
+  .gltf files w/embedded resources: In-progress
+
+  .glb files: Planned
 
 * Zero clang-tidy and MSVC CppCoreCheck violations
 
@@ -59,11 +61,11 @@ fx::gltf::SaveAsText(helmet, "example.gltf");
 * File->Open->CMake
     * Point to the `test` repo path
 * CMake->Rebuild All
-* Inside Text Explorer -> Run All
+* Inside Test Explorer -> Run All
 
 ### Command line
 
-```sh
+```shell
 $ cd test
 $ mkdir build
 $ cd build
