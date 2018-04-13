@@ -91,3 +91,10 @@ AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
 LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Used third-party tools
+
+This software would not be possible without the help of these great resources. Thanks a lot!
+
+* [Catch2](https://github.com/catchorg/Catch2) for testing
+* [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models) for glTF sample models. All 1.2gb of it...
