@@ -3,6 +3,9 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+include(CTest)
+enable_testing()
+
 #############################################################################
 # Catch library with the main function to speed up build
 #############################################################################

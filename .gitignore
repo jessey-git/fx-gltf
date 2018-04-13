@@ -3,3 +3,5 @@
 *.suo
 *.user
 *.sln.docstates
+
+build
