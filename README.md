@@ -13,7 +13,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 ### Installation
 * [`gltf.h`](https://github.com/jessey-git/fx-gltf/blob/master/include/fx/gltf.h) is the single required file available in the `include/fx` repo path.
 
-* Planned: get published to [vcpkg](https://github.com/Microsoft/vcpkg) for easy install with MSVC environments
+* Planned: publish to [vcpkg](https://github.com/Microsoft/vcpkg) for easy install within MSVC environments
 
 ### Dependencies
 * [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp`)
@@ -37,15 +37,16 @@ fx::gltf::SaveAsText(helmet, "example.gltf");
 ```
 
 ## Safety and Robustness
-* Prevention of directory traversal when loading Data URIs from malicious .gltf files
+* Prevention of directory traversal when loading external resource URIs from malicious .gltf files
 * Strict required vs. optional element loading and saving
-* Zero clang-tidy and MSVC CppCoreCheck violations
 
 * Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
 
-  Base Profile: 100% complete
+  Files w/external resources: 100% complete and passing
 
-  Embedded Profile: Not started
+  Files w/embedded resources: In-progress
+
+* Zero clang-tidy and MSVC CppCoreCheck violations
 
 ## Performance
 * Planned: compare with [TinyGLTF](https://github.com/syoyo/tinygltf)
@@ -78,7 +79,7 @@ $ ctest --output-on-failure -C [Debug or Release]
 
 ## Known Issues
 ### glTF 2.0 missing support
-* Loading/Saving: Embedded profile w/Base64 encoded data URIs
+* Loading/Saving: Embedded resources w/Base64 encoded data URIs
 * Loading/Saving: Binary .glb loading and processing
 
 * Saving: Data URIs
