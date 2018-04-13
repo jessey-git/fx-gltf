@@ -5,12 +5,20 @@
 // ------------------------------------------------------------
 #pragma once
 
+#include <exception>
 #include <nlohmann/json.hpp>
 #include <string>
 
 namespace utility
 {
-    nlohmann::json LoadFromFile(std::string const & filePath);
+    void FormatException(std::string & output, std::exception const & e, int level = 0);
 
+    nlohmann::json LoadJsonFromFile(std::string const & filePath);
+
+    // Several sample .glTF files contain json elements which are optional.
+    // When performing roundtrip tests against such files, fx-gltf will
+    // remove these optional elements in the final json, causing the diff
+    // to fail. This function filters such cases out before comparison.
     nlohmann::json FilterDefaultElements(nlohmann::json const & incoming);
+
 } // namespace utility

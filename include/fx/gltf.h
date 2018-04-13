@@ -214,7 +214,7 @@ namespace gltf
             };
 
             int32_t input{ -1 };
-            int32_t ouput{ -1 };
+            int32_t output{ -1 };
 
             Type interpolation{ Sampler::Type::Linear };
         };
@@ -231,9 +231,9 @@ namespace gltf
 
     struct Asset
     {
-        std::string copyright;
-        std::string generator{ "fx-gltf" };
-        std::string minVersion;
+        std::string copyright{};
+        std::string generator{};
+        std::string minVersion{};
         std::string version{ "2.0" };
 
         bool empty() const noexcept
@@ -264,7 +264,7 @@ namespace gltf
         std::string name;
 
         int32_t buffer{ -1 };
-        uint32_t byteOffset{};
+        uint32_t byteOffset{ static_cast<uint32_t>(-1) };
         uint32_t byteLength{};
         uint32_t byteStride{};
 
@@ -420,7 +420,7 @@ namespace gltf
 
         int32_t camera{ -1 };
         int32_t mesh{ -1 };
-        int32_t skin{};
+        int32_t skin{ -1 };
 
         std::array<float, 16> matrix{ defaults::IdentityMatrix };
         std::array<float, 4> rotation{ defaults::IdentityRotation };
@@ -583,6 +583,7 @@ namespace gltf
         detail::ReadRequiredField("componentType", json, accessor.componentType);
         detail::ReadRequiredField("type", json, accessor.type);
 
+        detail::ReadOptionalField("name", json, accessor.name);
         detail::ReadOptionalField("bufferView", json, accessor.bufferView);
         detail::ReadOptionalField("byteOffset", json, accessor.byteOffset);
         detail::ReadOptionalField("max", json, accessor.max);
@@ -627,7 +628,7 @@ namespace gltf
     void from_json(nlohmann::json const & json, Animation::Sampler & animationSampler)
     {
         detail::ReadRequiredField("input", json, animationSampler.input);
-        detail::ReadRequiredField("ouput", json, animationSampler.ouput);
+        detail::ReadRequiredField("output", json, animationSampler.output);
 
         detail::ReadOptionalField("interpolation", json, animationSampler.interpolation);
     }
@@ -952,7 +953,7 @@ namespace gltf
     void to_json(nlohmann::json & json, Animation::Sampler const & animationSampler)
     {
         detail::WriteField("input", json, animationSampler.input, -1);
-        detail::WriteField("ouput", json, animationSampler.ouput, -1);
+        detail::WriteField("output", json, animationSampler.output, -1);
         detail::WriteField("interpolation", json, animationSampler.interpolation, Animation::Sampler::Type::Linear);
     }
 
@@ -1111,7 +1112,7 @@ namespace gltf
         detail::WriteField("name", json, node.name);
         detail::WriteField("camera", json, node.camera, -1);
         detail::WriteField("mesh", json, node.mesh, -1);
-        detail::WriteField("skin", json, node.skin, {});
+        detail::WriteField("skin", json, node.skin, -1);
         detail::WriteField("matrix", json, node.matrix, defaults::IdentityMatrix);
         detail::WriteField("rotation", json, node.rotation, defaults::IdentityRotation);
         detail::WriteField("scale", json, node.scale, defaults::IdentityVec3);
