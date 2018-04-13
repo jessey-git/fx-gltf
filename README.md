@@ -4,7 +4,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 
 ## Features
 * Extensive glTF 2.0 schema support
-* Small, header-only library (~1200 lines of generously spaced code including whitespace/comments)
+* Small, header-only library (~1300 lines of generously spaced code including whitespace/comments)
 * C++14 and C++17 support (including the use of std::string_view where appropriate)
 * Serialization and Deserialization support
 
@@ -43,6 +43,10 @@ fx::gltf::SaveAsText(helmet, "example.gltf");
 
 * Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
 
+  Base Profile: 100% complete
+
+  Embedded Profile: Not started
+
 ## Performance
 * Planned: compare with [TinyGLTF](https://github.com/syoyo/tinygltf)
 * Planned: show graph of improvement when compiling in C++17 mode (std::string_view etc.)
@@ -74,8 +78,7 @@ $ ctest --output-on-failure -C [Debug or Release]
 
 ## Known Issues
 ### glTF 2.0 missing support
-* Loading/Saving: Sparse Accessors
-* Loading/Saving: Base64 encoded data URIs
+* Loading/Saving: Embedded profile w/Base64 encoded data URIs
 * Loading/Saving: Binary .glb loading and processing
 
 * Saving: Data URIs

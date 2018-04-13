@@ -145,6 +145,14 @@ namespace gltf
 
     using Attributes = std::unordered_map<std::string, uint32_t>;
 
+    struct NeverEmpty
+    {
+        bool empty() const noexcept
+        {
+            return false;
+        }
+    };
+
     struct Accessor
     {
         enum class ComponentType : uint16_t
@@ -170,15 +178,40 @@ namespace gltf
             Mat4
         };
 
-        std::string name;
+        struct Sparse
+        {
+            struct Indices : NeverEmpty
+            {
+                uint32_t bufferView{};
+                uint32_t byteOffset{};
+                ComponentType componentType{ ComponentType::None };
+            };
+
+            struct Values : NeverEmpty
+            {
+                uint32_t bufferView{};
+                uint32_t byteOffset{};
+            };
+
+            int32_t count{};
+            Indices indices{};
+            Values values{};
+
+            bool empty() const noexcept
+            {
+                return count == 0;
+            }
+        };
 
         int32_t bufferView{ -1 };
         uint32_t byteOffset{};
         uint32_t count{};
 
-        Type type{ Type::None };
         ComponentType componentType{ ComponentType::None };
+        Type type{ Type::None };
+        Sparse sparse{};
 
+        std::string name;
         std::vector<float> max{};
         std::vector<float> min{};
 
@@ -189,15 +222,10 @@ namespace gltf
     {
         struct Channel
         {
-            struct Target
+            struct Target : NeverEmpty
             {
                 int32_t node{ -1 };
                 std::string path{};
-
-                bool empty() const noexcept
-                {
-                    return false;
-                }
             };
 
             int32_t sampler{ -1 };
@@ -222,24 +250,14 @@ namespace gltf
         std::string name{};
         std::vector<Channel> channels{};
         std::vector<Sampler> samplers{};
-
-        bool empty() const noexcept
-        {
-            return false;
-        }
     };
 
-    struct Asset
+    struct Asset : NeverEmpty
     {
         std::string copyright{};
         std::string generator{};
         std::string minVersion{};
         std::string version{ "2.0" };
-
-        bool empty() const noexcept
-        {
-            return false;
-        }
     };
 
     struct Buffer
@@ -264,7 +282,7 @@ namespace gltf
         std::string name;
 
         int32_t buffer{ -1 };
-        uint32_t byteOffset{ static_cast<uint32_t>(-1) };
+        uint32_t byteOffset{};
         uint32_t byteLength{};
         uint32_t byteStride{};
 
@@ -280,34 +298,24 @@ namespace gltf
             Perspective
         };
 
-        struct Orthographic
+        struct Orthographic : NeverEmpty
         {
             float xmag{ defaults::FloatSentinal };
             float ymag{ defaults::FloatSentinal };
             float zfar{ defaults::FloatSentinal };
             float znear{ defaults::FloatSentinal };
-
-            bool empty() const noexcept
-            {
-                return false;
-            }
         };
 
-        struct Perspective
+        struct Perspective : NeverEmpty
         {
             float aspectRatio{};
             float yfov{};
             float zfar{};
             float znear{};
-
-            bool empty() const noexcept
-            {
-                return false;
-            }
         };
 
-        std::string name;
-        Type type;
+        std::string name{};
+        Type type{ Type::None };
 
         Orthographic orthographic;
         Perspective perspective;
@@ -577,6 +585,28 @@ namespace gltf
         }
     }
 
+    void from_json(nlohmann::json const & json, Accessor::Sparse::Values & values)
+    {
+        detail::ReadRequiredField("bufferView", json, values.bufferView);
+
+        detail::ReadOptionalField("byteOffset", json, values.byteOffset);
+    }
+
+    void from_json(nlohmann::json const & json, Accessor::Sparse::Indices & indices)
+    {
+        detail::ReadRequiredField("bufferView", json, indices.bufferView);
+        detail::ReadRequiredField("componentType", json, indices.componentType);
+
+        detail::ReadOptionalField("byteOffset", json, indices.byteOffset);
+    }
+
+    void from_json(nlohmann::json const & json, Accessor::Sparse & sparse)
+    {
+        detail::ReadRequiredField("count", json, sparse.count);
+        detail::ReadRequiredField("indices", json, sparse.indices);
+        detail::ReadRequiredField("values", json, sparse.values);
+    }
+
     void from_json(nlohmann::json const & json, Accessor & accessor)
     {
         detail::ReadRequiredField("count", json, accessor.count);
@@ -589,6 +619,7 @@ namespace gltf
         detail::ReadOptionalField("max", json, accessor.max);
         detail::ReadOptionalField("min", json, accessor.min);
         detail::ReadOptionalField("normalized", json, accessor.normalized);
+        detail::ReadOptionalField("sparse", json, accessor.sparse);
     }
 
     void from_json(nlohmann::json const & json, Animation::Channel::Target & animationChannelTarget)
@@ -909,6 +940,26 @@ namespace gltf
         }
     }
 
+    void to_json(nlohmann::json & json, Accessor::Sparse::Values const & values)
+    {
+        detail::WriteField("bufferView", json, values.bufferView, static_cast<uint32_t>(-1));
+        detail::WriteField("byteOffset", json, values.byteOffset, {});
+    }
+
+    void to_json(nlohmann::json & json, Accessor::Sparse::Indices const & indices)
+    {
+        detail::WriteField("bufferView", json, indices.bufferView, static_cast<uint32_t>(-1));
+        detail::WriteField("byteOffset", json, indices.byteOffset, {});
+        detail::WriteField("componentType", json, indices.componentType, Accessor::ComponentType::None);
+    }
+
+    void to_json(nlohmann::json & json, Accessor::Sparse const & sparse)
+    {
+        detail::WriteField("count", json, sparse.count, -1);
+        detail::WriteField("indices", json, sparse.indices);
+        detail::WriteField("values", json, sparse.values);
+    }
+
     void to_json(nlohmann::json & json, Accessor const & accessor)
     {
         detail::WriteField("name", json, accessor.name);
@@ -920,6 +971,7 @@ namespace gltf
         detail::WriteField("min", json, accessor.min);
         detail::WriteField("max", json, accessor.max);
         detail::WriteField("normalized", json, accessor.normalized, false);
+        detail::WriteField("sparse", json, accessor.sparse);
     }
 
     void to_json(nlohmann::json & json, Animation::Channel::Target const & animationChannelTarget)
@@ -984,7 +1036,7 @@ namespace gltf
     {
         detail::WriteField("buffer", json, bufferView.buffer, -1);
         detail::WriteField("byteLength", json, bufferView.byteLength, {});
-        detail::WriteField("byteOffset", json, bufferView.byteOffset, static_cast<uint32_t>(-1));
+        detail::WriteField("byteOffset", json, bufferView.byteOffset, {});
         detail::WriteField("byteStride", json, bufferView.byteStride, {});
         detail::WriteField("name", json, bufferView.name);
         detail::WriteField("target", json, bufferView.target, BufferView::TargetType::None);

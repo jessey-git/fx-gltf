@@ -84,7 +84,7 @@ TEST_CASE("roundtrip")
                 "data/glTF-Sample-Models/2.0/SciFiHelmet/glTF/SciFiHelmet.gltf",
                 "data/glTF-Sample-Models/2.0/SimpleMeshes/glTF/SimpleMeshes.gltf",
                 "data/glTF-Sample-Models/2.0/SimpleMorph/glTF/SimpleMorph.gltf",
-                //"data/glTF-Sample-Models/2.0/SimpleSparseAccessor/glTF/SimpleSparseAccessor.gltf",
+                "data/glTF-Sample-Models/2.0/SimpleSparseAccessor/glTF/SimpleSparseAccessor.gltf",
                 "data/glTF-Sample-Models/2.0/Suzanne/glTF/Suzanne.gltf",
                 "data/glTF-Sample-Models/2.0/TextureCoordinateTest/glTF/TextureCoordinateTest.gltf",
                 "data/glTF-Sample-Models/2.0/TextureSettingsTest/glTF/TextureSettingsTest.gltf",
