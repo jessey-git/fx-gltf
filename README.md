@@ -3,9 +3,9 @@
 A C++14/C++17 header-only library for simple, efficient, and robust serialization/deserialization of [glTF 2.0](https://www.khronos.org/gltf/)
 
 ## Features
-* Extensive glTF 2.0 schema support
-* Small, header-only library (~1300 lines of generously spaced code including whitespace/comments)
-* C++14 and C++17 support (including the use of std::string_view where appropriate)
+* Complete support of required glTF 2.0 schema elements
+* Modern C++14/C++17 support (including the use of std::string_view where appropriate)
+* Small, header-only library (~1500 lines of generously spaced code including whitespace/comments)
 * Serialization and Deserialization support
 
 ## Usage and Integration
@@ -13,13 +13,16 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 ### Installation
 * [`gltf.h`](https://github.com/jessey-git/fx-gltf/blob/master/include/fx/gltf.h) is the single required file available in the `include/fx` repo path.
 
-* Planned: get published to [vcpkg](https://github.com/Microsoft/vcpkg) for easy install with MSVC environments
+  A typical installation will preserve the directory hierarchy: ```#include <fx/gltf.h>```
+
+Planned: publishing to [vcpkg](https://github.com/Microsoft/vcpkg) for easy install within MSVC environments
 
 ### Dependencies
 * [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp`)
 
 ### Code
-```cpp
+
+```C++
 // Single header...
 #include <fx/gltf.h>
 
@@ -33,22 +36,27 @@ helmet.buffers.back().byteLength = 678;
 helmet.buffers.back().uri = "buffer.bin";
 
 // Saving...
-fx::gltf::SaveAsText(helmet, "example.gltf");
+fx::gltf::SaveAsText(helmet, "NewHelmet.gltf");
 ```
 
 ## Safety and Robustness
-* Prevention of directory traversal when loading Data URIs from malicious .gltf files
-* Strict required vs. optional element loading and saving
-* Zero clang-tidy and MSVC CppCoreCheck violations
 
 * Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
 
-  Base Profile: 100% complete
+| Model Type  | Status |
+| ------------- | ------------- |
+| .gltf files w/external resources  | 100% complete and passing  |
+| .gltf files w/embedded resources  | 100% complete and passing (2 models excluded due to out-of-spec mimetypes)  |
+| .glb files  | Planned  |
 
-  Embedded Profile: Not started
+* Built-in protection against directory traversal when loading external resource URIs from malicious .gltf files
+* Extensive testing of Base64 encoding and decoding
+* Strict required vs. optional element loading and saving
+
+* Developed using both clang-tidy and MSVC CppCoreCheck toolsets
 
 ## Performance
-* Planned: compare with [TinyGLTF](https://github.com/syoyo/tinygltf)
+* Planned: show loading performance comparisons against other glTF loaders
 * Planned: show graph of improvement when compiling in C++17 mode (std::string_view etc.)
 
 ## Execute unit tests
@@ -58,11 +66,11 @@ fx::gltf::SaveAsText(helmet, "example.gltf");
 * File->Open->CMake
     * Point to the `test` repo path
 * CMake->Rebuild All
-* Inside Text Explorer -> Run All
+* Inside Test Explorer -> Run All
 
 ### Command line
 
-```sh
+```Shell
 $ cd test
 $ mkdir build
 $ cd build
@@ -78,10 +86,11 @@ $ ctest --output-on-failure -C [Debug or Release]
 
 ## Known Issues
 ### glTF 2.0 missing support
-* Loading/Saving: Embedded profile w/Base64 encoded data URIs
+* Schema: Extension property bags on all types
 * Loading/Saving: Binary .glb loading and processing
 
 * Saving: Data URIs
+* Saving: Providing option for external or embedded resources
 
 ### General (future)
 * Make manipulation api a bit better by allowing easier creation of objects (C++20 will allow more intuitive aggregate struct initialization so maybe wait until then...)

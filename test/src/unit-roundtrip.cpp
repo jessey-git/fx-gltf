@@ -30,6 +30,11 @@ void RoundtripCompare(std::string const & filePath)
         {
             throw std::runtime_error(errorString.append(filteredDiff.dump(2)));
         }
+
+        for (auto b : doc.buffers)
+        {
+            REQUIRE(b.data.size() == b.byteLength);
+        }
     }
     catch (fx::gltf::invalid_gltf_document & e)
     {
@@ -41,7 +46,7 @@ void RoundtripCompare(std::string const & filePath)
 
 TEST_CASE("roundtrip")
 {
-    SECTION("roundtrip - base profile")
+    SECTION("roundtrip - .gltf files w/external resources")
     {
         for (auto & filePath :
             {
@@ -94,6 +99,50 @@ TEST_CASE("roundtrip")
                 "data/glTF-Sample-Models/2.0/VC/glTF/VC.gltf",
                 "data/glTF-Sample-Models/2.0/VertexColorTest/glTF/VertexColorTest.gltf",
                 "data/glTF-Sample-Models/2.0/WaterBottle/glTF/WaterBottle.gltf"
+            })
+        {
+            RoundtripCompare(filePath);
+        }
+    }
+
+    SECTION("roundtrip - .gltf files w/embedded resources")
+    {
+        for (auto & filePath :
+            {
+                "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Embedded/2CylinderEngine.gltf",
+                "data/glTF-Sample-Models/2.0/AlphaBlendModeTest/glTF-Embedded/AlphaBlendModeTest.gltf",
+                "data/glTF-Sample-Models/2.0/AnimatedTriangle/glTF-Embedded/AnimatedTriangle.gltf",
+                "data/glTF-Sample-Models/2.0/Box/glTF-Embedded/Box.gltf",
+                "data/glTF-Sample-Models/2.0/BoxAnimated/glTF-Embedded/BoxAnimated.gltf",
+                "data/glTF-Sample-Models/2.0/BoxInterleaved/glTF-Embedded/BoxInterleaved.gltf",
+                "data/glTF-Sample-Models/2.0/BoxTextured/glTF-Embedded/BoxTextured.gltf",
+                "data/glTF-Sample-Models/2.0/BoxTexturedNonPowerOfTwo/glTF-Embedded/BoxTexturedNonPowerOfTwo.gltf",
+                "data/glTF-Sample-Models/2.0/BoxVertexColors/glTF-Embedded/BoxVertexColors.gltf",
+                "data/glTF-Sample-Models/2.0/BrainStem/glTF-Embedded/BrainStem.gltf",
+                "data/glTF-Sample-Models/2.0/Buggy/glTF-Embedded/Buggy.gltf",
+                "data/glTF-Sample-Models/2.0/Cameras/glTF-Embedded/Cameras.gltf",
+                "data/glTF-Sample-Models/2.0/CesiumMan/glTF-Embedded/CesiumMan.gltf",
+                "data/glTF-Sample-Models/2.0/CesiumMilkTruck/glTF-Embedded/CesiumMilkTruck.gltf",
+                "data/glTF-Sample-Models/2.0/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf",
+                "data/glTF-Sample-Models/2.0/Duck/glTF-Embedded/Duck.gltf",
+                "data/glTF-Sample-Models/2.0/GearboxAssy/glTF-Embedded/GearboxAssy.gltf",
+                "data/glTF-Sample-Models/2.0/MetalRoughSpheres/glTF-Embedded/MetalRoughSpheres.gltf",
+                "data/glTF-Sample-Models/2.0/Monster/glTF-Embedded/Monster.gltf",
+                "data/glTF-Sample-Models/2.0/NormalTangentMirrorTest/glTF-Embedded/NormalTangentMirrorTest.gltf",
+                "data/glTF-Sample-Models/2.0/NormalTangentTest/glTF-Embedded/NormalTangentTest.gltf",
+                "data/glTF-Sample-Models/2.0/OrientationTest/glTF-Embedded/OrientationTest.gltf",
+                "data/glTF-Sample-Models/2.0/ReciprocatingSaw/glTF-Embedded/ReciprocatingSaw.gltf",
+                "data/glTF-Sample-Models/2.0/RiggedFigure/glTF-Embedded/RiggedFigure.gltf",
+                "data/glTF-Sample-Models/2.0/RiggedSimple/glTF-Embedded/RiggedSimple.gltf",
+                "data/glTF-Sample-Models/2.0/SimpleMeshes/glTF-Embedded/SimpleMeshes.gltf",
+                //"data/glTF-Sample-Models/2.0/SimpleMorph/glTF-Embedded/SimpleMorph.gltf",
+                //"data/glTF-Sample-Models/2.0/SimpleSparseAccessor/glTF-Embedded/SimpleSparseAccessor.gltf",
+                "data/glTF-Sample-Models/2.0/TextureCoordinateTest/glTF-Embedded/TextureCoordinateTest.gltf",
+                "data/glTF-Sample-Models/2.0/TextureSettingsTest/glTF-Embedded/TextureSettingsTest.gltf",
+                "data/glTF-Sample-Models/2.0/Triangle/glTF-Embedded/Triangle.gltf",
+                "data/glTF-Sample-Models/2.0/TriangleWithoutIndices/glTF-Embedded/TriangleWithoutIndices.gltf",
+                "data/glTF-Sample-Models/2.0/VC/glTF-Embedded/VC.gltf",
+                "data/glTF-Sample-Models/2.0/VertexColorTest/glTF-Embedded/VertexColorTest.gltf"
             })
         {
             RoundtripCompare(filePath);
