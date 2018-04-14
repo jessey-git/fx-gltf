@@ -57,7 +57,7 @@ namespace base64
         // clang-format on
     } // namespace detail
 
-    inline std::string Encode(std::vector<uint8_t> const & bytes)
+    inline std::string Encode(std::vector<char> const & bytes)
     {
         const std::size_t length = bytes.size();
         if (length == 0)
@@ -70,9 +70,9 @@ namespace base64
 
         uint32_t val = 0;
         int32_t valb = -6;
-        for (const uint8_t c : bytes)
+        for (const char c : bytes)
         {
-            val = (val << 8u) + c;
+            val = (val << 8u) + static_cast<uint8_t>(c);
             valb += 8;
             while (valb >= 0)
             {
@@ -96,7 +96,7 @@ namespace base64
         return out;
     }
 
-    inline bool TryDecode(const std::string & in, std::vector<uint8_t> & out)
+    inline bool TryDecode(const std::string & in, std::vector<char> & out)
     {
         out.clear();
 
@@ -116,10 +116,9 @@ namespace base64
         bool invalid = false;
         uint32_t val = 0;
         int32_t valb = -8;
-        //for (const uint8_t c : in)
         for (std::size_t i = 0; i < length; i++)
         {
-            const uint8_t c = in[i];
+            const uint8_t c = static_cast<uint8_t>(in[i]);
             const char map = detail::DecodeMap.at(c);
             if (map == -1)
             {
@@ -185,10 +184,10 @@ namespace gltf
     {
 #if defined(FX_GLTF_HAS_CPP_17)
         template <typename TTarget>
-        static void ReadRequiredField(std::string_view key, nlohmann::json const & json, TTarget & target)
+        inline void ReadRequiredField(std::string_view key, nlohmann::json const & json, TTarget & target)
 #else
         template <typename TKey, typename TTarget>
-        static void ReadRequiredField(TKey && key, nlohmann::json const & json, TTarget & target)
+        inline void ReadRequiredField(TKey && key, nlohmann::json const & json, TTarget & target)
 #endif
         {
             const nlohmann::json::const_iterator iter = json.find(key);
@@ -202,10 +201,10 @@ namespace gltf
 
 #if defined(FX_GLTF_HAS_CPP_17)
         template <typename TTarget>
-        static void ReadOptionalField(std::string_view key, nlohmann::json const & json, TTarget & target)
+        inline void ReadOptionalField(std::string_view key, nlohmann::json const & json, TTarget & target)
 #else
         template <typename TKey, typename TTarget>
-        static void ReadOptionalField(TKey && key, nlohmann::json const & json, TTarget & target)
+        inline void ReadOptionalField(TKey && key, nlohmann::json const & json, TTarget & target)
 #endif
         {
             const nlohmann::json::const_iterator iter = json.find(key);
@@ -216,7 +215,7 @@ namespace gltf
         }
 
         template <typename TValue>
-        static void WriteField(std::string const & key, nlohmann::json & json, TValue const & value)
+        inline void WriteField(std::string const & key, nlohmann::json & json, TValue const & value)
         {
             if (!value.empty())
             {
@@ -225,7 +224,7 @@ namespace gltf
         }
 
         template <typename TValue>
-        static void WriteField(std::string const & key, nlohmann::json & json, TValue const & value, TValue const & defaultValue)
+        inline void WriteField(std::string const & key, nlohmann::json & json, TValue const & value, TValue const & defaultValue)
         {
             if (value != defaultValue)
             {
@@ -233,7 +232,7 @@ namespace gltf
             }
         }
 
-        static std::string GetDocumentRootPath(std::string const & documentFilePath)
+        inline std::string GetDocumentRootPath(std::string const & documentFilePath)
         {
             const std::size_t pos = documentFilePath.find_last_of("/\\");
             if (pos != std::string::npos)
@@ -244,7 +243,7 @@ namespace gltf
             return {};
         }
 
-        static std::string CreateBufferUriPath(std::string const & documentRootPath, std::string const & bufferUri)
+        inline std::string CreateBufferUriPath(std::string const & documentRootPath, std::string const & bufferUri)
         {
             // Prevent simple forms of path traversal from malicious uri references...
             if (bufferUri.empty() || bufferUri.find("..") != std::string::npos || bufferUri.front() == '/' || bufferUri.front() == '\\')
@@ -263,6 +262,8 @@ namespace gltf
 
             return documentRoot + bufferUri;
         }
+
+        constexpr char const * const mimetypeApplicationOctet = "data:application/octet-stream;base64";
     } // namespace detail
 
     namespace defaults
@@ -667,15 +668,25 @@ namespace gltf
             {
                 if (buffer.byteLength > 0 && !buffer.uri.empty())
                 {
-                    buffer.data.resize(buffer.byteLength);
-
-                    std::ifstream fileData(detail::CreateBufferUriPath(bufferRootPath, buffer.uri), std::ios::binary);
-                    if (!fileData.good())
+                    if (buffer.uri.find(detail::mimetypeApplicationOctet) == std::string::npos)
                     {
-                        throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
-                    }
+                        std::ifstream fileData(detail::CreateBufferUriPath(bufferRootPath, buffer.uri), std::ios::binary);
+                        if (!fileData.good())
+                        {
+                            throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
+                        }
 
-                    fileData.read(&buffer.data[0], buffer.byteLength);
+                        buffer.data.resize(buffer.byteLength);
+                        fileData.read(&buffer.data[0], buffer.byteLength);
+                    }
+                    else
+                    {
+                        bool success = base64::TryDecode(buffer.uri.substr(std::char_traits<char>::length(detail::mimetypeApplicationOctet) + 1), buffer.data);
+                        if (!success)
+                        {
+                            throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
+                        }
+                    }
                 }
             }
 

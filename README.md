@@ -19,7 +19,8 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 * [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp`)
 
 ### Code
-```c++
+
+```C++
 // Single header...
 #include <fx/gltf.h>
 
@@ -38,17 +39,18 @@ fx::gltf::SaveAsText(helmet, "example.gltf");
 
 ## Safety and Robustness
 * Prevention of directory traversal when loading external resource URIs from malicious .gltf files
+* Extensive testing of Base64 encoding and decoding
 * Strict required vs. optional element loading and saving
 
 * Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
 
   .gltf files w/external resources: 100% complete and passing
 
-  .gltf files w/embedded resources: In-progress
+  .gltf files w/embedded resources: 100% complete and passing (2 models excluded due to their usage of out-of-spec mimetypes)
 
   .glb files: Planned
 
-* Zero clang-tidy and MSVC CppCoreCheck violations
+* Developed using both clang-tidy and MSVC CppCoreCheck toolsets
 
 ## Performance
 * Planned: compare with [TinyGLTF](https://github.com/syoyo/tinygltf)
@@ -81,10 +83,11 @@ $ ctest --output-on-failure -C [Debug or Release]
 
 ## Known Issues
 ### glTF 2.0 missing support
-* Loading/Saving: Embedded resources w/Base64 encoded data URIs
+* Schema: Extension property bags on all types
 * Loading/Saving: Binary .glb loading and processing
 
 * Saving: Data URIs
+* Saving: Providing option for external or embedded resources
 
 ### General (future)
 * Make manipulation api a bit better by allowing easier creation of objects (C++20 will allow more intuitive aggregate struct initialization so maybe wait until then...)

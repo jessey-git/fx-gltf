@@ -15,7 +15,7 @@ TEST_CASE("base64")
 {
     SECTION("simple")
     {
-        std::vector<uint8_t> bytes{};
+        std::vector<char> bytes{};
         std::string base64Text{};
 
         base64Text = "";
@@ -26,12 +26,12 @@ TEST_CASE("base64")
         base64Text = "TEST";
         REQUIRE(fx::base64::TryDecode(base64Text, bytes));
         REQUIRE(fx::base64::Encode(bytes) == base64Text);
-        REQUIRE(bytes == std::vector<uint8_t>{ 76, 68, 147 });
+        REQUIRE(bytes == std::vector<char>{ 76, 68, -109 });
 
         base64Text = "YW55IGNhcm5hbCBwbGVhcw==";
         REQUIRE(fx::base64::TryDecode(base64Text, bytes));
         REQUIRE(fx::base64::Encode(bytes) == base64Text);
-        REQUIRE(bytes == std::vector<uint8_t>{ 97, 110, 121, 32, 99, 97, 114, 110, 97, 108, 32, 112, 108, 101, 97, 115 });
+        REQUIRE(bytes == std::vector<char>{ 97, 110, 121, 32, 99, 97, 114, 110, 97, 108, 32, 112, 108, 101, 97, 115 });
     }
 
     SECTION("random encode/decode")
@@ -42,13 +42,13 @@ TEST_CASE("base64")
         for (int iteration = 1; iteration < 1024; iteration++)
         {
             // Random bytes...
-            std::vector<uint8_t> bytes(iteration);
-            std::generate(bytes.begin(), bytes.end(), [&dist, &gen] { return static_cast<uint8_t>(dist(gen)); });
+            std::vector<char> bytes(iteration);
+            std::generate(bytes.begin(), bytes.end(), [&dist, &gen] { return static_cast<char>(dist(gen)); });
 
             // Roundtrip...
             std::string encoded = fx::base64::Encode(bytes);
 
-            std::vector<uint8_t> outBytes;
+            std::vector<char> outBytes;
             const bool decodeResult = fx::base64::TryDecode(encoded, outBytes);
 
             REQUIRE(decodeResult);
@@ -78,7 +78,7 @@ TEST_CASE("base64")
             std::generate(encoded.begin(), encoded.end(), [&dist, &gen] { return fx::base64::detail::EncodeMap[dist(gen) % 64]; });
 
             bool decodeResult = false;
-            std::vector<uint8_t> outBytes;
+            std::vector<char> outBytes;
             if (encoded.length() % 4 == 0)
             {
                 // Base string should decode fine...
@@ -107,7 +107,7 @@ TEST_CASE("base64")
 
     SECTION("negative")
     {
-        std::vector<uint8_t> bytes{};
+        std::vector<char> bytes{};
         std::string base64Text{};
 
         base64Text = "A";
