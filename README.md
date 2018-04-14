@@ -4,7 +4,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 
 ## Features
 * Extensive glTF 2.0 schema support
-* Small, header-only library (~1300 lines of generously spaced code including whitespace/comments)
+* Small, header-only library (~1500 lines of generously spaced code including whitespace/comments)
 * C++14 and C++17 support (including the use of std::string_view where appropriate)
 * Serialization and Deserialization support
 

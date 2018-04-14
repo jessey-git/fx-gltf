@@ -41,7 +41,7 @@ void RoundtripCompare(std::string const & filePath)
 
 TEST_CASE("roundtrip")
 {
-    SECTION("roundtrip - base profile")
+    SECTION("roundtrip - .gltf files w/external resources")
     {
         for (auto & filePath :
             {
@@ -98,5 +98,9 @@ TEST_CASE("roundtrip")
         {
             RoundtripCompare(filePath);
         }
+    }
+
+    SECTION("roundtrip - .gltf files w/embedded resources")
+    {
     }
 }
