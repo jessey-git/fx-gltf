@@ -354,17 +354,23 @@ namespace gltf
                 uint32_t bufferView{};
                 uint32_t byteOffset{};
                 ComponentType componentType{ ComponentType::None };
+
+                nlohmann::json extensionsAndExtras;
             };
 
             struct Values : NeverEmpty
             {
                 uint32_t bufferView{};
                 uint32_t byteOffset{};
+
+                nlohmann::json extensionsAndExtras;
             };
 
             int32_t count{};
             Indices indices{};
             Values values{};
+
+            nlohmann::json extensionsAndExtras;
 
             bool empty() const noexcept
             {
@@ -384,6 +390,8 @@ namespace gltf
         std::string name;
         std::vector<float> max{};
         std::vector<float> min{};
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Animation
@@ -394,10 +402,14 @@ namespace gltf
             {
                 int32_t node{ -1 };
                 std::string path{};
+
+                nlohmann::json extensionsAndExtras;
             };
 
             int32_t sampler{ -1 };
             Target target{};
+
+            nlohmann::json extensionsAndExtras;
         };
 
         struct Sampler
@@ -413,11 +425,15 @@ namespace gltf
             int32_t output{ -1 };
 
             Type interpolation{ Sampler::Type::Linear };
+
+            nlohmann::json extensionsAndExtras;
         };
 
         std::string name{};
         std::vector<Channel> channels{};
         std::vector<Sampler> samplers{};
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Asset : NeverEmpty
@@ -426,6 +442,8 @@ namespace gltf
         std::string generator{};
         std::string minVersion{};
         std::string version{ "2.0" };
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Buffer
@@ -436,6 +454,8 @@ namespace gltf
         std::string uri;
 
         std::vector<char> data{};
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct BufferView
@@ -455,6 +475,8 @@ namespace gltf
         uint32_t byteStride{};
 
         TargetType target{ TargetType::None };
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Camera
@@ -472,6 +494,8 @@ namespace gltf
             float ymag{ defaults::FloatSentinal };
             float zfar{ defaults::FloatSentinal };
             float znear{ defaults::FloatSentinal };
+
+            nlohmann::json extensionsAndExtras;
         };
 
         struct Perspective : NeverEmpty
@@ -480,6 +504,8 @@ namespace gltf
             float yfov{};
             float zfar{};
             float znear{};
+
+            nlohmann::json extensionsAndExtras;
         };
 
         std::string name{};
@@ -487,6 +513,8 @@ namespace gltf
 
         Orthographic orthographic;
         Perspective perspective;
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Image
@@ -496,6 +524,8 @@ namespace gltf
         std::string name;
         std::string uri;
         std::string mimeType;
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Material
@@ -511,6 +541,8 @@ namespace gltf
         {
             int32_t index{ -1 };
             int32_t texCoord{ -1 };
+
+            nlohmann::json extensionsAndExtras;
 
             bool empty() const noexcept
             {
@@ -536,6 +568,8 @@ namespace gltf
             float roughnessFactor{ defaults::IdentityScalar };
             float metallicFactor{ defaults::IdentityScalar };
             Texture metallicRoughnessTexture;
+
+            nlohmann::json extensionsAndExtras;
 
             bool empty() const noexcept
             {
@@ -579,6 +613,8 @@ namespace gltf
 
         Attributes attributes{};
         std::vector<Attributes> targets{};
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Mesh
@@ -587,6 +623,8 @@ namespace gltf
 
         std::vector<float> weights{};
         std::vector<Primitive> primitives{};
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Node
@@ -604,6 +642,8 @@ namespace gltf
 
         std::vector<int32_t> children{};
         std::vector<float> weights{};
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Sampler
@@ -641,6 +681,8 @@ namespace gltf
         WrappingMode wrapS{ WrappingMode::Repeat };
         WrappingMode wrapT{ WrappingMode::Repeat };
 
+        nlohmann::json extensionsAndExtras;
+
         bool empty() const noexcept
         {
             return name.empty() && magFilter == MagFilter::None && minFilter == MinFilter::None && wrapS == WrappingMode::Repeat && wrapT == WrappingMode::Repeat;
@@ -652,6 +694,8 @@ namespace gltf
         std::string name;
 
         std::vector<uint32_t> nodes{};
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Skin
@@ -659,8 +703,10 @@ namespace gltf
         int32_t inverseBindMatrices{ -1 };
         int32_t skeleton{ -1 };
 
-        std::vector<uint32_t> joints{};
         std::string name;
+        std::vector<uint32_t> joints{};
+
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Texture
@@ -669,6 +715,9 @@ namespace gltf
 
         int32_t sampler{ -1 };
         int32_t source{ -1 };
+
+        nlohmann::json extensionsAndExtras;
+
     };
 
     struct Document
@@ -692,6 +741,8 @@ namespace gltf
         int32_t scene{ -1 };
         std::vector<std::string> extensionsUsed;
         std::vector<std::string> extensionsRequired;
+
+        nlohmann::json extensionsAndExtras;
 
         struct DataContext
         {
@@ -808,6 +859,8 @@ namespace gltf
         detail::ReadRequiredField("bufferView", json, values.bufferView);
 
         detail::ReadOptionalField("byteOffset", json, values.byteOffset);
+
+        detail::ReadExtensionsAndExtras(json, values.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Accessor::Sparse::Indices & indices)
@@ -816,6 +869,8 @@ namespace gltf
         detail::ReadRequiredField("componentType", json, indices.componentType);
 
         detail::ReadOptionalField("byteOffset", json, indices.byteOffset);
+
+        detail::ReadExtensionsAndExtras(json, indices.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Accessor::Sparse & sparse)
@@ -823,6 +878,8 @@ namespace gltf
         detail::ReadRequiredField("count", json, sparse.count);
         detail::ReadRequiredField("indices", json, sparse.indices);
         detail::ReadRequiredField("values", json, sparse.values);
+
+        detail::ReadExtensionsAndExtras(json, sparse.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Accessor & accessor)
@@ -838,6 +895,8 @@ namespace gltf
         detail::ReadOptionalField("name", json, accessor.name);
         detail::ReadOptionalField("normalized", json, accessor.normalized);
         detail::ReadOptionalField("sparse", json, accessor.sparse);
+
+        detail::ReadExtensionsAndExtras(json, accessor.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Animation::Channel::Target & animationChannelTarget)
@@ -845,12 +904,16 @@ namespace gltf
         detail::ReadRequiredField("path", json, animationChannelTarget.path);
 
         detail::ReadOptionalField("node", json, animationChannelTarget.node);
+
+        detail::ReadExtensionsAndExtras(json, animationChannelTarget.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Animation::Channel & animationChannel)
     {
         detail::ReadRequiredField("sampler", json, animationChannel.sampler);
         detail::ReadRequiredField("target", json, animationChannel.target);
+
+        detail::ReadExtensionsAndExtras(json, animationChannel.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Animation::Sampler::Type & animationSamplerType)
@@ -880,6 +943,8 @@ namespace gltf
         detail::ReadRequiredField("output", json, animationSampler.output);
 
         detail::ReadOptionalField("interpolation", json, animationSampler.interpolation);
+
+        detail::ReadExtensionsAndExtras(json, animationSampler.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Animation & animation)
@@ -888,6 +953,8 @@ namespace gltf
         detail::ReadRequiredField("samplers", json, animation.samplers);
 
         detail::ReadOptionalField("name", json, animation.name);
+
+        detail::ReadExtensionsAndExtras(json, animation.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Asset & asset)
@@ -896,6 +963,8 @@ namespace gltf
         detail::ReadOptionalField("copyright", json, asset.copyright);
         detail::ReadOptionalField("generator", json, asset.generator);
         detail::ReadOptionalField("minVersion", json, asset.minVersion);
+
+        detail::ReadExtensionsAndExtras(json, asset.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Buffer & buffer)
@@ -904,6 +973,8 @@ namespace gltf
 
         detail::ReadOptionalField("name", json, buffer.name);
         detail::ReadOptionalField("uri", json, buffer.uri);
+
+        detail::ReadExtensionsAndExtras(json, buffer.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, BufferView & bufferView)
@@ -915,6 +986,8 @@ namespace gltf
         detail::ReadOptionalField("byteStride", json, bufferView.byteStride);
         detail::ReadOptionalField("name", json, bufferView.name);
         detail::ReadOptionalField("target", json, bufferView.target);
+
+        detail::ReadExtensionsAndExtras(json, bufferView.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Camera::Type & cameraType)
@@ -940,6 +1013,8 @@ namespace gltf
         detail::ReadRequiredField("ymag", json, camera.ymag);
         detail::ReadRequiredField("zfar", json, camera.zfar);
         detail::ReadRequiredField("znear", json, camera.znear);
+
+        detail::ReadExtensionsAndExtras(json, camera.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Camera::Perspective & camera)
@@ -949,6 +1024,8 @@ namespace gltf
 
         detail::ReadOptionalField("aspectRatio", json, camera.aspectRatio);
         detail::ReadOptionalField("zfar", json, camera.zfar);
+
+        detail::ReadExtensionsAndExtras(json, camera.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Camera & camera)
@@ -956,6 +1033,8 @@ namespace gltf
         detail::ReadRequiredField("type", json, camera.type);
 
         detail::ReadOptionalField("name", json, camera.name);
+
+        detail::ReadExtensionsAndExtras(json, camera.extensionsAndExtras);
 
         if (camera.type == Camera::Type::Perspective)
         {
@@ -973,6 +1052,8 @@ namespace gltf
         detail::ReadOptionalField("mimeType", json, image.mimeType);
         detail::ReadOptionalField("name", json, image.name);
         detail::ReadOptionalField("uri", json, image.uri);
+
+        detail::ReadExtensionsAndExtras(json, image.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Material::AlphaMode & materialAlphaMode)
@@ -1000,18 +1081,24 @@ namespace gltf
     {
         detail::ReadRequiredField("index", json, materialTexture.index);
         detail::ReadOptionalField("texCoord", json, materialTexture.texCoord);
+
+        detail::ReadExtensionsAndExtras(json, materialTexture.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Material::NormalTexture & materialTexture)
     {
         from_json(json, static_cast<Material::Texture &>(materialTexture));
         detail::ReadOptionalField("scale", json, materialTexture.scale);
+
+        detail::ReadExtensionsAndExtras(json, materialTexture.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Material::OcclusionTexture & materialTexture)
     {
         from_json(json, static_cast<Material::Texture &>(materialTexture));
         detail::ReadOptionalField("strength", json, materialTexture.strength);
+
+        detail::ReadExtensionsAndExtras(json, materialTexture.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Material::PBRMetallicRoughness & pbrMetallicRoughness)
@@ -1021,6 +1108,8 @@ namespace gltf
         detail::ReadOptionalField("metallicFactor", json, pbrMetallicRoughness.metallicFactor);
         detail::ReadOptionalField("metallicRoughnessTexture", json, pbrMetallicRoughness.metallicRoughnessTexture);
         detail::ReadOptionalField("roughnessFactor", json, pbrMetallicRoughness.roughnessFactor);
+
+        detail::ReadExtensionsAndExtras(json, pbrMetallicRoughness.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Material & material)
@@ -1044,6 +1133,8 @@ namespace gltf
 
         detail::ReadOptionalField("name", json, mesh.name);
         detail::ReadOptionalField("weights", json, mesh.weights);
+
+        detail::ReadExtensionsAndExtras(json, mesh.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Node & node)
@@ -1057,6 +1148,8 @@ namespace gltf
         detail::ReadOptionalField("scale", json, node.scale);
         detail::ReadOptionalField("skin", json, node.skin);
         detail::ReadOptionalField("translation", json, node.translation);
+
+        detail::ReadExtensionsAndExtras(json, node.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Primitive & primitive)
@@ -1067,6 +1160,8 @@ namespace gltf
         detail::ReadOptionalField("material", json, primitive.material);
         detail::ReadOptionalField("mode", json, primitive.mode);
         detail::ReadOptionalField("targets", json, primitive.targets);
+
+        detail::ReadExtensionsAndExtras(json, primitive.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Sampler & sampler)
@@ -1076,12 +1171,16 @@ namespace gltf
         detail::ReadOptionalField("name", json, sampler.name);
         detail::ReadOptionalField("wrapS", json, sampler.wrapS);
         detail::ReadOptionalField("wrapT", json, sampler.wrapT);
+
+        detail::ReadExtensionsAndExtras(json, sampler.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Scene & scene)
     {
         detail::ReadOptionalField("name", json, scene.name);
         detail::ReadOptionalField("nodes", json, scene.nodes);
+
+        detail::ReadExtensionsAndExtras(json, scene.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Skin & skin)
@@ -1091,6 +1190,8 @@ namespace gltf
         detail::ReadOptionalField("inverseBindMatrices", json, skin.inverseBindMatrices);
         detail::ReadOptionalField("name", json, skin.name);
         detail::ReadOptionalField("skeleton", json, skin.skeleton);
+
+        detail::ReadExtensionsAndExtras(json, skin.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Texture & texture)
@@ -1098,6 +1199,8 @@ namespace gltf
         detail::ReadOptionalField("name", json, texture.name);
         detail::ReadOptionalField("sampler", json, texture.sampler);
         detail::ReadOptionalField("source", json, texture.source);
+
+        detail::ReadExtensionsAndExtras(json, texture.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Document & document)
@@ -1121,6 +1224,7 @@ namespace gltf
 
         detail::ReadOptionalField("extensionsUsed", json, document.extensionsUsed);
         detail::ReadOptionalField("extensionsRequired", json, document.extensionsRequired);
+        detail::ReadExtensionsAndExtras(json, document.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Accessor::ComponentType const & accessorComponentType)
@@ -1167,6 +1271,7 @@ namespace gltf
     {
         detail::WriteField("bufferView", json, values.bufferView, static_cast<uint32_t>(-1));
         detail::WriteField("byteOffset", json, values.byteOffset, {});
+        detail::WriteExtensions(json, values.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Accessor::Sparse::Indices const & indices)
@@ -1174,6 +1279,7 @@ namespace gltf
         detail::WriteField("componentType", json, indices.componentType, Accessor::ComponentType::None);
         detail::WriteField("bufferView", json, indices.bufferView, static_cast<uint32_t>(-1));
         detail::WriteField("byteOffset", json, indices.byteOffset, {});
+        detail::WriteExtensions(json, indices.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Accessor::Sparse const & sparse)
@@ -1181,6 +1287,7 @@ namespace gltf
         detail::WriteField("count", json, sparse.count, -1);
         detail::WriteField("indices", json, sparse.indices);
         detail::WriteField("values", json, sparse.values);
+        detail::WriteExtensions(json, sparse.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Accessor const & accessor)
@@ -1195,18 +1302,21 @@ namespace gltf
         detail::WriteField("normalized", json, accessor.normalized, false);
         detail::WriteField("sparse", json, accessor.sparse);
         detail::WriteField("type", json, accessor.type, Accessor::Type::None);
+        detail::WriteExtensions(json, accessor.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Animation::Channel::Target const & animationChannelTarget)
     {
         detail::WriteField("node", json, animationChannelTarget.node, -1);
         detail::WriteField("path", json, animationChannelTarget.path);
+        detail::WriteExtensions(json, animationChannelTarget.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Animation::Channel const & animationChannel)
     {
         detail::WriteField("sampler", json, animationChannel.sampler, -1);
         detail::WriteField("target", json, animationChannel.target);
+        detail::WriteExtensions(json, animationChannel.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Animation::Sampler::Type const & animationSamplerType)
@@ -1230,6 +1340,7 @@ namespace gltf
         detail::WriteField("input", json, animationSampler.input, -1);
         detail::WriteField("interpolation", json, animationSampler.interpolation, Animation::Sampler::Type::Linear);
         detail::WriteField("output", json, animationSampler.output, -1);
+        detail::WriteExtensions(json, animationSampler.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Animation const & animation)
@@ -1237,6 +1348,7 @@ namespace gltf
         detail::WriteField("channels", json, animation.channels);
         detail::WriteField("name", json, animation.name);
         detail::WriteField("samplers", json, animation.samplers);
+        detail::WriteExtensions(json, animation.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Asset const & asset)
@@ -1245,14 +1357,15 @@ namespace gltf
         detail::WriteField("generator", json, asset.generator);
         detail::WriteField("minVersion", json, asset.minVersion);
         detail::WriteField("version", json, asset.version);
+        detail::WriteExtensions(json, asset.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Buffer const & buffer)
     {
         detail::WriteField("byteLength", json, buffer.byteLength, {});
-        //detail::WriteOptionalField("data", json, buffer.data);
         detail::WriteField("name", json, buffer.name);
         detail::WriteField("uri", json, buffer.uri);
+        detail::WriteExtensions(json, buffer.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, BufferView const & bufferView)
@@ -1263,6 +1376,7 @@ namespace gltf
         detail::WriteField("byteStride", json, bufferView.byteStride, {});
         detail::WriteField("name", json, bufferView.name);
         detail::WriteField("target", json, bufferView.target, BufferView::TargetType::None);
+        detail::WriteExtensions(json, bufferView.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Camera::Type const & cameraType)
@@ -1286,6 +1400,7 @@ namespace gltf
         detail::WriteField("ymag", json, camera.ymag, defaults::FloatSentinal);
         detail::WriteField("zfar", json, camera.zfar, defaults::FloatSentinal);
         detail::WriteField("znear", json, camera.znear, defaults::FloatSentinal);
+        detail::WriteExtensions(json, camera.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Camera::Perspective const & camera)
@@ -1294,12 +1409,14 @@ namespace gltf
         detail::WriteField("yfov", json, camera.yfov, {});
         detail::WriteField("zfar", json, camera.zfar, {});
         detail::WriteField("znear", json, camera.znear, {});
+        detail::WriteExtensions(json, camera.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Camera const & camera)
     {
         detail::WriteField("name", json, camera.name);
         detail::WriteField("type", json, camera.type, Camera::Type::None);
+        detail::WriteExtensions(json, camera.extensionsAndExtras);
 
         if (camera.type == Camera::Type::Perspective)
         {
@@ -1317,6 +1434,7 @@ namespace gltf
         detail::WriteField("mimeType", json, image.mimeType);
         detail::WriteField("name", json, image.name);
         detail::WriteField("uri", json, image.uri);
+        detail::WriteExtensions(json, image.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Material::AlphaMode const & materialAlphaMode)
@@ -1339,18 +1457,21 @@ namespace gltf
     {
         detail::WriteField("index", json, materialTexture.index, -1);
         detail::WriteField("texCoord", json, materialTexture.texCoord, -1);
+        detail::WriteExtensions(json, materialTexture.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Material::NormalTexture const & materialTexture)
     {
         to_json(json, static_cast<Material::Texture const &>(materialTexture));
         detail::WriteField("scale", json, materialTexture.scale, defaults::IdentityScalar);
+        detail::WriteExtensions(json, materialTexture.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Material::OcclusionTexture const & materialTexture)
     {
         to_json(json, static_cast<Material::Texture const &>(materialTexture));
         detail::WriteField("strength", json, materialTexture.strength, defaults::IdentityScalar);
+        detail::WriteExtensions(json, materialTexture.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Material::PBRMetallicRoughness const & pbrMetallicRoughness)
@@ -1360,6 +1481,7 @@ namespace gltf
         detail::WriteField("metallicFactor", json, pbrMetallicRoughness.metallicFactor, defaults::IdentityScalar);
         detail::WriteField("metallicRoughnessTexture", json, pbrMetallicRoughness.metallicRoughnessTexture);
         detail::WriteField("roughnessFactor", json, pbrMetallicRoughness.roughnessFactor, defaults::IdentityScalar);
+        detail::WriteExtensions(json, pbrMetallicRoughness.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Material const & material)
@@ -1382,6 +1504,7 @@ namespace gltf
         detail::WriteField("name", json, mesh.name);
         detail::WriteField("primitives", json, mesh.primitives);
         detail::WriteField("weights", json, mesh.weights);
+        detail::WriteExtensions(json, mesh.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Node const & node)
@@ -1396,6 +1519,7 @@ namespace gltf
         detail::WriteField("skin", json, node.skin, -1);
         detail::WriteField("translation", json, node.translation, defaults::NullVec3);
         detail::WriteField("weights", json, node.weights);
+        detail::WriteExtensions(json, node.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Primitive const & primitive)
@@ -1405,6 +1529,7 @@ namespace gltf
         detail::WriteField("material", json, primitive.material, -1);
         detail::WriteField("mode", json, primitive.mode, Primitive::Mode::Triangles);
         detail::WriteField("targets", json, primitive.targets);
+        detail::WriteExtensions(json, primitive.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Sampler const & sampler)
@@ -1414,12 +1539,14 @@ namespace gltf
         detail::WriteField("minFilter", json, sampler.minFilter, Sampler::MinFilter::None);
         detail::WriteField("wrapS", json, sampler.wrapS, Sampler::WrappingMode::Repeat);
         detail::WriteField("wrapT", json, sampler.wrapT, Sampler::WrappingMode::Repeat);
+        detail::WriteExtensions(json, sampler.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Scene const & scene)
     {
         detail::WriteField("name", json, scene.name);
         detail::WriteField("nodes", json, scene.nodes);
+        detail::WriteExtensions(json, scene.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Skin const & skin)
@@ -1428,6 +1555,7 @@ namespace gltf
         detail::WriteField("name", json, skin.name);
         detail::WriteField("skeleton", json, skin.skeleton, -1);
         detail::WriteField("joints", json, skin.joints);
+        detail::WriteExtensions(json, skin.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Texture const & texture)
@@ -1435,6 +1563,7 @@ namespace gltf
         detail::WriteField("name", json, texture.name);
         detail::WriteField("sampler", json, texture.sampler, -1);
         detail::WriteField("source", json, texture.source, -1);
+        detail::WriteExtensions(json, texture.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Document const & document)
@@ -1457,6 +1586,7 @@ namespace gltf
 
         detail::WriteField("extensionsUsed", json, document.extensionsUsed);
         detail::WriteField("extensionsRequired", json, document.extensionsRequired);
+        detail::WriteExtensions(json, document.extensionsAndExtras);
     }
 
     inline Document LoadFromText(std::string const & documentFilePath)

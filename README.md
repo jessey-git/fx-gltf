@@ -5,7 +5,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 ## Features
 * Complete support for required glTF 2.0 schema elements
     * External and embedded resource loading
-    * .glb binary files
+    * Binary .glb files
     * Serialization (Save) and Deserialization (Load) capability
 
 * Modern C++14/C++17 support
@@ -13,10 +13,11 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
     * Implemented using modern and safe syntax and methodologies
 
 * Small, header-only library
-    * ~1500 lines of generously spaced code including whitespace/comments
-    * C++20 Module ready (does not leak preprocessor macros beyond its own file)
+    * ~1700 lines of high-level, straightforward, generously spaced code including whitespace/comments
+    * C++20 Module ready (does not leak preprocessor defines/macros beyond its own file)
 
 * Fast and efficient processing
+    * See Performance section below
 
 ## Usage and Integration
 
@@ -66,8 +67,117 @@ fx::gltf::SaveAsText(helmet, "NewHelmet.gltf");
 * Developed using both clang-tidy and MSVC CppCoreCheck toolsets
 
 ## Performance
-* Planned: show loading performance comparisons against other glTF loaders
-* Planned: show graph of improvement when compiling in C++17 mode (std::string_view etc.)
+* Faster than other full-featured loaders
+
+  * Greater than 10% faster across a range of models, small and large. Sometimes as high as 50%!
+
+```
+-------------------------------------------------------------------------------------
+Benchmark                                               Time           CPU Iterations
+-------------------------------------------------------------------------------------
+fxgltf_Test/External_Box_mean                         261 us        261 us       2358
+fxgltf_Test/External_Box_median                       253 us        258 us       2358
+fxgltf_Test/External_Box_stddev                        27 us         28 us       2358
+tinygltf_Test/External_Box_mean                       321 us        319 us       2133
+tinygltf_Test/External_Box_median                     312 us        308 us       2133
+tinygltf_Test/External_Box_stddev                      20 us         20 us       2133
+
+fxgltf_Test/Embedded_Box_mean                         192 us        192 us       4073
+fxgltf_Test/Embedded_Box_median                       192 us        188 us       4073
+fxgltf_Test/Embedded_Box_stddev                        14 us         16 us       4073
+tinygltf_Test/Embedded_Box_mean                       274 us        273 us       3200
+tinygltf_Test/Embedded_Box_median                     281 us        278 us       3200
+tinygltf_Test/Embedded_Box_stddev                      30 us         30 us       3200
+
+fxgltf_Test/External_2CylinderEngine_mean            6503 us       6563 us        100
+fxgltf_Test/External_2CylinderEngine_median          7065 us       7188 us        100
+fxgltf_Test/External_2CylinderEngine_stddev           900 us        931 us        100
+tinygltf_Test/External_2CylinderEngine_mean          8664 us       8681 us         90
+tinygltf_Test/External_2CylinderEngine_median        8490 us       8507 us         90
+tinygltf_Test/External_2CylinderEngine_stddev        1034 us       1005 us         90
+
+fxgltf_Test/Embedded_2CylinderEngine_mean           72760 us      72727 us         11
+fxgltf_Test/Embedded_2CylinderEngine_median         74147 us      73864 us         11
+fxgltf_Test/Embedded_2CylinderEngine_stddev          8219 us       8246 us         11
+tinygltf_Test/Embedded_2CylinderEngine_mean        110179 us     110268 us          7
+tinygltf_Test/Embedded_2CylinderEngine_median      109267 us     109375 us          7
+tinygltf_Test/Embedded_2CylinderEngine_stddev        5324 us       6431 us          7
+
+fxgltf_Test/External_ReciprocatingSaw_mean          12221 us      12333 us         56
+fxgltf_Test/External_ReciprocatingSaw_median        11875 us      11998 us         56
+fxgltf_Test/External_ReciprocatingSaw_stddev          717 us        666 us         56
+tinygltf_Test/External_ReciprocatingSaw_mean        17273 us      17313 us         50
+tinygltf_Test/External_ReciprocatingSaw_median      18154 us      18125 us         50
+tinygltf_Test/External_ReciprocatingSaw_stddev       2095 us       2205 us         50
+
+fxgltf_Test/Embedded_ReciprocatingSaw_mean         143724 us     144792 us          6
+fxgltf_Test/Embedded_ReciprocatingSaw_median       147001 us     148438 us          6
+fxgltf_Test/Embedded_ReciprocatingSaw_stddev        14070 us      14096 us          6
+tinygltf_Test/Embedded_ReciprocatingSaw_mean       211632 us     210417 us          3
+tinygltf_Test/Embedded_ReciprocatingSaw_median     206052 us     208333 us          3
+tinygltf_Test/Embedded_ReciprocatingSaw_stddev      20525 us      21663 us          3
+```
+
+* More memory efficient than other full-featured loaders
+
+  * Greater than 50% reduction in number of allocations across a variety of models. Sometimes as high as 70%!
+
+  * Greater than 40% reduction in total allocation size across a variety of models. Sometimes as high as 67%!
+
+```
+----------------------------------------------------------------------------------------------------------
+Benchmark                                        Time           CPU Iterations TotalNewCalls TotalNewSize
+----------------------------------------------------------------------------------------------------------
+fxgltf_Test/External_Box                       222 us          0 us          1        201    12.646k
+tinygltf_Test/External_Box                     664 us          0 us          1        428    36.709k
+
+fxgltf_Test/Embedded_Box                       660 us          0 us          1        218     20.84k
+tinygltf_Test/Embedded_Box                     670 us          0 us          1        452    49.667k
+
+fxgltf_Test/External_2CylinderEngine         11398 us          0 us          1     4.915k   2.15445M
+tinygltf_Test/External_2CylinderEngine       11598 us      15625 us          1    14.942k    5.1615M
+
+fxgltf_Test/Embedded_2CylinderEngine         57782 us      62500 us          1     4.969k   25.4693M
+tinygltf_Test/Embedded_2CylinderEngine       80368 us      78125 us          1    15.021k   43.5535M
+
+fxgltf_Test/External_ReciprocatingSaw        17415 us      15625 us          1     9.784k    4.2078M
+tinygltf_Test/External_ReciprocatingSaw      13825 us      15625 us          1    31.806k   10.5618M
+
+fxgltf_Test/Embedded_ReciprocatingSaw       126205 us     125000 us          1     9.841k   47.2497M
+tinygltf_Test/Embedded_ReciprocatingSaw     236703 us     234375 us          1    31.889k   79.4386M
+```
+
+* Using C++17 yields some additional benefits over C++14
+
+  * Total allocations drop 2-3% and total allocation size drops about 1%. Not much, but why bleed if you don't have to?
+
+C++14
+
+```
+--------------------------------------------------------------------------------------------------------
+Benchmark                                      Time           CPU Iterations TotalNewCalls TotalNewSize
+--------------------------------------------------------------------------------------------------------
+fxgltf_Test/External_Box                     648 us          0 us          1        206    12.806k
+fxgltf_Test/Embedded_Box                     608 us          0 us          1        223        21k
+fxgltf_Test/External_2CylinderEngine       11017 us      15625 us          1     5.052k   2.15883M
+fxgltf_Test/Embedded_2CylinderEngine       54864 us      62500 us          1     5.106k   25.4737M
+fxgltf_Test/External_ReciprocatingSaw      10434 us          0 us          1    10.045k   4.21615M
+fxgltf_Test/Embedded_ReciprocatingSaw     106756 us     109375 us          1    10.102k    47.258M
+```
+
+C++17
+
+```
+--------------------------------------------------------------------------------------------------------
+Benchmark                                      Time           CPU Iterations TotalNewCalls TotalNewSize
+--------------------------------------------------------------------------------------------------------
+fxgltf_Test/External_Box                     340 us          0 us          1        201    12.646k
+fxgltf_Test/Embedded_Box                     202 us          0 us          1        218     20.84k
+fxgltf_Test/External_2CylinderEngine        7026 us      15625 us          1     4.915k   2.15445M
+fxgltf_Test/Embedded_2CylinderEngine       55037 us      46875 us          1     4.969k   25.4693M
+fxgltf_Test/External_ReciprocatingSaw       9722 us          0 us          1     9.784k    4.2078M
+fxgltf_Test/Embedded_ReciprocatingSaw     106502 us     109375 us          1     9.841k   47.2497M
+```
 
 ## Execute unit tests
 
@@ -97,8 +207,8 @@ $ ctest --output-on-failure -C [Debug or Release]
 Planned: Ship a C++20 Modules file in addition to the header
 
 ## Known Issues
-### glTF 2.0 missing support
-* Schema: ```Extension``` property bags on all types
+### glTF 2.0 support
+* No known issues or missing features
 
 ### API
 * Saving: Binary .glb files
