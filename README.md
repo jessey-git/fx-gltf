@@ -71,7 +71,7 @@ fx::gltf::SaveAsText(helmet, "NewHelmet.gltf");
 ## Performance
 * Faster than other full-featured loaders
 
-  * Greater than 10% faster across a range of models, small and large. Sometimes as high as 50%!
+  * Improvement ranges from 1.1x to 2x (!) faster depending on the model.
 
 ```
 -------------------------------------------------------------------------------------
