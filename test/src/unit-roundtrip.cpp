@@ -13,6 +13,8 @@
 
 void RoundtripCompare(std::string const & filePath)
 {
+    INFO(filePath);
+
     std::string errorString = "Failed: ";
     errorString.append(filePath).append("\n");
 
@@ -31,7 +33,33 @@ void RoundtripCompare(std::string const & filePath)
             throw std::runtime_error(errorString.append(filteredDiff.dump(2)));
         }
 
+        // Ensure all the buffers have data...
         for (auto b : doc.buffers)
+        {
+            REQUIRE(b.data.size() == b.byteLength);
+        }
+    }
+    catch (fx::gltf::invalid_gltf_document & e)
+    {
+        utility::FormatException(errorString, e);
+
+        throw std::runtime_error(errorString);
+    }
+}
+
+void CheckBinary(std::string const & filePath)
+{
+    INFO(filePath);
+
+    std::string errorString = "Failed: ";
+    errorString.append(filePath).append("\n");
+
+    try
+    {
+        fx::gltf::Document doc = fx::gltf::LoadFromBinary(filePath);
+
+        // Ensure all the buffers have data...
+        for (auto & b : doc.buffers)
         {
             REQUIRE(b.data.size() == b.byteLength);
         }
@@ -146,6 +174,51 @@ TEST_CASE("roundtrip")
             })
         {
             RoundtripCompare(filePath);
+        }
+    }
+
+    SECTION("load - .glb files")
+    {
+        for (auto & filePath :
+            {
+                "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Binary/2CylinderEngine.glb",
+                "data/glTF-Sample-Models/2.0/AlphaBlendModeTest/glTF-Binary/AlphaBlendModeTest.glb",
+                "data/glTF-Sample-Models/2.0/AnimatedMorphCube/glTF-Binary/AnimatedMorphCube.glb",
+                "data/glTF-Sample-Models/2.0/AnimatedMorphSphere/glTF-Binary/AnimatedMorphSphere.glb",
+                "data/glTF-Sample-Models/2.0/Avocado/glTF-Binary/Avocado.glb",
+                "data/glTF-Sample-Models/2.0/BarramundiFish/glTF-Binary/BarramundiFish.glb",
+                "data/glTF-Sample-Models/2.0/BoomBox/glTF-Binary/BoomBox.glb",
+                "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb",
+                "data/glTF-Sample-Models/2.0/BoxAnimated/glTF-Binary/BoxAnimated.glb",
+                "data/glTF-Sample-Models/2.0/BoxInterleaved/glTF-Binary/BoxInterleaved.glb",
+                "data/glTF-Sample-Models/2.0/BoxTextured/glTF-Binary/BoxTextured.glb",
+                "data/glTF-Sample-Models/2.0/BoxTexturedNonPowerOfTwo/glTF-Binary/BoxTexturedNonPowerOfTwo.glb",
+                "data/glTF-Sample-Models/2.0/BoxVertexColors/glTF-Binary/BoxVertexColors.glb",
+                "data/glTF-Sample-Models/2.0/BrainStem/glTF-Binary/BrainStem.glb",
+                "data/glTF-Sample-Models/2.0/Buggy/glTF-Binary/Buggy.glb",
+                "data/glTF-Sample-Models/2.0/CesiumMan/glTF-Binary/CesiumMan.glb",
+                "data/glTF-Sample-Models/2.0/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb",
+                "data/glTF-Sample-Models/2.0/Corset/glTF-Binary/Corset.glb",
+                "data/glTF-Sample-Models/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb",
+                "data/glTF-Sample-Models/2.0/Duck/glTF-Binary/Duck.glb",
+                "data/glTF-Sample-Models/2.0/GearboxAssy/glTF-Binary/GearboxAssy.glb",
+                "data/glTF-Sample-Models/2.0/Lantern/glTF-Binary/Lantern.glb",
+                "data/glTF-Sample-Models/2.0/MetalRoughSpheres/glTF-Binary/MetalRoughSpheres.glb",
+                "data/glTF-Sample-Models/2.0/Monster/glTF-Binary/Monster.glb",
+                "data/glTF-Sample-Models/2.0/NormalTangentMirrorTest/glTF-Binary/NormalTangentMirrorTest.glb",
+                "data/glTF-Sample-Models/2.0/NormalTangentTest/glTF-Binary/NormalTangentTest.glb",
+                "data/glTF-Sample-Models/2.0/OrientationTest/glTF-Binary/OrientationTest.glb",
+                "data/glTF-Sample-Models/2.0/ReciprocatingSaw/glTF-Binary/ReciprocatingSaw.glb",
+                "data/glTF-Sample-Models/2.0/RiggedFigure/glTF-Binary/RiggedFigure.glb",
+                "data/glTF-Sample-Models/2.0/RiggedSimple/glTF-Binary/RiggedSimple.glb",
+                "data/glTF-Sample-Models/2.0/TextureCoordinateTest/glTF-Binary/TextureCoordinateTest.glb",
+                "data/glTF-Sample-Models/2.0/TextureSettingsTest/glTF-Binary/TextureSettingsTest.glb",
+                "data/glTF-Sample-Models/2.0/VC/glTF-Binary/VC.glb",
+                "data/glTF-Sample-Models/2.0/VertexColorTest/glTF-Binary/VertexColorTest.glb",
+                "data/glTF-Sample-Models/2.0/WaterBottle/glTF-Binary/WaterBottle.glb"
+            })
+        {
+            CheckBinary(filePath);
         }
     }
 }

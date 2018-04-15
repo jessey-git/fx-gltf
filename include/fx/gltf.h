@@ -6,6 +6,7 @@
 #pragma once
 
 #include <array>
+#include <cstring>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -68,24 +69,24 @@ namespace base64
         std::string out{};
         out.reserve(((length * 4 / 3) + 3) & (~3u)); // round up to nearest 4
 
-        uint32_t val = 0;
-        int32_t valb = -6;
+        uint32_t value = 0;
+        int32_t bitCount = -6;
         for (const char c : bytes)
         {
-            val = (val << 8u) + static_cast<uint8_t>(c);
-            valb += 8;
-            while (valb >= 0)
+            value = (value << 8u) + static_cast<uint8_t>(c);
+            bitCount += 8;
+            while (bitCount >= 0)
             {
-                const uint32_t shiftOperand = valb;
-                out.push_back(detail::EncodeMap.at((val >> shiftOperand) & 0x3fu));
-                valb -= 6;
+                const uint32_t shiftOperand = bitCount;
+                out.push_back(detail::EncodeMap.at((value >> shiftOperand) & 0x3fu));
+                bitCount -= 6;
             }
         }
 
-        if (valb > -6)
+        if (bitCount > -6)
         {
-            const uint32_t shiftOperand = valb + 8;
-            out.push_back(detail::EncodeMap.at(((val << 8u) >> shiftOperand) & 0x3fu));
+            const uint32_t shiftOperand = bitCount + 8;
+            out.push_back(detail::EncodeMap.at(((value << 8u) >> shiftOperand) & 0x3fu));
         }
 
         while (out.size() % 4 != 0)
@@ -96,7 +97,7 @@ namespace base64
         return out;
     }
 
-    inline bool TryDecode(const std::string & in, std::vector<char> & out)
+    inline bool TryDecode(std::string const & in, std::vector<char> & out)
     {
         out.clear();
 
@@ -114,8 +115,8 @@ namespace base64
         out.reserve((length / 4) * 3 + 2);
 
         bool invalid = false;
-        uint32_t val = 0;
-        int32_t valb = -8;
+        uint32_t value = 0;
+        int32_t bitCount = -8;
         for (std::size_t i = 0; i < length; i++)
         {
             const uint8_t c = static_cast<uint8_t>(in[i]);
@@ -139,13 +140,13 @@ namespace base64
                 break;
             }
 
-            val = (val << 6u) + map;
-            valb += 6;
-            if (valb >= 0)
+            value = (value << 6u) + map;
+            bitCount += 6;
+            if (bitCount >= 0)
             {
-                const uint32_t shiftOperand = valb;
-                out.push_back(char((val >> shiftOperand) & 0xffu));
-                valb -= 8;
+                const uint32_t shiftOperand = bitCount;
+                out.push_back(char((value >> shiftOperand) & 0xffu));
+                bitCount -= 8;
             }
         }
 
@@ -160,16 +161,16 @@ namespace base64
 
 namespace gltf
 {
-    class invalid_gltf_document : public std::exception
+    class invalid_gltf_document : public std::runtime_error
     {
     public:
         explicit invalid_gltf_document(char const * message) noexcept
-            : std::exception(message)
+            : std::runtime_error(message)
         {
         }
 
         invalid_gltf_document(char const * message, std::string const & extra)
-            : std::exception(CreateMessage(message, extra).c_str())
+            : std::runtime_error(CreateMessage(message, extra).c_str())
         {
         }
 
@@ -263,7 +264,10 @@ namespace gltf
             return documentRoot + bufferUri;
         }
 
-        constexpr char const * const mimetypeApplicationOctet = "data:application/octet-stream;base64";
+        constexpr char const * const MimetypeApplicationOctet = "data:application/octet-stream;base64";
+        constexpr uint32_t GLBHeaderMagic = 0x46546c67u;
+        constexpr uint32_t GLBChunkJSON = 0x4e4f534au;
+        constexpr uint32_t GLBChunkBIN = 0x004e4942u;
     } // namespace detail
 
     namespace defaults
@@ -660,37 +664,76 @@ namespace gltf
 
         int32_t scene{ -1 };
 
-        static Document Create(nlohmann::json const & json, std::string const & bufferRootPath)
+        struct DataContext
         {
-            Document document = json;
+            std::string bufferRootPath{};
+            std::vector<char> * binaryData{};
+            std::size_t binaryOffset{};
+        };
 
-            for (auto & buffer : document.buffers)
+        static Document Create(nlohmann::json const & json, DataContext const & dataContext)
+        {
+            try
             {
-                if (buffer.byteLength > 0 && !buffer.uri.empty())
-                {
-                    if (buffer.uri.find(detail::mimetypeApplicationOctet) == std::string::npos)
-                    {
-                        std::ifstream fileData(detail::CreateBufferUriPath(bufferRootPath, buffer.uri), std::ios::binary);
-                        if (!fileData.good())
-                        {
-                            throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
-                        }
+                Document document = json;
 
-                        buffer.data.resize(buffer.byteLength);
-                        fileData.read(&buffer.data[0], buffer.byteLength);
-                    }
-                    else
+                for (auto & buffer : document.buffers)
+                {
+                    if (buffer.byteLength > 0)
                     {
-                        bool success = base64::TryDecode(buffer.uri.substr(std::char_traits<char>::length(detail::mimetypeApplicationOctet) + 1), buffer.data);
-                        if (!success)
+                        if (!buffer.uri.empty())
                         {
-                            throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
+                            if (buffer.uri.find(detail::MimetypeApplicationOctet) == std::string::npos)
+                            {
+                                std::ifstream fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
+                                if (!fileData.good())
+                                {
+                                    throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
+                                }
+
+                                buffer.data.resize(buffer.byteLength);
+                                fileData.read(&buffer.data[0], buffer.byteLength);
+                            }
+                            else
+                            {
+                                bool success = base64::TryDecode(buffer.uri.substr(std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1), buffer.data);
+                                if (!success)
+                                {
+                                    throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
+                                }
+                            }
+                        }
+                        else if (dataContext.binaryData != nullptr)
+                        {
+                            struct ChunkHeader
+                            {
+                                uint32_t chunkLength{};
+                                uint32_t chunkType{};
+                            };
+
+                            constexpr std::size_t HeaderSize{ sizeof(ChunkHeader) };
+                            ChunkHeader header;
+
+                            std::vector<char> & binary = *dataContext.binaryData;
+                            std::memcpy(&header, &binary[dataContext.binaryOffset], HeaderSize);
+
+                            if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
+                            {
+                                throw invalid_gltf_document("Invalid buffer data");
+                            }
+
+                            buffer.data.resize(buffer.byteLength);
+                            std::memcpy(&buffer.data[0], &binary[dataContext.binaryOffset + HeaderSize], buffer.byteLength);
                         }
                     }
                 }
-            }
 
-            return document;
+                return document;
+            }
+            catch (std::exception &)
+            {
+                std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
+            }
         }
     };
 
@@ -1390,18 +1433,54 @@ namespace gltf
             file >> json;
         }
 
-        try
+        return Document::Create(json, { detail::GetDocumentRootPath(documentFilePath) });
+    }
+
+    inline Document LoadFromBinary(std::string const & documentFilePath)
+    {
+        std::vector<char> binary{};
         {
-            return Document::Create(json, detail::GetDocumentRootPath(documentFilePath));
+            std::ifstream file(documentFilePath, std::ios::binary);
+            if (!file.is_open())
+            {
+                throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
+            }
+
+            file.seekg(0, file.end);
+            const std::streampos fileSize = file.tellg();
+            file.seekg(0, file.beg);
+
+            if (fileSize < 20)
+            {
+                throw invalid_gltf_document("Invalid GLB file");
+            }
+
+            binary.resize(fileSize);
+            file.read(&binary[0], fileSize);
         }
-        catch (invalid_gltf_document &)
+
+        struct GLBHeader
         {
-            throw;
-        }
-        catch (std::exception &)
+            uint32_t magic{};
+            uint32_t version{};
+            uint32_t length{};
+            uint32_t chunkLength{};
+            uint32_t chunkType{};
+        };
+
+        constexpr std::size_t HeaderSize{ sizeof(GLBHeader) };
+        GLBHeader header;
+        std::memcpy(&header, &binary[0], HeaderSize);
+        if (header.magic != detail::GLBHeaderMagic ||
+            header.chunkType != detail::GLBChunkJSON ||
+            header.chunkLength + HeaderSize > header.length)
         {
-            std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
+            throw invalid_gltf_document("Invalid GLB header");
         }
+
+        return Document::Create(
+            nlohmann::json::parse({&binary[HeaderSize], header.chunkLength}),
+            { detail::GetDocumentRootPath(documentFilePath), &binary, header.chunkLength + HeaderSize });
     }
 
     inline void SaveAsText(Document const & document, std::string const & documentFilePath)
