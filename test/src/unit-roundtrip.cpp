@@ -11,7 +11,19 @@
 
 #include "utility.h"
 
-void RoundtripCompare(std::string const & filePath)
+bool FindExtension(std::string const & extensionName, nlohmann::json const & json)
+{
+    const nlohmann::json::const_iterator iterExtensions = json.find("extensions");
+    if (iterExtensions != json.end())
+    {
+        nlohmann::json const & ext = *iterExtensions;
+        return ext.find(extensionName) != ext.end();
+    }
+
+    return false;
+}
+
+void RoundtripCompare(std::string const & filePath, bool checkExtensions = false)
 {
     INFO(filePath);
 
@@ -37,6 +49,25 @@ void RoundtripCompare(std::string const & filePath)
         for (auto b : doc.buffers)
         {
             REQUIRE(b.data.size() == b.byteLength);
+        }
+
+        // Ensure used extensions are actually still referenced...
+        if (checkExtensions)
+        {
+            for (auto e : doc.extensionsUsed)
+            {
+                bool found = false;
+                for (auto & m : doc.materials)
+                {
+                    found |= FindExtension(e, m.extensionsAndExtras);
+                    if (found)
+                    {
+                        break;
+                    }
+                }
+
+                REQUIRE(found);
+            }
         }
     }
     catch (fx::gltf::invalid_gltf_document & e)
@@ -163,8 +194,8 @@ TEST_CASE("roundtrip")
                 "data/glTF-Sample-Models/2.0/RiggedFigure/glTF-Embedded/RiggedFigure.gltf",
                 "data/glTF-Sample-Models/2.0/RiggedSimple/glTF-Embedded/RiggedSimple.gltf",
                 "data/glTF-Sample-Models/2.0/SimpleMeshes/glTF-Embedded/SimpleMeshes.gltf",
-                //"data/glTF-Sample-Models/2.0/SimpleMorph/glTF-Embedded/SimpleMorph.gltf",
-                //"data/glTF-Sample-Models/2.0/SimpleSparseAccessor/glTF-Embedded/SimpleSparseAccessor.gltf",
+                //"data/glTF-Sample-Models/2.0/SimpleMorph/glTF-Embedded/SimpleMorph.gltf",                     // Invalid mimetype
+                //"data/glTF-Sample-Models/2.0/SimpleSparseAccessor/glTF-Embedded/SimpleSparseAccessor.gltf",   // Invalid mimetype
                 "data/glTF-Sample-Models/2.0/TextureCoordinateTest/glTF-Embedded/TextureCoordinateTest.gltf",
                 "data/glTF-Sample-Models/2.0/TextureSettingsTest/glTF-Embedded/TextureSettingsTest.gltf",
                 "data/glTF-Sample-Models/2.0/Triangle/glTF-Embedded/Triangle.gltf",
@@ -174,6 +205,39 @@ TEST_CASE("roundtrip")
             })
         {
             RoundtripCompare(filePath);
+        }
+    }
+
+    SECTION("roundtrip - .gltf files w/extensions")
+    {
+        for (auto & filePath :
+            {
+                "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-pbrSpecularGlossiness/2CylinderEngine.gltf",
+                "data/glTF-Sample-Models/2.0/Avocado/glTF-pbrSpecularGlossiness/Avocado.gltf",
+                "data/glTF-Sample-Models/2.0/BarramundiFish/glTF-pbrSpecularGlossiness/BarramundiFish.gltf",
+                "data/glTF-Sample-Models/2.0/BoomBox/glTF-pbrSpecularGlossiness/BoomBox.gltf",
+                "data/glTF-Sample-Models/2.0/Box/glTF-pbrSpecularGlossiness/Box.gltf",
+                "data/glTF-Sample-Models/2.0/BoxAnimated/glTF-pbrSpecularGlossiness/BoxAnimated.gltf",
+                //"data/glTF-Sample-Models/2.0/BoxInterleaved/glTF-pbrSpecularGlossiness/BoxInterleaved.gltf",  // Uses/Requires extension but does not actually use it
+                "data/glTF-Sample-Models/2.0/BoxTextured/glTF-pbrSpecularGlossiness/BoxTextured.gltf",
+                "data/glTF-Sample-Models/2.0/BoxTexturedNonPowerOfTwo/glTF-pbrSpecularGlossiness/BoxTexturedNonPowerOfTwo.gltf",
+                "data/glTF-Sample-Models/2.0/BrainStem/glTF-pbrSpecularGlossiness/BrainStem.gltf",
+                "data/glTF-Sample-Models/2.0/Buggy/glTF-pbrSpecularGlossiness/Buggy.gltf",
+                "data/glTF-Sample-Models/2.0/CesiumMan/glTF-pbrSpecularGlossiness/CesiumMan.gltf",
+                "data/glTF-Sample-Models/2.0/CesiumMilkTruck/glTF-pbrSpecularGlossiness/CesiumMilkTruck.gltf",
+                "data/glTF-Sample-Models/2.0/Corset/glTF-pbrSpecularGlossiness/Corset.gltf",
+                "data/glTF-Sample-Models/2.0/Duck/glTF-pbrSpecularGlossiness/Duck.gltf",
+                "data/glTF-Sample-Models/2.0/GearboxAssy/glTF-pbrSpecularGlossiness/GearboxAssy.gltf",
+                "data/glTF-Sample-Models/2.0/Lantern/glTF-pbrSpecularGlossiness/Lantern.gltf",
+                "data/glTF-Sample-Models/2.0/Monster/glTF-pbrSpecularGlossiness/Monster.gltf",
+                "data/glTF-Sample-Models/2.0/ReciprocatingSaw/glTF-pbrSpecularGlossiness/ReciprocatingSaw.gltf",
+                "data/glTF-Sample-Models/2.0/RiggedFigure/glTF-pbrSpecularGlossiness/RiggedFigure.gltf",
+                "data/glTF-Sample-Models/2.0/RiggedSimple/glTF-pbrSpecularGlossiness/RiggedSimple.gltf",
+                "data/glTF-Sample-Models/2.0/VC/glTF-pbrSpecularGlossiness/VC.gltf",
+                "data/glTF-Sample-Models/2.0/WaterBottle/glTF-pbrSpecularGlossiness/WaterBottle.gltf"
+            })
+        {
+            RoundtripCompare(filePath, true);
         }
     }
 

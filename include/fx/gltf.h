@@ -7,9 +7,8 @@
 
 #include <array>
 #include <cstring>
-#include <exception>
 #include <fstream>
-#include <iostream>
+#include <stdexcept>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -19,6 +18,7 @@
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
 #define FX_GLTF_HAS_CPP_17
+#include <string_view>
 #endif
 
 namespace fx
@@ -215,6 +215,21 @@ namespace gltf
             }
         }
 
+        inline void ReadExtensionsAndExtras(nlohmann::json const & json, nlohmann::json & extensionsAndExtras)
+        {
+            const nlohmann::json::const_iterator iterExtensions = json.find("extensions");
+            const nlohmann::json::const_iterator iterExtras = json.find("extras");
+            if (iterExtensions != json.end())
+            {
+                extensionsAndExtras["extensions"] = *iterExtensions;
+            }
+
+            if (iterExtras != json.end())
+            {
+                extensionsAndExtras["extras"] = *iterExtras;
+            }
+        }
+
         template <typename TValue>
         inline void WriteField(std::string const & key, nlohmann::json & json, TValue const & value)
         {
@@ -230,6 +245,17 @@ namespace gltf
             if (value != defaultValue)
             {
                 json[key] = value;
+            }
+        }
+
+        inline void WriteExtensions(nlohmann::json & json, nlohmann::json const & extensionsAndExtras)
+        {
+            if (!extensionsAndExtras.empty())
+            {
+                for (nlohmann::json::const_iterator it = extensionsAndExtras.begin(); it != extensionsAndExtras.end(); ++it)
+                {
+                    json[it.key()] = it.value();
+                }
             }
         }
 
@@ -530,6 +556,7 @@ namespace gltf
         std::array<float, 3> emissiveFactor = { defaults::NullVec3 };
 
         std::string name;
+        nlohmann::json extensionsAndExtras;
     };
 
     struct Primitive
@@ -663,6 +690,8 @@ namespace gltf
         std::vector<Texture> textures{};
 
         int32_t scene{ -1 };
+        std::vector<std::string> extensionsUsed;
+        std::vector<std::string> extensionsRequired;
 
         struct DataContext
         {
@@ -1005,6 +1034,8 @@ namespace gltf
         detail::ReadOptionalField("normalTexture", json, material.normalTexture);
         detail::ReadOptionalField("occlusionTexture", json, material.occlusionTexture);
         detail::ReadOptionalField("pbrMetallicRoughness", json, material.pbrMetallicRoughness);
+
+        detail::ReadExtensionsAndExtras(json, material.extensionsAndExtras);
     }
 
     inline void from_json(nlohmann::json const & json, Mesh & mesh)
@@ -1087,6 +1118,9 @@ namespace gltf
         detail::ReadOptionalField("scenes", json, document.scenes);
         detail::ReadOptionalField("skins", json, document.skins);
         detail::ReadOptionalField("textures", json, document.textures);
+
+        detail::ReadOptionalField("extensionsUsed", json, document.extensionsUsed);
+        detail::ReadOptionalField("extensionsRequired", json, document.extensionsRequired);
     }
 
     inline void to_json(nlohmann::json & json, Accessor::ComponentType const & accessorComponentType)
@@ -1339,6 +1373,8 @@ namespace gltf
         detail::WriteField("normalTexture", json, material.normalTexture);
         detail::WriteField("occlusionTexture", json, material.occlusionTexture);
         detail::WriteField("pbrMetallicRoughness", json, material.pbrMetallicRoughness);
+
+        detail::WriteExtensions(json, material.extensionsAndExtras);
     }
 
     inline void to_json(nlohmann::json & json, Mesh const & mesh)
@@ -1418,6 +1454,9 @@ namespace gltf
         detail::WriteField("scenes", json, document.scenes);
         detail::WriteField("skins", json, document.skins);
         detail::WriteField("textures", json, document.textures);
+
+        detail::WriteField("extensionsUsed", json, document.extensionsUsed);
+        detail::WriteField("extensionsRequired", json, document.extensionsRequired);
     }
 
     inline Document LoadFromText(std::string const & documentFilePath)
