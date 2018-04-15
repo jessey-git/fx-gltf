@@ -58,7 +58,9 @@ fx::gltf::SaveAsText(helmet, "NewHelmet.gltf");
 | ------------| ------ |
 | .gltf files w/external resources  | 100% complete and passing  |
 | .gltf files w/embedded resources  | 100% complete and passing (2 models excluded due to out-of-spec mimetypes)  |
+| .gltf files w/pbrSpecularGlossiness extension | 100% complete and passing  |
 | .glb files                        | 100% complete and passing  |
+
 
 * Built-in protection against directory traversal when loading external resource URIs from malicious .gltf files
 * Extensive testing of Base64 encoding and decoding
