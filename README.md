@@ -3,10 +3,20 @@
 A C++14/C++17 header-only library for simple, efficient, and robust serialization/deserialization of [glTF 2.0](https://www.khronos.org/gltf/)
 
 ## Features
-* Complete support of required glTF 2.0 schema elements
-* Modern C++14/C++17 support (including the use of std::string_view where appropriate)
-* Small, header-only library (~1500 lines of generously spaced code including whitespace/comments)
-* Serialization and Deserialization support
+* Complete support for required glTF 2.0 schema elements
+    * External and embedded resource loading
+    * .glb binary files
+    * Serialization (Save) and Deserialization (Load) capability
+
+* Modern C++14/C++17 support
+    * Includes usage of std::string_view internally where appropriate for performance
+    * Implemented using modern and safe syntax and methodologies
+
+* Small, header-only library
+    * ~1500 lines of generously spaced code including whitespace/comments
+    * C++20 Module ready (does not leak preprocessor macros beyond its own file)
+
+* Fast and efficient processing
 
 ## Usage and Integration
 
@@ -15,7 +25,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 
   A typical installation will preserve the directory hierarchy: ```#include <fx/gltf.h>```
 
-Planned: publishing to [vcpkg](https://github.com/Microsoft/vcpkg) for easy install within MSVC environments
+Planned: publishing to [vcpkg](https://github.com/Microsoft/vcpkg) for even easier installs within MSVC environments
 
 ### Dependencies
 * [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp`)
@@ -44,10 +54,10 @@ fx::gltf::SaveAsText(helmet, "NewHelmet.gltf");
 * Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
 
 | Model Type  | Status |
-| ------------- | ------------- |
+| ------------| ------ |
 | .gltf files w/external resources  | 100% complete and passing  |
 | .gltf files w/embedded resources  | 100% complete and passing (2 models excluded due to out-of-spec mimetypes)  |
-| .glb files  | Planned  |
+| .glb files                        | 100% complete and passing  |
 
 * Built-in protection against directory traversal when loading external resource URIs from malicious .gltf files
 * Extensive testing of Base64 encoding and decoding
@@ -81,19 +91,21 @@ $ ctest --output-on-failure -C [Debug or Release]
 
 ## Supported Compilers
 * Microsoft Visual C++ 2017 15.6 (and possibly earlier)
+* Clang 5.0+
+* GCC 6.1+
 
-* Planned: Clang 6.0
+Planned: Ship a C++20 Modules file in addition to the header
 
 ## Known Issues
 ### glTF 2.0 missing support
-* Schema: Extension property bags on all types
-* Loading/Saving: Binary .glb loading and processing
+* Schema: ```Extension``` property bags on all types
 
-* Saving: Data URIs
-* Saving: Providing option for external or embedded resources
+### API
+* Saving: Binary .glb files
+* Saving: Providing options for external or embedded resources
 
 ### General (future)
-* Make manipulation api a bit better by allowing easier creation of objects (C++20 will allow more intuitive aggregate struct initialization so maybe wait until then...)
+* API: Make manipulation api a bit better by allowing easier creation of objects (C++20 will allow more intuitive aggregate struct initialization so maybe wait until then...)
 
 ## License
 
