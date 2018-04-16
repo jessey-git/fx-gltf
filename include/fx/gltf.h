@@ -1607,6 +1607,17 @@ namespace gltf
 
     inline Document LoadFromBinary(std::string const & documentFilePath)
     {
+        struct GLBHeader
+        {
+            uint32_t magic{};
+            uint32_t version{};
+            uint32_t length{};
+            uint32_t chunkLength{};
+            uint32_t chunkType{};
+        };
+
+        constexpr std::size_t HeaderSize{ sizeof(GLBHeader) };
+
         std::vector<char> binary{};
         {
             std::ifstream file(documentFilePath, std::ios::binary);
@@ -1619,7 +1630,7 @@ namespace gltf
             const std::streampos fileSize = file.tellg();
             file.seekg(0, file.beg);
 
-            if (fileSize < 20)
+            if (fileSize < HeaderSize)
             {
                 throw invalid_gltf_document("Invalid GLB file");
             }
@@ -1628,16 +1639,6 @@ namespace gltf
             file.read(&binary[0], fileSize);
         }
 
-        struct GLBHeader
-        {
-            uint32_t magic{};
-            uint32_t version{};
-            uint32_t length{};
-            uint32_t chunkLength{};
-            uint32_t chunkType{};
-        };
-
-        constexpr std::size_t HeaderSize{ sizeof(GLBHeader) };
         GLBHeader header;
         std::memcpy(&header, &binary[0], HeaderSize);
         if (header.magic != detail::GLBHeaderMagic ||
@@ -1655,6 +1656,10 @@ namespace gltf
     inline void SaveAsText(Document const & document, std::string const & documentFilePath)
     {
         nlohmann::json json = document;
+
+        // TODO: Make a Document::Save func that takes in another DataContext with the relevant information
+        // TODO: Have option as to whether to write out to .bins or use embedded base64
+        // TODO: Have option as to whether to write out to .glb or use not
 
         std::ofstream file(documentFilePath);
         if (!file.is_open())
