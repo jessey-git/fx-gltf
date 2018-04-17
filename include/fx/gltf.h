@@ -754,7 +754,6 @@ namespace gltf
         int32_t source{ -1 };
 
         nlohmann::json extensionsAndExtras;
-
     };
 
     struct Document
@@ -888,7 +887,7 @@ namespace gltf
             std::size_t externalBufferIndex = 0;
             if (useBinaryFormat)
             {
-                detail::GLBHeader header{ detail::GLBHeaderMagic, 2, 0, {0, detail::GLBChunkJSON } };
+                detail::GLBHeader header{ detail::GLBHeaderMagic, 2, 0, { 0, detail::GLBChunkJSON } };
                 detail::ChunkHeader binHeader{ 0, detail::GLBChunkBIN };
 
                 std::string jsonText = json.dump();
@@ -1771,7 +1770,7 @@ namespace gltf
         }
 
         return Document::Create(
-            nlohmann::json::parse({&binary[detail::HeaderSize], header.jsonHeader.chunkLength}),
+            nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
             { detail::GetDocumentRootPath(documentFilePath), &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
     }
 } // namespace gltf
