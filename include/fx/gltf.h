@@ -482,7 +482,7 @@ namespace gltf
 
         void SetEmbeddedResource()
         {
-            std::string(detail::MimetypeApplicationOctet).append(",").append(base64::Encode(data));
+            uri = std::string(detail::MimetypeApplicationOctet).append(",").append(base64::Encode(data));
         }
 
         void MaterializeData()
