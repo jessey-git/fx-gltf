@@ -43,7 +43,7 @@ namespace utility
         int attempts = 5;
         while (--attempts)
         {
-            if (FX_GLTF_FILESYSTEM::create_directory(GetTestOutputDir(), &err))
+            if (FX_GLTF_FILESYSTEM::create_directory(GetTestOutputDir(), err))
             {
                 break;
             }
@@ -56,7 +56,7 @@ namespace utility
         int attempts = 5;
         while (--attempts)
         {
-            if (FX_GLTF_FILESYSTEM::remove_all(GetTestOutputDir(), &err) != static_cast<std::uintmax_t>(-1))
+            if (FX_GLTF_FILESYSTEM::remove_all(GetTestOutputDir(), err) != static_cast<std::uintmax_t>(-1))
             {
                 break;
             }

@@ -4,9 +4,10 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 
 ## Features
 * Complete support for required glTF 2.0 schema elements
+    * Full serialization (save) and deserialization (load) capability
     * External and embedded resource loading
     * Binary .glb files
-    * Serialization (Save) and Deserialization (Load) capability
+    * Load as text, save as binary etc.
 
 * Modern C++14/C++17 support
     * Includes usage of std::string_view internally where appropriate for performance
@@ -24,7 +25,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 ### Installation
 * [`gltf.h`](https://github.com/jessey-git/fx-gltf/blob/master/include/fx/gltf.h) is the single required file available in the `include/fx` repo path.
 
-  A typical installation will preserve the directory hierarchy: ```#include <fx/gltf.h>```
+A typical installation will preserve the directory hierarchy: ```#include <fx/gltf.h>```
 
 Planned: publishing to [vcpkg](https://github.com/Microsoft/vcpkg) for even easier installs within MSVC environments
 
