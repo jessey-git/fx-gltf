@@ -13,7 +13,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
     * Implemented using modern and safe syntax and methodologies
 
 * Small, header-only library
-    * ~1700 lines of high-level, straightforward, generously spaced code including whitespace/comments
+    * ~1800 lines of high-level, straightforward, generously spaced code including whitespace/comments
     * C++20 Module ready (does not leak preprocessor defines/macros beyond its own file)
 
 * Fast and efficient processing
@@ -44,10 +44,11 @@ fx::gltf::Document helmet = fx::gltf::LoadFromText("DamagedHelmet.gltf");
 helmet.asset.generator = "My cool generator";
 helmet.buffers.push_back(fx::gltf::Buffer{});
 helmet.buffers.back().byteLength = 678;
-helmet.buffers.back().uri = "buffer.bin";
+helmet.buffers.back().data = ...;
+helmet.buffers.back().SetAsEmbeddedResource();
 
-// Saving...
-fx::gltf::SaveAsText(helmet, "NewHelmet.gltf");
+// Saving back as text...
+helmet.Save("NewHelmet.glb", false);
 ```
 
 ## Safety and Robustness
@@ -213,11 +214,10 @@ Planned: Ship a C++20 Modules file in addition to the header
 * No known issues or missing features
 
 ### API
-* Saving: Binary .glb files
-* Saving: Providing options for external or embedded resources
+* No known issues
 
 ### General (future)
-* API: Make manipulation api a bit better by allowing easier creation of objects (C++20 will allow more intuitive aggregate struct initialization so maybe wait until then...)
+* API: Improvement: Make creation of objects easier when building documents by hand (C++20 will allow aggregate struct initialization so maybe that's all that is needed...)
 
 ## License
 
