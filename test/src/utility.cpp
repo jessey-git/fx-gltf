@@ -6,8 +6,15 @@
 
 #include "utility.h"
 
+#include <filesystem>
 #include <fstream>
 #include <system_error>
+
+#if (defined(_MSC_VER) && _MSC_VER <= 1913)
+#define FX_GLTF_FILESYSTEM std::experimental::filesystem
+#else
+#define FX_GLTF_FILESYSTEM std::filesystem
+#endif
 
 namespace utility
 {
@@ -23,6 +30,37 @@ namespace utility
             FormatException(output, e, level + 1);
         }
         catch (...) {}
+    }
+
+    std::string GetTestOutputDir()
+    {
+        return "output";
+    }
+
+    void CreateTestOutputDir()
+    {
+        std::error_code err{};
+        int attempts = 5;
+        while (--attempts)
+        {
+            if (FX_GLTF_FILESYSTEM::create_directory(GetTestOutputDir(), err))
+            {
+                break;
+            }
+        }
+    }
+
+    void CleanupTestOutputDir()
+    {
+        std::error_code err{};
+        int attempts = 5;
+        while (--attempts)
+        {
+            if (FX_GLTF_FILESYSTEM::remove_all(GetTestOutputDir(), err) != static_cast<std::uintmax_t>(-1))
+            {
+                break;
+            }
+        }
     }
 
     nlohmann::json LoadJsonFromFile(std::string const & filePath)
