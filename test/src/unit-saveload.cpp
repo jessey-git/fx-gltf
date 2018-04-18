@@ -123,10 +123,10 @@ TEST_CASE("saveload")
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromBinary(originalFile);
 
-        std::vector<char> newBytes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        std::vector<uint8_t> newBytes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         originalDocument.buffers.push_back(fx::gltf::Buffer{});
         originalDocument.buffers.back().uri = "test7.bin";
-        originalDocument.buffers.back().byteLength = newBytes.size();
+        originalDocument.buffers.back().byteLength = static_cast<uint32_t>(newBytes.size());
         originalDocument.buffers.back().data = newBytes;
 
         originalDocument.Save(newFile, true);
@@ -144,10 +144,10 @@ TEST_CASE("saveload")
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromBinary(originalFile);
 
-        std::vector<char> newBytes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        std::vector<uint8_t> newBytes = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         originalDocument.buffers.push_back(fx::gltf::Buffer{});
         originalDocument.buffers.back().uri = "test8.bin";
-        originalDocument.buffers.back().byteLength = newBytes.size();
+        originalDocument.buffers.back().byteLength = static_cast<uint32_t>(newBytes.size());
         originalDocument.buffers.back().data = newBytes;
         originalDocument.buffers.back().SetEmbeddedResource();
 
