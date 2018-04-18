@@ -58,7 +58,7 @@ namespace base64
         // clang-format on
     } // namespace detail
 
-    inline std::string Encode(std::vector<char> const & bytes)
+    inline std::string Encode(std::vector<uint8_t> const & bytes)
     {
         const std::size_t length = bytes.size();
         if (length == 0)
@@ -71,9 +71,9 @@ namespace base64
 
         uint32_t value = 0;
         int32_t bitCount = -6;
-        for (const char c : bytes)
+        for (const uint8_t c : bytes)
         {
-            value = (value << 8u) + static_cast<uint8_t>(c);
+            value = (value << 8u) + c;
             bitCount += 8;
             while (bitCount >= 0)
             {
@@ -97,7 +97,7 @@ namespace base64
         return out;
     }
 
-    inline bool TryDecode(std::string const & in, std::vector<char> & out)
+    inline bool TryDecode(std::string const & in, std::vector<uint8_t> & out)
     {
         out.clear();
 
@@ -145,7 +145,7 @@ namespace base64
             if (bitCount >= 0)
             {
                 const uint32_t shiftOperand = bitCount;
-                out.push_back(char((value >> shiftOperand) & 0xffu));
+                out.push_back(uint8_t{ (value >> shiftOperand) & 0xffu });
                 bitCount -= 8;
             }
         }
@@ -473,7 +473,7 @@ namespace gltf
 
         nlohmann::json extensionsAndExtras;
 
-        std::vector<char> data{};
+        std::vector<uint8_t> data{};
 
         bool IsEmbeddedResource() const noexcept
         {
@@ -783,7 +783,7 @@ namespace gltf
         struct DataContext
         {
             std::string bufferRootPath{};
-            std::vector<char> * binaryData{};
+            std::vector<uint8_t> * binaryData{};
             std::size_t binaryOffset{};
         };
 
@@ -805,7 +805,7 @@ namespace gltf
                             }
                             else
                             {
-                                std::ifstream fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
+                                std::basic_ifstream<uint8_t> fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
                                 if (!fileData.good())
                                 {
                                     throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
@@ -819,7 +819,7 @@ namespace gltf
                         {
                             detail::ChunkHeader header;
 
-                            std::vector<char> & binary = *dataContext.binaryData;
+                            std::vector<uint8_t> & binary = *dataContext.binaryData;
                             std::memcpy(&header, &binary[dataContext.binaryOffset], detail::ChunkHeaderSize);
 
                             if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
@@ -900,17 +900,18 @@ namespace gltf
                 header.jsonHeader.chunkLength = jsonText.length() & 0xffffffffu;
                 header.length = detail::HeaderSize + header.jsonHeader.chunkLength + detail::ChunkHeaderSize + binHeader.chunkLength;
 
-                std::ofstream fileData(documentFilePath, std::ios::binary);
+                std::basic_ofstream<uint8_t> fileData(documentFilePath, std::ios::binary);
                 if (!fileData.good())
                 {
                     throw std::system_error(std::make_error_code(std::errc::io_error));
                 }
 
-                fileData.write(reinterpret_cast<char *>(&header), detail::HeaderSize);
-                fileData.write(jsonText.c_str(), jsonText.length());
-                fileData.write(reinterpret_cast<char *>(&binHeader), detail::ChunkHeaderSize);
+                const uint8_t empty[3] = {};
+                fileData.write(reinterpret_cast<uint8_t *>(&header), detail::HeaderSize);
+                fileData.write(reinterpret_cast<uint8_t const *>(jsonText.c_str()), jsonText.length());
+                fileData.write(reinterpret_cast<uint8_t *>(&binHeader), detail::ChunkHeaderSize);
                 fileData.write(&binBuffer.data[0], binBuffer.byteLength);
-                fileData.write(std::string(padding, '\0').c_str(), padding);
+                fileData.write(&empty[0], padding);
 
                 externalBufferIndex = 1;
             }
@@ -933,7 +934,7 @@ namespace gltf
                 Buffer & buffer = buffers[externalBufferIndex];
                 if (!buffer.IsEmbeddedResource())
                 {
-                    std::ofstream fileData(detail::CreateBufferUriPath(documentRootPath, buffer.uri), std::ios::binary);
+                    std::basic_ofstream<uint8_t> fileData(detail::CreateBufferUriPath(documentRootPath, buffer.uri), std::ios::binary);
                     if (!fileData.good())
                     {
                         throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
@@ -1735,9 +1736,9 @@ namespace gltf
 
     inline Document LoadFromBinary(std::string const & documentFilePath)
     {
-        std::vector<char> binary{};
+        std::vector<uint8_t> binary{};
         {
-            std::ifstream file(documentFilePath, std::ios::binary);
+            std::basic_ifstream<uint8_t> file(documentFilePath, std::ios::binary);
             if (!file.is_open())
             {
                 throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));

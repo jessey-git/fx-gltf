@@ -25,11 +25,10 @@ namespace utility
         {
             std::rethrow_if_nested(e);
         }
-        catch (const std::exception& e)
+        catch (std::exception const & e)
         {
             FormatException(output, e, level + 1);
         }
-        catch (...) {}
     }
 
     std::string GetTestOutputDir()
