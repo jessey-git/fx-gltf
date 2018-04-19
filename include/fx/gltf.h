@@ -790,6 +790,20 @@ namespace gltf
             std::size_t binaryOffset{};
         };
 
+        inline std::streampos GetFileSize(std::basic_ifstream<uint8_t> & file)
+        {
+            file.seekg(0, file.end);
+            const std::streampos fileSize = file.tellg();
+            file.seekg(0, file.beg);
+
+            if (fileSize < 0)
+            {
+                throw std::system_error(std::make_error_code(std::errc::io_error));
+            }
+
+            return fileSize;
+        }
+
         inline Document Create(nlohmann::json const & json, DataContext const & dataContext)
         {
             try
@@ -798,41 +812,49 @@ namespace gltf
 
                 for (auto & buffer : document.buffers)
                 {
-                    if (buffer.byteLength > 0)
+                    if (buffer.byteLength == 0)
                     {
-                        if (!buffer.uri.empty())
-                        {
-                            if (buffer.IsEmbeddedResource())
-                            {
-                                buffer.MaterializeData();
-                            }
-                            else
-                            {
-                                std::basic_ifstream<uint8_t> fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
-                                if (!fileData.good())
-                                {
-                                    throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
-                                }
+                        throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength == 0");
+                    }
 
-                                buffer.data.resize(buffer.byteLength);
-                                fileData.read(&buffer.data[0], buffer.byteLength);
-                            }
+                    if (!buffer.uri.empty())
+                    {
+                        if (buffer.IsEmbeddedResource())
+                        {
+                            buffer.MaterializeData();
                         }
-                        else if (dataContext.binaryData != nullptr)
+                        else
                         {
-                            detail::ChunkHeader header;
-
-                            std::vector<uint8_t> & binary = *dataContext.binaryData;
-                            std::memcpy(&header, &binary[dataContext.binaryOffset], detail::ChunkHeaderSize);
-
-                            if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
+                            std::basic_ifstream<uint8_t> fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
+                            if (!fileData.good())
                             {
-                                throw invalid_gltf_document("Invalid buffer data");
+                                throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
+                            }
+
+                            const std::streampos fileSize = detail::GetFileSize(fileData);
+                            if (buffer.byteLength > fileSize)
+                            {
+                                throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength > file size");
                             }
 
                             buffer.data.resize(buffer.byteLength);
-                            std::memcpy(&buffer.data[0], &binary[dataContext.binaryOffset + detail::ChunkHeaderSize], buffer.byteLength);
+                            fileData.read(&buffer.data[0], buffer.byteLength);
                         }
+                    }
+                    else if (dataContext.binaryData != nullptr)
+                    {
+                        detail::ChunkHeader header;
+
+                        std::vector<uint8_t> & binary = *dataContext.binaryData;
+                        std::memcpy(&header, &binary[dataContext.binaryOffset], detail::ChunkHeaderSize);
+
+                        if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
+                        {
+                            throw invalid_gltf_document("Invalid buffer data");
+                        }
+
+                        buffer.data.resize(buffer.byteLength);
+                        std::memcpy(&buffer.data[0], &binary[dataContext.binaryOffset + detail::ChunkHeaderSize], buffer.byteLength);
                     }
                 }
 
@@ -1745,20 +1767,13 @@ namespace gltf
                 throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
             }
 
-            file.seekg(0, file.end);
-            const std::streampos fileSize = file.tellg();
-            if (fileSize < 0)
-            {
-                throw std::system_error(std::make_error_code(std::errc::io_error));
-            }
-
+            const std::streampos fileSize = detail::GetFileSize(file);
             if (static_cast<std::size_t>(fileSize) < detail::HeaderSize)
             {
                 throw invalid_gltf_document("Invalid GLB file");
             }
 
             binary.resize(fileSize);
-            file.seekg(0, file.beg);
             file.read(&binary[0], fileSize);
         }
 

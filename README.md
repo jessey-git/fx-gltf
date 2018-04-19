@@ -25,9 +25,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 ### Installation
 * [`gltf.h`](https://github.com/jessey-git/fx-gltf/blob/master/include/fx/gltf.h) is the single required file available in the `include/fx` repo path.
 
-A typical installation will preserve the directory hierarchy: ```#include <fx/gltf.h>```
-
-Planned: publishing to [vcpkg](https://github.com/Microsoft/vcpkg) for even easier installs within MSVC environments
+  A typical installation will preserve the directory hierarchy: ```#include <fx/gltf.h>```
 
 ### Dependencies
 * [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp`)
@@ -216,6 +214,9 @@ Planned: Ship a C++20 Modules file in addition to the header
 
 ### API
 * No known issues
+
+### Packaging
+ * Publish to [vcpkg](https://github.com/Microsoft/vcpkg) for easier package maintenance within MSVC environments
 
 ### General (future)
 * API: Improvement: Make creation of objects easier when building documents by hand (C++20 will allow aggregate struct initialization so maybe that's all that is needed...)
