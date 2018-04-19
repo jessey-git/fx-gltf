@@ -18,8 +18,8 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
     * C++20 Module ready (does not leak preprocessor defines/macros beyond its own file)
 
 * Fast, Efficient, and Safe processing
-    * [Safety and Robustness](#Safety-and-Robustness)
-    * [Performance](#Performance)
+    * [Safety and Robustness](#safety-and-robustness)
+    * [Performance](#performance)
 
 
 ## Usage and Integration
@@ -228,8 +228,6 @@ $ ctest --output-on-failure -C [Debug or Release]
 * Clang 5.0+
 * GCC 6.1+
 
-Planned: Ship a C++20 Modules file in addition to the header
-
 ## Known Issues
 ### glTF 2.0 support
 * No known issues or missing features
@@ -239,6 +237,7 @@ Planned: Ship a C++20 Modules file in addition to the header
 
 ### Packaging
  * Publish to [vcpkg](https://github.com/Microsoft/vcpkg) for easier package maintenance within MSVC environments
+ * Ship a C++20 Modules file in addition to the header
 
 ### General (future)
 * API: Improvement: Make creation of objects easier when building documents by hand (C++20 will allow aggregate struct initialization so maybe that's all that is needed...)
