@@ -20,14 +20,14 @@ namespace utility
 {
     void FormatException(std::string & output, std::exception const & e, int level)
     {
-        output.append(std::string(level, ' ')).append("exception: ").append(e.what()).append("\n");
+        output.append(std::string(level, ' ')).append(e.what()).append("\n");
         try
         {
             std::rethrow_if_nested(e);
         }
         catch (std::exception const & e)
         {
-            FormatException(output, e, level + 1);
+            FormatException(output, e, level + 2);
         }
     }
 

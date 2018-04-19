@@ -25,7 +25,7 @@ TEST_CASE("saveload")
         std::string originalUri = originalDocument.buffers.front().uri;
 
         originalDocument.buffers.front().SetEmbeddedResource();
-        originalDocument.Save(newFile, false);
+        fx::gltf::Save(originalDocument, newFile, false);
 
         fx::gltf::Document newDocument = fx::gltf::LoadFromText(newFile);
 
@@ -42,7 +42,7 @@ TEST_CASE("saveload")
         fx::gltf::Document originalDocument = fx::gltf::LoadFromText(originalFile);
 
         originalDocument.buffers.front().uri.clear();
-        originalDocument.Save(newFile, true);
+        fx::gltf::Save(originalDocument, newFile, true);
 
         fx::gltf::Document newDocument = fx::gltf::LoadFromBinary(newFile);
 
@@ -59,7 +59,7 @@ TEST_CASE("saveload")
         std::string originalUri = originalDocument.buffers.front().uri;
 
         originalDocument.buffers.front().uri = "test3.bin";
-        originalDocument.Save(newFile, false);
+        fx::gltf::Save(originalDocument, newFile, false);
 
         fx::gltf::Document newDocument = fx::gltf::LoadFromText(newFile);
 
@@ -76,7 +76,7 @@ TEST_CASE("saveload")
         fx::gltf::Document originalDocument = fx::gltf::LoadFromText(originalFile);
 
         originalDocument.buffers.front().uri.clear();
-        originalDocument.Save(newFile, true);
+        fx::gltf::Save(originalDocument, newFile, true);
 
         fx::gltf::Document newDocument = fx::gltf::LoadFromBinary(newFile);
 
@@ -92,7 +92,7 @@ TEST_CASE("saveload")
         fx::gltf::Document originalDocument = fx::gltf::LoadFromBinary(originalFile);
 
         originalDocument.buffers.front().uri = "test5.bin";
-        originalDocument.Save(newFile, false);
+        fx::gltf::Save(originalDocument, newFile, false);
 
         fx::gltf::Document newDocument = fx::gltf::LoadFromText(newFile);
 
@@ -108,7 +108,7 @@ TEST_CASE("saveload")
         fx::gltf::Document originalDocument = fx::gltf::LoadFromBinary(originalFile);
 
         originalDocument.buffers.front().SetEmbeddedResource();
-        originalDocument.Save(newFile, false);
+        fx::gltf::Save(originalDocument, newFile, false);
 
         fx::gltf::Document newDocument = fx::gltf::LoadFromText(newFile);
 
@@ -129,7 +129,7 @@ TEST_CASE("saveload")
         originalDocument.buffers.back().byteLength = static_cast<uint32_t>(newBytes.size());
         originalDocument.buffers.back().data = newBytes;
 
-        originalDocument.Save(newFile, true);
+        fx::gltf::Save(originalDocument, newFile, true);
 
         fx::gltf::Document newDocument = fx::gltf::LoadFromBinary(newFile);
 
@@ -151,7 +151,7 @@ TEST_CASE("saveload")
         originalDocument.buffers.back().data = newBytes;
         originalDocument.buffers.back().SetEmbeddedResource();
 
-        originalDocument.Save(newFile, true);
+        fx::gltf::Save(originalDocument, newFile, true);
 
         fx::gltf::Document newDocument = fx::gltf::LoadFromBinary(newFile);
 
