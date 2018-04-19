@@ -307,6 +307,7 @@ namespace gltf
             ChunkHeader jsonHeader;
         };
 
+        constexpr uint32_t DefaultMaxMemoryAllocation = 32 * 1024 * 1024;
         constexpr std::size_t HeaderSize{ sizeof(GLBHeader) };
         constexpr std::size_t ChunkHeaderSize{ sizeof(ChunkHeader) };
         constexpr uint32_t GLBHeaderMagic = 0x46546c67u;
@@ -781,16 +782,24 @@ namespace gltf
         nlohmann::json extensionsAndExtras;
     };
 
+    struct ReadQuotas
+    {
+        uint32_t MaxFileSize{ detail::DefaultMaxMemoryAllocation };
+        uint32_t MaxBufferByteLength{ detail::DefaultMaxMemoryAllocation };
+    };
+
     namespace detail
     {
         struct DataContext
         {
             std::string bufferRootPath{};
+            ReadQuotas readQuotas;
+
             std::vector<uint8_t> * binaryData{};
             std::size_t binaryOffset{};
         };
 
-        inline std::streampos GetFileSize(std::basic_ifstream<uint8_t> & file)
+        inline std::size_t GetFileSize(std::ifstream & file)
         {
             file.seekg(0, file.end);
             const std::streampos fileSize = file.tellg();
@@ -801,7 +810,7 @@ namespace gltf
                 throw std::system_error(std::make_error_code(std::errc::io_error));
             }
 
-            return fileSize;
+            return static_cast<std::size_t>(fileSize);
         }
 
         inline Document Create(nlohmann::json const & json, DataContext const & dataContext)
@@ -825,20 +834,19 @@ namespace gltf
                         }
                         else
                         {
-                            std::basic_ifstream<uint8_t> fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
+                            std::ifstream fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
                             if (!fileData.good())
                             {
                                 throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
                             }
 
-                            const std::streampos fileSize = detail::GetFileSize(fileData);
-                            if (buffer.byteLength > fileSize)
+                            if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
                             {
-                                throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength > file size");
+                                throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength > readQuotas.MaxBufferByteLength");
                             }
 
                             buffer.data.resize(buffer.byteLength);
-                            fileData.read(&buffer.data[0], buffer.byteLength);
+                            fileData.read(reinterpret_cast<char *>(&buffer.data[0]), buffer.byteLength);
                         }
                     }
                     else if (dataContext.binaryData != nullptr)
@@ -851,6 +859,11 @@ namespace gltf
                         if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
                         {
                             throw invalid_gltf_document("Invalid buffer data");
+                        }
+
+                        if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
+                        {
+                            throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength > readQuotas.MaxBufferByteLength");
                         }
 
                         buffer.data.resize(buffer.byteLength);
@@ -923,17 +936,17 @@ namespace gltf
                 header.jsonHeader.chunkLength = jsonText.length() & 0xffffffffu;
                 header.length = detail::HeaderSize + header.jsonHeader.chunkLength + detail::ChunkHeaderSize + binHeader.chunkLength;
 
-                std::basic_ofstream<uint8_t> fileData(documentFilePath, std::ios::binary);
+                std::ofstream fileData(documentFilePath, std::ios::binary);
                 if (!fileData.good())
                 {
                     throw std::system_error(std::make_error_code(std::errc::io_error));
                 }
 
-                const uint8_t empty[3] = {};
-                fileData.write(reinterpret_cast<uint8_t *>(&header), detail::HeaderSize);
-                fileData.write(reinterpret_cast<uint8_t const *>(jsonText.c_str()), jsonText.length());
-                fileData.write(reinterpret_cast<uint8_t *>(&binHeader), detail::ChunkHeaderSize);
-                fileData.write(&binBuffer.data[0], binBuffer.byteLength);
+                const char empty[3] = {};
+                fileData.write(reinterpret_cast<char *>(&header), detail::HeaderSize);
+                fileData.write(jsonText.c_str(), jsonText.length());
+                fileData.write(reinterpret_cast<char *>(&binHeader), detail::ChunkHeaderSize);
+                fileData.write(reinterpret_cast<char const *>(&binBuffer.data[0]), binBuffer.byteLength);
                 fileData.write(&empty[0], padding);
 
                 externalBufferIndex = 1;
@@ -957,13 +970,13 @@ namespace gltf
                 Buffer const & buffer = document.buffers[externalBufferIndex];
                 if (!buffer.IsEmbeddedResource())
                 {
-                    std::basic_ofstream<uint8_t> fileData(detail::CreateBufferUriPath(documentRootPath, buffer.uri), std::ios::binary);
+                    std::ofstream fileData(detail::CreateBufferUriPath(documentRootPath, buffer.uri), std::ios::binary);
                     if (!fileData.good())
                     {
                         throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
                     }
 
-                    fileData.write(&buffer.data[0], buffer.byteLength);
+                    fileData.write(reinterpret_cast<char const *>(&buffer.data[0]), buffer.byteLength);
                 }
             }
         }
@@ -1741,7 +1754,7 @@ namespace gltf
         detail::WriteExtensions(json, document.extensionsAndExtras);
     }
 
-    inline Document LoadFromText(std::string const & documentFilePath)
+    inline Document LoadFromText(std::string const & documentFilePath, ReadQuotas const & readQuota = {})
     {
         nlohmann::json json;
         {
@@ -1754,27 +1767,32 @@ namespace gltf
             file >> json;
         }
 
-        return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath) });
+        return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath), readQuota });
     }
 
-    inline Document LoadFromBinary(std::string const & documentFilePath)
+    inline Document LoadFromBinary(std::string const & documentFilePath, ReadQuotas const & readQuota = {})
     {
         std::vector<uint8_t> binary{};
         {
-            std::basic_ifstream<uint8_t> file(documentFilePath, std::ios::binary);
+            std::ifstream file(documentFilePath, std::ios::binary);
             if (!file.is_open())
             {
                 throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
             }
 
-            const std::streampos fileSize = detail::GetFileSize(file);
-            if (static_cast<std::size_t>(fileSize) < detail::HeaderSize)
+            const std::size_t fileSize = detail::GetFileSize(file);
+            if (fileSize < detail::HeaderSize)
             {
                 throw invalid_gltf_document("Invalid GLB file");
             }
 
+            if (fileSize > readQuota.MaxFileSize)
+            {
+                throw invalid_gltf_document("Invalid GLB file", "file size > readQuota.MaxFileSize");
+            }
+
             binary.resize(fileSize);
-            file.read(&binary[0], fileSize);
+            file.read(reinterpret_cast<char *>(&binary[0]), fileSize);
         }
 
         detail::GLBHeader header;
@@ -1788,7 +1806,7 @@ namespace gltf
 
         return detail::Create(
             nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
-            { detail::GetDocumentRootPath(documentFilePath), &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
+            { detail::GetDocumentRootPath(documentFilePath), readQuota, &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
     }
 
     inline void Save(Document const & document, std::string documentFilePath, bool useBinaryFormat)
