@@ -1754,7 +1754,7 @@ namespace gltf
         detail::WriteExtensions(json, document.extensionsAndExtras);
     }
 
-    inline Document LoadFromText(std::string const & documentFilePath, ReadQuotas const & readQuota = {})
+    inline Document LoadFromText(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
         nlohmann::json json;
         {
@@ -1767,10 +1767,10 @@ namespace gltf
             file >> json;
         }
 
-        return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath), readQuota });
+        return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath), readQuotas });
     }
 
-    inline Document LoadFromBinary(std::string const & documentFilePath, ReadQuotas const & readQuota = {})
+    inline Document LoadFromBinary(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
         std::vector<uint8_t> binary{};
         {
@@ -1786,9 +1786,9 @@ namespace gltf
                 throw invalid_gltf_document("Invalid GLB file");
             }
 
-            if (fileSize > readQuota.MaxFileSize)
+            if (fileSize > readQuotas.MaxFileSize)
             {
-                throw invalid_gltf_document("Invalid GLB file", "file size > readQuota.MaxFileSize");
+                throw invalid_gltf_document("Invalid GLB file", "file size > readQuotas.MaxFileSize");
             }
 
             binary.resize(fileSize);
@@ -1806,7 +1806,7 @@ namespace gltf
 
         return detail::Create(
             nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
-            { detail::GetDocumentRootPath(documentFilePath), readQuota, &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
+            { detail::GetDocumentRootPath(documentFilePath), readQuotas, &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
     }
 
     inline void Save(Document const & document, std::string documentFilePath, bool useBinaryFormat)

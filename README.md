@@ -17,8 +17,10 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
     * ~1800 lines of high-level, straightforward, generously spaced code including whitespace/comments
     * C++20 Module ready (does not leak preprocessor defines/macros beyond its own file)
 
-* Fast and efficient processing
-    * See Performance section below
+* Fast, Efficient, and Safe processing
+    * [Safety and Robustness](#Safety-and-Robustness)
+    * [Performance](#Performance)
+
 
 ## Usage and Integration
 
@@ -31,6 +33,8 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
 * [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp`)
 
 ### Code
+
+Example: General usage
 
 ```C++
 // Single header...
@@ -50,21 +54,39 @@ helmet.buffers.back().SetAsEmbeddedResource();
 fx::gltf::Save(helment, "NewHelmet.glb", false);
 ```
 
+Example: Placing a quota on how large files and buffers can be; e.g. when loading files from potentially hostile sources
+
+```C++
+#include <fx/gltf.h>
+
+// Create an 8mb quota for binary file sizes as well as any external buffer contained inside...
+// [Default is 32mb for each]
+fx::gltf::ReadQuotas readQuotas{};
+readQuotas.MaxFileSize = 8 * 1024 * 1024;
+readQuotas.MaxBufferByteLength = 8 * 1024 * 1024;
+
+fx::gltf::Document docFromInternet = fx::gltf::LoadFromBinary("untrusted.glb", readQuotas);
+
+```
+
 ## Safety and Robustness
 
-* Automated, roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
+* Robust automated testing
 
-| Model Type  | Status |
-| ------------| ------ |
+    * Roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
+    * Extensive testing of Base64 encoding and decoding
+    * Strict required vs. optional element loading and saving
+
+| Model Type  | Status: glTF-Sample-Models |
+| ------------| -------------------------- |
 | .gltf files w/external resources  | 100% complete and passing  |
 | .gltf files w/embedded resources  | 100% complete and passing (2 models excluded due to out-of-spec mimetypes)  |
 | .gltf files w/pbrSpecularGlossiness extension | 100% complete and passing  |
 | .glb files                        | 100% complete and passing  |
 
-
-* Built-in protection against directory traversal when loading external resource URIs from malicious .gltf files
-* Extensive testing of Base64 encoding and decoding
-* Strict required vs. optional element loading and saving
+* Safety
+    * Built-in protection against directory traversal when loading external resource URIs from malicious files
+    * Enforced quotas on maximum files sizes and buffers to prevent DOS's from malicious files
 
 * Developed using both clang-tidy and MSVC CppCoreCheck toolsets
 

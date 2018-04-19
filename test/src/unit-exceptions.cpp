@@ -116,6 +116,19 @@ TEST_CASE("exceptions")
         Mutate(json, [](nlohmann::json & m) { m["materials"][0]["alphaMode"] = "opaque"; }, "material.alphaMode");
     }
 
+    SECTION("load : quotas")
+    {
+        std::string externalFile{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
+        std::string glbFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
+
+        fx::gltf::ReadQuotas readQuotas{};
+        readQuotas.MaxBufferByteLength = 500;
+        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromText(externalFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxBufferByteLength"));
+
+        readQuotas.MaxFileSize = 500;
+        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary(externalFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxFileSize"));
+    }
+
     SECTION("save : invalid buffers")
     {
         fx::gltf::Document doc;
