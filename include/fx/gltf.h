@@ -779,7 +779,10 @@ namespace gltf
         std::vector<std::string> extensionsRequired;
 
         nlohmann::json extensionsAndExtras;
+    };
 
+    namespace detail
+    {
         struct DataContext
         {
             std::string bufferRootPath{};
@@ -787,7 +790,7 @@ namespace gltf
             std::size_t binaryOffset{};
         };
 
-        static Document Create(nlohmann::json const & json, DataContext const & dataContext)
+        inline Document Create(nlohmann::json const & json, DataContext const & dataContext)
         {
             try
             {
@@ -841,17 +844,17 @@ namespace gltf
             }
         }
 
-        void ValidateBuffers(bool useBinaryFormat)
+        inline void ValidateBuffers(Document const & document, bool useBinaryFormat)
         {
-            if (buffers.empty())
+            if (document.buffers.empty())
             {
                 throw invalid_gltf_document("Invalid document. A document must have at least 1 buffer.");
             }
 
             bool foundBinaryBuffer = false;
-            for (std::size_t bufferIndex = 0; bufferIndex < buffers.size(); bufferIndex++)
+            for (std::size_t bufferIndex = 0; bufferIndex < document.buffers.size(); bufferIndex++)
             {
-                Buffer const & buffer = buffers[bufferIndex];
+                Buffer const & buffer = document.buffers[bufferIndex];
                 if (buffer.byteLength == 0)
                 {
                     throw invalid_gltf_document("Invalid buffer.byteLength value.", "0");
@@ -878,21 +881,19 @@ namespace gltf
             }
         }
 
-        void Save(std::string documentFilePath, bool useBinaryFormat)
+        inline void Save(Document const & document, std::string documentFilePath, bool useBinaryFormat)
         {
-            ValidateBuffers(useBinaryFormat);
-
-            nlohmann::json json = *this;
+            nlohmann::json json = document;
 
             std::size_t externalBufferIndex = 0;
             if (useBinaryFormat)
             {
-                detail::GLBHeader header{ detail::GLBHeaderMagic, 2, 0, { 0, detail::GLBChunkJSON } };
+                detail::GLBHeader header{ detail::GLBHeaderMagic, 2, 0,{ 0, detail::GLBChunkJSON } };
                 detail::ChunkHeader binHeader{ 0, detail::GLBChunkBIN };
 
                 std::string jsonText = json.dump();
 
-                Buffer & binBuffer = buffers.front();
+                Buffer const & binBuffer = document.buffers.front();
                 const uint32_t paddedLength = ((binBuffer.byteLength + 3) & (~3u));
                 const uint32_t padding = paddedLength - binBuffer.byteLength;
                 binHeader.chunkLength = paddedLength;
@@ -929,9 +930,9 @@ namespace gltf
             // The glTF 2.0 spec allows a document to have more than 1 buffer. However, only the first one will be included in the .glb
             // All others must be considered as External/Embedded resources. Process them if necessary...
             std::string documentRootPath = detail::GetDocumentRootPath(documentFilePath);
-            for (; externalBufferIndex < buffers.size(); externalBufferIndex++)
+            for (; externalBufferIndex < document.buffers.size(); externalBufferIndex++)
             {
-                Buffer & buffer = buffers[externalBufferIndex];
+                Buffer const & buffer = document.buffers[externalBufferIndex];
                 if (!buffer.IsEmbeddedResource())
                 {
                     std::basic_ofstream<uint8_t> fileData(detail::CreateBufferUriPath(documentRootPath, buffer.uri), std::ios::binary);
@@ -944,7 +945,7 @@ namespace gltf
                 }
             }
         }
-    };
+    } // namespace detail
 
     inline void from_json(nlohmann::json const & json, Accessor::Type & accessorType)
     {
@@ -1731,7 +1732,7 @@ namespace gltf
             file >> json;
         }
 
-        return Document::Create(json, { detail::GetDocumentRootPath(documentFilePath) });
+        return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath) });
     }
 
     inline Document LoadFromBinary(std::string const & documentFilePath)
@@ -1770,9 +1771,16 @@ namespace gltf
             throw invalid_gltf_document("Invalid GLB header");
         }
 
-        return Document::Create(
+        return detail::Create(
             nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
             { detail::GetDocumentRootPath(documentFilePath), &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
+    }
+
+    inline void Save(Document const & document, std::string documentFilePath, bool useBinaryFormat)
+    {
+        detail::ValidateBuffers(document, useBinaryFormat);
+
+        detail::Save(document, documentFilePath, useBinaryFormat);
     }
 } // namespace gltf
 } // namespace fx

@@ -119,18 +119,18 @@ TEST_CASE("exceptions")
         INFO("No buffers");
         doc = json;
         doc.buffers.clear();
-        REQUIRE_THROWS_AS(doc.Save("nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Buffer byteLength = 0");
         doc = json;
         doc.buffers[0].byteLength = 0;
-        REQUIRE_THROWS_AS(doc.Save("nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Buffer byteLength != data size");
         doc = json;
         doc.buffers[0].byteLength = 20;
         doc.buffers[0].data.resize(10);
-        REQUIRE_THROWS_AS(doc.Save("nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("A second buffer with empty uri");
         doc = json;
@@ -141,13 +141,13 @@ TEST_CASE("exceptions")
         doc.buffers[1].uri.clear();
         doc.buffers[1].byteLength = 20;
         doc.buffers[1].data.resize(20);
-        REQUIRE_THROWS_AS(doc.Save("nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Binary save with invalid buffer uri");
         doc = json;
         doc.buffers[0].uri = "not empty";
         doc.buffers[0].byteLength = 20;
         doc.buffers[0].data.resize(20);
-        REQUIRE_THROWS_AS(doc.Save("nop", true), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", true), fx::gltf::invalid_gltf_document);
     }
 }

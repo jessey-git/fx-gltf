@@ -49,7 +49,7 @@ helmet.buffers.back().data = ...;
 helmet.buffers.back().SetAsEmbeddedResource();
 
 // Saving back as text...
-helmet.Save("NewHelmet.glb", false);
+fx::gltf::Save(helment, "NewHelmet.glb", false);
 ```
 
 ## Safety and Robustness
