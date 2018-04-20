@@ -59,11 +59,12 @@ Example: Placing a quota on how large files and buffers can be; e.g. when loadin
 ```C++
 #include <fx/gltf.h>
 
-// Create an 8mb quota for binary file size as well as any external buffer contained inside. Load at most 3 buffers in total...
+// Load at most 3 buffers in total, each as large as 8mb...
+// additionally, place a quota on the file size as well
 fx::gltf::ReadQuotas readQuotas{};
-readQuotas.MaxFileSize = 8 * 1024 * 1024;          // default: 32mb
-readQuotas.MaxBufferByteLength = 8 * 1024 * 1024;  // default: 32mb
 readQuotas.MaxBufferCount = 3;                     // default: 8
+readQuotas.MaxBufferByteLength = 8 * 1024 * 1024;  // default: 32mb
+readQuotas.MaxFileSize = 8 * 1024 * 1024;          // default: 32mb (applies to binary .glb only)
 
 fx::gltf::Document docFromInternet = fx::gltf::LoadFromBinary("untrusted.glb", readQuotas);
 
