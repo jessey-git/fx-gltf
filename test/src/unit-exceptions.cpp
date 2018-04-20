@@ -127,6 +127,12 @@ TEST_CASE("exceptions")
 
         readQuotas.MaxFileSize = 500;
         REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary(externalFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxFileSize"));
+
+        readQuotas = {};
+        readQuotas.MaxBufferCount = 1;
+        nlohmann::json json = utility::LoadJsonFromFile(externalFile);
+        json["buffers"].push_back(json["buffers"][0]); // Duplicate so we have 2 identical buffers
+        REQUIRE_THROWS_MATCHES(fx::gltf::detail::Create(json, { fx::gltf::detail::GetDocumentRootPath(externalFile), readQuotas }), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxBufferCount"));
     }
 
     SECTION("save : invalid buffers")

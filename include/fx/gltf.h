@@ -97,7 +97,11 @@ namespace base64
         return out;
     }
 
+#if defined(FX_GLTF_HAS_CPP_17)
+    inline bool TryDecode(std::string_view in, std::vector<uint8_t> & out)
+#else
     inline bool TryDecode(std::string const & in, std::vector<uint8_t> & out)
+#endif
     {
         out.clear();
 
@@ -112,7 +116,7 @@ namespace base64
             return false;
         }
 
-        out.reserve((length / 4) * 3 + 2);
+        out.reserve((length / 4) * 3);
 
         bool invalid = false;
         uint32_t value = 0;
@@ -307,6 +311,7 @@ namespace gltf
             ChunkHeader jsonHeader;
         };
 
+        constexpr uint32_t DefaultMaxBufferCount = 8;
         constexpr uint32_t DefaultMaxMemoryAllocation = 32 * 1024 * 1024;
         constexpr std::size_t HeaderSize{ sizeof(GLBHeader) };
         constexpr std::size_t ChunkHeaderSize{ sizeof(ChunkHeader) };
@@ -488,7 +493,19 @@ namespace gltf
 
         void MaterializeData()
         {
-            bool success = base64::TryDecode(uri.substr(std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1), data);
+            const std::size_t startPos = std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1;
+            const std::size_t base64Length = uri.length() - startPos;
+            const std::size_t decodedEstimate = base64Length / 4 * 3;
+            if ((decodedEstimate - 2) > byteLength) // we need to give room for padding...
+            {
+                throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
+            }
+
+#if defined(FX_GLTF_HAS_CPP_17)
+            const bool success = base64::TryDecode({ &uri[startPos], base64Length }, data);
+#else
+            const bool success = base64::TryDecode(uri.substr(startPos), data);
+#endif
             if (!success)
             {
                 throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
@@ -784,6 +801,7 @@ namespace gltf
 
     struct ReadQuotas
     {
+        uint32_t MaxBufferCount{ detail::DefaultMaxBufferCount };
         uint32_t MaxFileSize{ detail::DefaultMaxMemoryAllocation };
         uint32_t MaxBufferByteLength{ detail::DefaultMaxMemoryAllocation };
     };
@@ -819,11 +837,21 @@ namespace gltf
             {
                 Document document = json;
 
+                if (document.buffers.size() > dataContext.readQuotas.MaxBufferCount)
+                {
+                    throw invalid_gltf_document("Quota exceeded.", "Number of buffers > MaxBufferCount");
+                }
+
                 for (auto & buffer : document.buffers)
                 {
                     if (buffer.byteLength == 0)
                     {
                         throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength == 0");
+                    }
+
+                    if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
+                    {
+                        throw invalid_gltf_document("Quota exceeded.", "Buffer byteLength > MaxBufferByteLength");
                     }
 
                     if (!buffer.uri.empty())
@@ -840,11 +868,6 @@ namespace gltf
                                 throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
                             }
 
-                            if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
-                            {
-                                throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength > readQuotas.MaxBufferByteLength");
-                            }
-
                             buffer.data.resize(buffer.byteLength);
                             fileData.read(reinterpret_cast<char *>(&buffer.data[0]), buffer.byteLength);
                         }
@@ -859,11 +882,6 @@ namespace gltf
                         if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
                         {
                             throw invalid_gltf_document("Invalid buffer data");
-                        }
-
-                        if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
-                        {
-                            throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength > readQuotas.MaxBufferByteLength");
                         }
 
                         buffer.data.resize(buffer.byteLength);
@@ -923,7 +941,7 @@ namespace gltf
             std::size_t externalBufferIndex = 0;
             if (useBinaryFormat)
             {
-                detail::GLBHeader header{ detail::GLBHeaderMagic, 2, 0,{ 0, detail::GLBChunkJSON } };
+                detail::GLBHeader header{ detail::GLBHeaderMagic, 2, 0, { 0, detail::GLBChunkJSON } };
                 detail::ChunkHeader binHeader{ 0, detail::GLBChunkBIN };
 
                 std::string jsonText = json.dump();
@@ -1788,7 +1806,7 @@ namespace gltf
 
             if (fileSize > readQuotas.MaxFileSize)
             {
-                throw invalid_gltf_document("Invalid GLB file", "file size > readQuotas.MaxFileSize");
+                throw invalid_gltf_document("Quota exceeded.", "File size > MaxFileSize");
             }
 
             binary.resize(fileSize);
