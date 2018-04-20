@@ -112,7 +112,7 @@ namespace base64
             return false;
         }
 
-        out.reserve((length / 4) * 3 + 2);
+        out.reserve((length / 4) * 3);
 
         bool invalid = false;
         uint32_t value = 0;
@@ -307,6 +307,7 @@ namespace gltf
             ChunkHeader jsonHeader;
         };
 
+        constexpr uint32_t DefaultMaxBufferCount = 8;
         constexpr uint32_t DefaultMaxMemoryAllocation = 32 * 1024 * 1024;
         constexpr std::size_t HeaderSize{ sizeof(GLBHeader) };
         constexpr std::size_t ChunkHeaderSize{ sizeof(ChunkHeader) };
@@ -488,7 +489,14 @@ namespace gltf
 
         void MaterializeData()
         {
-            bool success = base64::TryDecode(uri.substr(std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1), data);
+            const std::size_t startPos = std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1;
+            const std::size_t decodedEstimate = (uri.length() - startPos) / 4 * 3;
+            if (decodedEstimate > (byteLength + 2)) // we need to give room for padding...
+            {
+                throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
+            }
+
+            const bool success = base64::TryDecode(uri.substr(startPos), data);
             if (!success)
             {
                 throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
@@ -784,6 +792,7 @@ namespace gltf
 
     struct ReadQuotas
     {
+        uint32_t MaxBufferCount{ detail::DefaultMaxBufferCount };
         uint32_t MaxFileSize{ detail::DefaultMaxMemoryAllocation };
         uint32_t MaxBufferByteLength{ detail::DefaultMaxMemoryAllocation };
     };
@@ -819,11 +828,21 @@ namespace gltf
             {
                 Document document = json;
 
+                if (document.buffers.size() > dataContext.readQuotas.MaxBufferCount)
+                {
+                    throw invalid_gltf_document("Quota exceeded.", "Number of buffers > MaxBufferCount");
+                }
+
                 for (auto & buffer : document.buffers)
                 {
                     if (buffer.byteLength == 0)
                     {
                         throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength == 0");
+                    }
+
+                    if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
+                    {
+                        throw invalid_gltf_document("Quota exceeded.", "Buffer byteLength > MaxBufferByteLength");
                     }
 
                     if (!buffer.uri.empty())
@@ -840,11 +859,6 @@ namespace gltf
                                 throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
                             }
 
-                            if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
-                            {
-                                throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength > readQuotas.MaxBufferByteLength");
-                            }
-
                             buffer.data.resize(buffer.byteLength);
                             fileData.read(reinterpret_cast<char *>(&buffer.data[0]), buffer.byteLength);
                         }
@@ -859,11 +873,6 @@ namespace gltf
                         if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
                         {
                             throw invalid_gltf_document("Invalid buffer data");
-                        }
-
-                        if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
-                        {
-                            throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength > readQuotas.MaxBufferByteLength");
                         }
 
                         buffer.data.resize(buffer.byteLength);
@@ -1788,7 +1797,7 @@ namespace gltf
 
             if (fileSize > readQuotas.MaxFileSize)
             {
-                throw invalid_gltf_document("Invalid GLB file", "file size > readQuotas.MaxFileSize");
+                throw invalid_gltf_document("Quota exceeded.", "File size > MaxFileSize");
             }
 
             binary.resize(fileSize);
