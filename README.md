@@ -14,7 +14,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
     * Implemented using modern and safe syntax and methodologies
 
 * Small, header-only library
-    * ~1800 lines of high-level, straightforward, generously spaced code including whitespace/comments
+    * <2000 lines of high-level, straightforward, generously spaced code including whitespace/comments
     * C++20 Module ready (does not leak preprocessor defines/macros beyond its own file)
 
 * Fast, Efficient, and Safe processing
@@ -155,25 +155,25 @@ Benchmark                                        Time           CPU Iterations T
 fxgltf_Test/External_Box                       222 us          0 us          1        201    12.646k
 tinygltf_Test/External_Box                     664 us          0 us          1        428    36.709k
 
-fxgltf_Test/Embedded_Box                       660 us          0 us          1        218     20.84k
+fxgltf_Test/Embedded_Box                       660 us          0 us          1        217    19.958k
 tinygltf_Test/Embedded_Box                     670 us          0 us          1        452    49.667k
 
 fxgltf_Test/External_2CylinderEngine         11398 us          0 us          1     4.915k   2.15445M
 tinygltf_Test/External_2CylinderEngine       11598 us      15625 us          1    14.942k    5.1615M
 
-fxgltf_Test/Embedded_2CylinderEngine         57782 us      62500 us          1     4.969k   25.4693M
+fxgltf_Test/Embedded_2CylinderEngine         57782 us      62500 us          1     4.968k   23.0764M
 tinygltf_Test/Embedded_2CylinderEngine       80368 us      78125 us          1    15.021k   43.5535M
 
 fxgltf_Test/External_ReciprocatingSaw        17415 us      15625 us          1     9.784k    4.2078M
 tinygltf_Test/External_ReciprocatingSaw      13825 us      15625 us          1    31.806k   10.5618M
 
-fxgltf_Test/Embedded_ReciprocatingSaw       126205 us     125000 us          1     9.841k   47.2497M
+fxgltf_Test/Embedded_ReciprocatingSaw       126205 us     125000 us          1      9.84k   42.5873M
 tinygltf_Test/Embedded_ReciprocatingSaw     236703 us     234375 us          1    31.889k   79.4386M
 ```
 
 * Using C++17 yields some additional benefits over C++14
 
-  * Total allocations drop 2-3% and total allocation size drops about 1%. Not much, but why bleed if you don't have to?
+  * Total number of allocations drops 2-3% and total allocation size drops 1% for external resources and 5-10% for embedded resources!
 
 C++14
 
@@ -195,12 +195,12 @@ C++17
 --------------------------------------------------------------------------------------------------------
 Benchmark                                      Time           CPU Iterations TotalNewCalls TotalNewSize
 --------------------------------------------------------------------------------------------------------
-fxgltf_Test/External_Box                     340 us          0 us          1        201    12.646k
-fxgltf_Test/Embedded_Box                     202 us          0 us          1        218     20.84k
-fxgltf_Test/External_2CylinderEngine        7026 us      15625 us          1     4.915k   2.15445M
-fxgltf_Test/Embedded_2CylinderEngine       55037 us      46875 us          1     4.969k   25.4693M
-fxgltf_Test/External_ReciprocatingSaw       9722 us          0 us          1     9.784k    4.2078M
-fxgltf_Test/Embedded_ReciprocatingSaw     106502 us     109375 us          1     9.841k   47.2497M
+fxgltf_Test/External_Box                     236 us          0 us          1        201    12.646k
+fxgltf_Test/Embedded_Box                     193 us          0 us          1        217    19.958k
+fxgltf_Test/External_2CylinderEngine        6076 us      15625 us          1     4.915k   2.15445M
+fxgltf_Test/Embedded_2CylinderEngine       63823 us      78125 us          1     4.968k   23.0764M
+fxgltf_Test/External_ReciprocatingSaw      17033 us      15625 us          1     9.784k    4.2078M
+fxgltf_Test/Embedded_ReciprocatingSaw     122586 us     109375 us          1      9.84k   42.5873M
 ```
 
 ## Execute unit tests

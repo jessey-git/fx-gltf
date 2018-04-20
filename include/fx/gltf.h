@@ -97,7 +97,11 @@ namespace base64
         return out;
     }
 
+#if defined(FX_GLTF_HAS_CPP_17)
+    inline bool TryDecode(std::string_view in, std::vector<uint8_t> & out)
+#else
     inline bool TryDecode(std::string const & in, std::vector<uint8_t> & out)
+#endif
     {
         out.clear();
 
@@ -490,13 +494,18 @@ namespace gltf
         void MaterializeData()
         {
             const std::size_t startPos = std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1;
-            const std::size_t decodedEstimate = (uri.length() - startPos) / 4 * 3;
-            if (decodedEstimate > (byteLength + 2)) // we need to give room for padding...
+            const std::size_t base64Length = uri.length() - startPos;
+            const std::size_t decodedEstimate = base64Length / 4 * 3;
+            if ((decodedEstimate - 2) > byteLength) // we need to give room for padding...
             {
                 throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
             }
 
+#if defined(FX_GLTF_HAS_CPP_17)
+            const bool success = base64::TryDecode({ &uri[startPos], base64Length }, data);
+#else
             const bool success = base64::TryDecode(uri.substr(startPos), data);
+#endif
             if (!success)
             {
                 throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
