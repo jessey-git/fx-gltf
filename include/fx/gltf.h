@@ -941,7 +941,7 @@ namespace gltf
             std::size_t externalBufferIndex = 0;
             if (useBinaryFormat)
             {
-                detail::GLBHeader header{ detail::GLBHeaderMagic, 2, 0,{ 0, detail::GLBChunkJSON } };
+                detail::GLBHeader header{ detail::GLBHeaderMagic, 2, 0, { 0, detail::GLBChunkJSON } };
                 detail::ChunkHeader binHeader{ 0, detail::GLBChunkBIN };
 
                 std::string jsonText = json.dump();
