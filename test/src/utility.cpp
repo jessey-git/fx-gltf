@@ -10,10 +10,10 @@
 #include <fstream>
 #include <system_error>
 
-#if (defined(_MSC_VER) && _MSC_VER <= 1913)
-#define FX_GLTF_FILESYSTEM std::experimental::filesystem
-#else
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER >= 1914)
 #define FX_GLTF_FILESYSTEM std::filesystem
+#else
+#define FX_GLTF_FILESYSTEM std::experimental::filesystem
 #endif
 
 namespace utility
