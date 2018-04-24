@@ -16,7 +16,7 @@
 
 #include <nlohmann/json.hpp>
 
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER >= 1911)
 #define FX_GLTF_HAS_CPP_17
 #include <string_view>
 #endif
@@ -294,8 +294,6 @@ namespace gltf
             return documentRoot + bufferUri;
         }
 
-        constexpr char const * const MimetypeApplicationOctet = "data:application/octet-stream;base64";
-
         struct ChunkHeader
         {
             uint32_t chunkLength{};
@@ -318,6 +316,8 @@ namespace gltf
         constexpr uint32_t GLBHeaderMagic = 0x46546c67u;
         constexpr uint32_t GLBChunkJSON = 0x4e4f534au;
         constexpr uint32_t GLBChunkBIN = 0x004e4942u;
+
+        constexpr char const * const MimetypeApplicationOctet = "data:application/octet-stream;base64";
     } // namespace detail
 
     namespace defaults

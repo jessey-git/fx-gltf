@@ -67,7 +67,6 @@ readQuotas.MaxBufferByteLength = 8 * 1024 * 1024;  // default: 32mb
 readQuotas.MaxFileSize = 8 * 1024 * 1024;          // default: 32mb (applies to binary .glb only)
 
 fx::gltf::Document docFromInternet = fx::gltf::LoadFromBinary("untrusted.glb", readQuotas);
-
 ```
 
 ## Safety and Robustness
@@ -75,7 +74,7 @@ fx::gltf::Document docFromInternet = fx::gltf::LoadFromBinary("untrusted.glb", r
 * Robust automated testing
 
     * Roundtrip testing for all models inside [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models)
-    * Extensive testing of Base64 encoding and decoding
+    * Testing of Base64 encoding and decoding routines, including invalid Base64 inputs
     * Strict required vs. optional element loading and saving
 
 | Model Type  | Status: glTF-Sample-Models |
@@ -225,7 +224,7 @@ $ ctest --output-on-failure -C [Debug or Release]
 ```
 
 ## Supported Compilers
-* Microsoft Visual C++ 2017 15.6 (and possibly earlier)
+* Microsoft Visual C++ 2017 15.3+ (and possibly earlier)
 * Clang 5.0+
 * GCC 6.1+
 
