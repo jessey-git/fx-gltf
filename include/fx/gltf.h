@@ -16,7 +16,7 @@
 
 #include <nlohmann/json.hpp>
 
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER >= 1911)
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
 #define FX_GLTF_HAS_CPP_17
 #include <string_view>
 #endif
