@@ -5,3 +5,5 @@
 *.sln.docstates
 
 build
+
+examples/viewer/x64
