@@ -379,7 +379,7 @@ namespace gltf
                 uint32_t byteOffset{};
                 ComponentType componentType{ ComponentType::None };
 
-                nlohmann::json extensionsAndExtras;
+                nlohmann::json extensionsAndExtras{};
             };
 
             struct Values : NeverEmpty
@@ -387,14 +387,14 @@ namespace gltf
                 uint32_t bufferView{};
                 uint32_t byteOffset{};
 
-                nlohmann::json extensionsAndExtras;
+                nlohmann::json extensionsAndExtras{};
             };
 
             int32_t count{};
             Indices indices{};
             Values values{};
 
-            nlohmann::json extensionsAndExtras;
+            nlohmann::json extensionsAndExtras{};
 
             bool empty() const noexcept
             {
@@ -415,7 +415,7 @@ namespace gltf
         std::vector<float> max{};
         std::vector<float> min{};
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Animation
@@ -427,13 +427,13 @@ namespace gltf
                 int32_t node{ -1 };
                 std::string path{};
 
-                nlohmann::json extensionsAndExtras;
+                nlohmann::json extensionsAndExtras{};
             };
 
             int32_t sampler{ -1 };
             Target target{};
 
-            nlohmann::json extensionsAndExtras;
+            nlohmann::json extensionsAndExtras{};
         };
 
         struct Sampler
@@ -450,14 +450,14 @@ namespace gltf
 
             Type interpolation{ Sampler::Type::Linear };
 
-            nlohmann::json extensionsAndExtras;
+            nlohmann::json extensionsAndExtras{};
         };
 
         std::string name{};
         std::vector<Channel> channels{};
         std::vector<Sampler> samplers{};
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Asset : NeverEmpty
@@ -467,7 +467,7 @@ namespace gltf
         std::string minVersion{};
         std::string version{ "2.0" };
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Buffer
@@ -477,7 +477,7 @@ namespace gltf
         std::string name;
         std::string uri;
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
 
         std::vector<uint8_t> data{};
 
@@ -531,7 +531,7 @@ namespace gltf
 
         TargetType target{ TargetType::None };
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Camera
@@ -550,7 +550,7 @@ namespace gltf
             float zfar{ defaults::FloatSentinal };
             float znear{ defaults::FloatSentinal };
 
-            nlohmann::json extensionsAndExtras;
+            nlohmann::json extensionsAndExtras{};
         };
 
         struct Perspective : NeverEmpty
@@ -560,7 +560,7 @@ namespace gltf
             float zfar{};
             float znear{};
 
-            nlohmann::json extensionsAndExtras;
+            nlohmann::json extensionsAndExtras{};
         };
 
         std::string name{};
@@ -569,7 +569,7 @@ namespace gltf
         Orthographic orthographic;
         Perspective perspective;
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Image
@@ -580,7 +580,7 @@ namespace gltf
         std::string uri;
         std::string mimeType;
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Material
@@ -597,7 +597,7 @@ namespace gltf
             int32_t index{ -1 };
             int32_t texCoord{ -1 };
 
-            nlohmann::json extensionsAndExtras;
+            nlohmann::json extensionsAndExtras{};
 
             bool empty() const noexcept
             {
@@ -624,7 +624,7 @@ namespace gltf
             float metallicFactor{ defaults::IdentityScalar };
             Texture metallicRoughnessTexture;
 
-            nlohmann::json extensionsAndExtras;
+            nlohmann::json extensionsAndExtras{};
 
             bool empty() const noexcept
             {
@@ -645,7 +645,7 @@ namespace gltf
         std::array<float, 3> emissiveFactor = { defaults::NullVec3 };
 
         std::string name;
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Primitive
@@ -669,7 +669,7 @@ namespace gltf
         Attributes attributes{};
         std::vector<Attributes> targets{};
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Mesh
@@ -679,7 +679,7 @@ namespace gltf
         std::vector<float> weights{};
         std::vector<Primitive> primitives{};
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Node
@@ -698,7 +698,7 @@ namespace gltf
         std::vector<int32_t> children{};
         std::vector<float> weights{};
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Sampler
@@ -736,7 +736,7 @@ namespace gltf
         WrappingMode wrapS{ WrappingMode::Repeat };
         WrappingMode wrapT{ WrappingMode::Repeat };
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
 
         bool empty() const noexcept
         {
@@ -750,7 +750,7 @@ namespace gltf
 
         std::vector<uint32_t> nodes{};
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Skin
@@ -761,7 +761,7 @@ namespace gltf
         std::string name;
         std::vector<uint32_t> joints{};
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Texture
@@ -771,7 +771,7 @@ namespace gltf
         int32_t sampler{ -1 };
         int32_t source{ -1 };
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct Document
@@ -793,10 +793,10 @@ namespace gltf
         std::vector<Texture> textures{};
 
         int32_t scene{ -1 };
-        std::vector<std::string> extensionsUsed;
-        std::vector<std::string> extensionsRequired;
+        std::vector<std::string> extensionsUsed{};
+        std::vector<std::string> extensionsRequired{};
 
-        nlohmann::json extensionsAndExtras;
+        nlohmann::json extensionsAndExtras{};
     };
 
     struct ReadQuotas
