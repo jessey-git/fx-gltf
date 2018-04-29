@@ -33,8 +33,10 @@ public:
         m_uploadBuffer->Map(0, nullptr, reinterpret_cast<void **>(&m_mappedData));
     }
 
-    D3DUploadBuffer(const D3DUploadBuffer & rhs) = delete;
-    D3DUploadBuffer & operator=(const D3DUploadBuffer & rhs) = delete;
+    D3DUploadBuffer(D3DUploadBuffer const & rhs) = delete;
+    D3DUploadBuffer(D3DUploadBuffer && rhs) = delete;
+    D3DUploadBuffer & operator=(D3DUploadBuffer const & rhs) = delete;
+    D3DUploadBuffer & operator=(D3DUploadBuffer && rhs) = delete;
 
     ~D3DUploadBuffer()
     {
@@ -53,12 +55,12 @@ public:
 
     void CopyData(int elementIndex, T const & data)
     {
-        memcpy(&m_mappedData[elementIndex * m_elementByteSize], &data, sizeof(T));
+        std::memcpy(&m_mappedData[elementIndex * m_elementByteSize], &data, sizeof(T));
     }
 
 private:
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer;
-    BYTE * m_mappedData = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer{};
+    BYTE * m_mappedData{};
 
-    UINT m_elementByteSize = 0;
+    UINT m_elementByteSize{};
 };

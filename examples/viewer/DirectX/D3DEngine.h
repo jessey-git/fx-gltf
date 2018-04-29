@@ -30,30 +30,27 @@ public:
 
 private:
     // Device and Frame resources.
-    std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources;
+    std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};
 
-    Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature;
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap;
-    UINT                                            m_descriptorSize;
-
-    std::vector<std::unique_ptr<D3DUploadBuffer<SceneConstantBuffer>>> m_sceneCB;
-    std::vector<std::unique_ptr<D3DUploadBuffer<MeshConstantBuffer>>>  m_meshCB;
+    Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
+    UINT                                            m_descriptorSize{};
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_lambertPipelineState;
 
-    Microsoft::WRL::ComPtr<ID3D12Fence>     m_fence;
-    Microsoft::WRL::Wrappers::Event         m_fenceEvent;
+    Microsoft::WRL::ComPtr<ID3D12Fence>     m_fence{};
+    Microsoft::WRL::Wrappers::Event         m_fenceEvent{};
 
     // These computed values will be loaded into a ConstantBuffer
     // during Render
-    DirectX::XMFLOAT4X4                     m_viewMatrix;
-    DirectX::XMFLOAT4X4                     m_projectionMatrix;
-    DirectX::XMFLOAT4                       m_lightDirs[2];
-    DirectX::XMFLOAT4                       m_lightColors[2];
+    DirectX::XMFLOAT4X4                     m_viewMatrix{};
+    DirectX::XMFLOAT4X4                     m_projectionMatrix{};
+    DirectX::XMFLOAT4                       m_lightDirs[2]{};
+    DirectX::XMFLOAT4                       m_lightColors[2]{};
 
     float                                   m_curRotationAngleRad{};
 
-    D3DMesh                                 m_d3dMesh;
+    D3DMesh                                 m_d3dMesh{};
 
     void PrepareRender();
     void CompleteRender(int frameIdx);

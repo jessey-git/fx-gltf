@@ -73,8 +73,9 @@ void D3DEngine::Render()
     MeshConstantBuffer meshParameters{};
     meshParameters.worldMatrix = XMMatrixTranspose(XMLoadFloat4x4(&m_d3dMesh.WorldMatrix()));
 
-    m_sceneCB[frameIdx]->CopyData(0, sceneParameters);
-    m_meshCB[frameIdx]->CopyData(0, meshParameters);
+    D3DFrameResource & currentFrame = m_deviceResources->GetCurrentFrameResource();
+    currentFrame.SceneCB->CopyData(0, sceneParameters);
+    currentFrame.MeshCB->CopyData(0, meshParameters);
 
     // Prepare the command list to render a new frame.
     PrepareRender();
@@ -87,9 +88,8 @@ void D3DEngine::Render()
     // Set the root signature and pipeline state for the command list
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-    commandList->SetGraphicsRootConstantBufferView(0, m_sceneCB[frameIdx]->Resource()->GetGPUVirtualAddress());
-
-    commandList->SetGraphicsRootConstantBufferView(1, m_meshCB[frameIdx]->Resource()->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->Resource()->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(1, currentFrame.MeshCB->Resource()->GetGPUVirtualAddress());
 
     commandList->SetPipelineState(m_lambertPipelineState.Get());
     m_d3dMesh.Render(commandList);
@@ -219,12 +219,7 @@ void D3DEngine::BuildDescriptorHeaps()
 
 void D3DEngine::BuildConstantBufferUploadBuffers()
 {
-    ID3D12Device * device = m_deviceResources->GetD3DDevice();
-    for (UINT i = 0; i < m_deviceResources->GetBackBufferCount(); ++i)
-    {
-        m_sceneCB.push_back(std::make_unique<D3DUploadBuffer<SceneConstantBuffer>>(device, 1, true));
-        m_meshCB.push_back(std::make_unique<D3DUploadBuffer<MeshConstantBuffer>>(device, 1, true));
-    }
+    m_deviceResources->CreateConstantBuffers(1, 1);
 }
 
 void D3DEngine::BuildScene()
