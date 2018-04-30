@@ -50,7 +50,7 @@ private:
 
     float                                   m_curRotationAngleRad{};
 
-    D3DMesh                                 m_d3dMesh{};
+    std::vector<D3DMesh>                    m_meshes{};
 
     void PrepareRender();
     void CompleteRender(int frameIdx);

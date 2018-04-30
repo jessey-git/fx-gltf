@@ -14,7 +14,7 @@ D3DFrameResource::D3DFrameResource(ID3D12Device * device)
         IID_PPV_ARGS(CommandAllocator.GetAddressOf())));
 }
 
-void D3DFrameResource::AllocateConstantBuffers(ID3D12Device * device, UINT sceneCount, UINT meshCount)
+void D3DFrameResource::AllocateConstantBuffers(ID3D12Device * device, std::size_t sceneCount, std::size_t meshCount)
 {
     SceneCB = std::make_unique<D3DUploadBuffer<SceneConstantBuffer>>(device, sceneCount, true);
     MeshCB = std::make_unique<D3DUploadBuffer<MeshConstantBuffer>>(device, meshCount, true);

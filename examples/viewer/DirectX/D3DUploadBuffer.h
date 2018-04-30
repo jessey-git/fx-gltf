@@ -12,7 +12,7 @@ template <typename T>
 class D3DUploadBuffer
 {
 public:
-    D3DUploadBuffer(ID3D12Device * device, UINT elementCount, bool isConstantBuffer)
+    D3DUploadBuffer(ID3D12Device * device, std::size_t elementCount, bool isConstantBuffer)
     {
         m_elementByteSize = sizeof(T);
         if (isConstantBuffer)
@@ -53,7 +53,12 @@ public:
         return m_uploadBuffer.Get();
     }
 
-    void CopyData(int elementIndex, T const & data)
+    D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress(std::size_t elementIndex)
+    {
+        return Resource()->GetGPUVirtualAddress() + (elementIndex * m_elementByteSize);
+    }
+
+    void CopyData(std::size_t elementIndex, T const & data)
     {
         std::memcpy(&m_mappedData[elementIndex * m_elementByteSize], &data, sizeof(T));
     }

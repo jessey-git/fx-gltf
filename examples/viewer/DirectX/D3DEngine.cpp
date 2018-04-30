@@ -44,7 +44,10 @@ void D3DEngine::Update(float elapsedTime)
     }
 
     // Rotate the cube around the origin
-    m_d3dMesh.Rotate(m_curRotationAngleRad);
+    for (auto & mesh : m_meshes)
+    {
+        mesh.Rotate(m_curRotationAngleRad);
+    }
 }
 
 // Draws the scene.
@@ -62,20 +65,24 @@ void D3DEngine::Render()
         WaitForSingleObjectEx(m_fenceEvent.Get(), INFINITE, FALSE);
     }
 
+    D3DFrameResource & currentFrame = m_deviceResources->GetCurrentFrameResource();
+
     SceneConstantBuffer sceneParameters{};
     sceneParameters.lightDir[0] = XMLoadFloat4(&m_lightDirs[0]);
     sceneParameters.lightDir[1] = XMLoadFloat4(&m_lightDirs[1]);
     sceneParameters.lightColor[0] = XMLoadFloat4(&m_lightColors[0]);
     sceneParameters.lightColor[1] = XMLoadFloat4(&m_lightColors[1]);
-
-    MeshConstantBuffer meshParameters{};
-    DirectX::CXMMATRIX viewProj = XMLoadFloat4x4(&m_viewMatrix) * XMLoadFloat4x4(&m_projectionMatrix);
-    meshParameters.worldViewProj = DirectX::XMMatrixTranspose(XMLoadFloat4x4(&m_d3dMesh.WorldMatrix()) * viewProj);
-    meshParameters.world = DirectX::XMMatrixTranspose(XMLoadFloat4x4(&m_d3dMesh.WorldMatrix()));
-
-    D3DFrameResource & currentFrame = m_deviceResources->GetCurrentFrameResource();
     currentFrame.SceneCB->CopyData(0, sceneParameters);
-    currentFrame.MeshCB->CopyData(0, meshParameters);
+
+    DirectX::CXMMATRIX viewProj = XMLoadFloat4x4(&m_viewMatrix) * XMLoadFloat4x4(&m_projectionMatrix);
+    for (std::size_t i = 0; i < m_meshes.size(); i++)
+    {
+        MeshConstantBuffer meshParameters{};
+        meshParameters.worldViewProj = DirectX::XMMatrixTranspose(XMLoadFloat4x4(&m_meshes[i].WorldMatrix()) * viewProj);
+        meshParameters.world = DirectX::XMMatrixTranspose(XMLoadFloat4x4(&m_meshes[i].WorldMatrix()));
+
+        currentFrame.MeshCB->CopyData(i, meshParameters);
+    }
 
     // Prepare the command list to render a new frame.
     PrepareRender();
@@ -87,12 +94,15 @@ void D3DEngine::Render()
 
     // Set the root signature and pipeline state for the command list
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-
-    commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->Resource()->GetGPUVirtualAddress());
-    commandList->SetGraphicsRootConstantBufferView(1, currentFrame.MeshCB->Resource()->GetGPUVirtualAddress());
-
     commandList->SetPipelineState(m_lambertPipelineState.Get());
-    m_d3dMesh.Render(commandList);
+
+    commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
+
+    for (std::size_t i = 0; i < m_meshes.size(); i++)
+    {
+        commandList->SetGraphicsRootConstantBufferView(1, currentFrame.MeshCB->GetGPUVirtualAddress(i));
+        m_meshes[i].Render(commandList);
+    }
 
     CompleteRender(frameIdx);
 }
@@ -219,13 +229,18 @@ void D3DEngine::BuildDescriptorHeaps()
 
 void D3DEngine::BuildConstantBufferUploadBuffers()
 {
-    m_deviceResources->CreateConstantBuffers(1, 1);
+    m_deviceResources->CreateConstantBuffers(1, m_meshes.size());
 }
 
 void D3DEngine::BuildScene()
 {
-    fx::gltf::Document doc = fx::gltf::LoadFromText("E:/source/fx-gltf/test/data/glTF-Sample-Models/2.0/SciFiHelmet/glTF/SciFiHelmet.gltf");
-    m_d3dMesh.CreateDeviceDependentResources(doc, 0, m_deviceResources);
+    //fx::gltf::Document doc = fx::gltf::LoadFromText("E:/source/fx-gltf/test/data/glTF-Sample-Models/2.0/SciFiHelmet/glTF/SciFiHelmet.gltf");
+    fx::gltf::Document doc = fx::gltf::LoadFromText("E:/source/fx-gltf/test/data/glTF-Sample-Models/2.0/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
+    m_meshes.resize(doc.meshes.size());
+    for (std::size_t i = 0; i < doc.meshes.size(); i++)
+    {
+        m_meshes[i].CreateDeviceDependentResources(doc, i, m_deviceResources);
+    }
 }
 
 void D3DEngine::CreateDeviceDependentResources()
@@ -251,10 +266,13 @@ void D3DEngine::CreateDeviceDependentResources()
         device->CreateFence(m_deviceResources->GetCurrentFrameIndex(), D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));
 
     // Initialize the world matrix
-    DirectX::XMStoreFloat4x4(&m_d3dMesh.WorldMatrix(), DirectX::XMMatrixIdentity());
+    for (auto & mesh : m_meshes)
+    {
+        DirectX::XMStoreFloat4x4(&mesh.WorldMatrix(), DirectX::XMMatrixIdentity());
+    }
 
     // Initialize the view matrix
-    static const DirectX::XMVECTORF32 c_eye = { 0.0f, 0.0f, 5.0f, 0.0f };
+    static const DirectX::XMVECTORF32 c_eye = { 4.0f, 2.0f, 10.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_at = { 0.0f, 0.0f, 0.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_up = { 0.0f, 1.0f, 0.0f, 0.0 };
     DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(c_eye, c_at, c_up));
@@ -312,8 +330,10 @@ void D3DEngine::OnDeviceLost()
 
     m_fence.Reset();
 
-    m_d3dMesh.Reset();
-
+    for (auto & mesh : m_meshes)
+    {
+        mesh.Reset();
+    }
 }
 
 void D3DEngine::OnDeviceRestored()

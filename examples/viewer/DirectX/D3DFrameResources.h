@@ -19,7 +19,7 @@ struct D3DFrameResource
     D3DFrameResource & operator=(D3DFrameResource && rhs) = delete;
     ~D3DFrameResource() = default;
 
-    void AllocateConstantBuffers(ID3D12Device * device, UINT sceneCount, UINT meshCount);
+    void AllocateConstantBuffers(ID3D12Device * device, std::size_t sceneCount, std::size_t meshCount);
 
     // clang-format off
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator>          CommandAllocator{};

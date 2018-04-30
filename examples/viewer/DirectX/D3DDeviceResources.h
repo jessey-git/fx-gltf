@@ -38,7 +38,7 @@ namespace DX
 
         void CreateDeviceResources();
         void CreateWindowSizeDependentResources();
-        void CreateConstantBuffers(UINT sceneCount, UINT meshCount);
+        void CreateConstantBuffers(std::size_t sceneCount, std::size_t meshCount);
 
         void SetWindow(HWND window, int width, int height);
         bool WindowSizeChanged(int width, int height);

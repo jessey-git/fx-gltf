@@ -25,15 +25,20 @@ public:
     DirectX::XMFLOAT4X4 & WorldMatrix() { return m_worldMatrix; }
 
 private:
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_vertexBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_normalBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_indexBuffer;
+    struct D3DMeshPart
+    {
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_vertexBuffer{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_normalBuffer{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_indexBuffer{};
 
-    D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};
-    D3D12_VERTEX_BUFFER_VIEW m_normalBufferView{};
-    D3D12_INDEX_BUFFER_VIEW m_indexBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW m_normalBufferView{};
+        D3D12_INDEX_BUFFER_VIEW m_indexBufferView{};
+
+        uint32_t m_indexCount{};
+    };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};
 
-    uint32_t m_indexCount{};
+    std::vector<D3DMeshPart> m_meshParts{};
 };

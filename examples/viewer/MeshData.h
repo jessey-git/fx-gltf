@@ -19,24 +19,24 @@ public:
         uint32_t totalSize;
     };
 
-    MeshData(fx::gltf::Document const & doc, std::size_t meshIndex) : doc_(doc), indexBuffer{}, vertexBuffer{}, normalBuffer{}
+    MeshData(fx::gltf::Document const & doc, std::size_t meshIndex, std::size_t primitveIndex)
     {
         fx::gltf::Mesh const & mesh = doc.meshes[meshIndex];
-        fx::gltf::Primitive const & primitive = mesh.primitives[0];
+        fx::gltf::Primitive const & primitive = mesh.primitives[primitveIndex];
 
-        for (auto & e : primitive.attributes)
+        for (auto const & attrib : primitive.attributes)
         {
-            if (e.first == "POSITION")
+            if (attrib.first == "POSITION")
             {
-                vertexBuffer = GetData(doc.accessors[e.second]);
+                vertexBuffer = GetData(doc, doc.accessors[attrib.second]);
             }
-            else if (e.first == "NORMAL")
+            else if (attrib.first == "NORMAL")
             {
-                normalBuffer = GetData(doc.accessors[e.second]);
+                normalBuffer = GetData(doc, doc.accessors[attrib.second]);
             }
         }
 
-        indexBuffer = GetData(doc.accessors[primitive.indices]);
+        indexBuffer = GetData(doc, doc.accessors[primitive.indices]);
     }
 
     bool HasIndexData()
@@ -70,16 +70,14 @@ public:
     }
 
 private:
-    fx::gltf::Document const & doc_;
+    BufferInfo indexBuffer{};
+    BufferInfo vertexBuffer{};
+    BufferInfo normalBuffer{};
 
-    BufferInfo indexBuffer;
-    BufferInfo vertexBuffer;
-    BufferInfo normalBuffer;
-
-    BufferInfo GetData(fx::gltf::Accessor const & accessor)
+    static BufferInfo GetData(fx::gltf::Document const & doc, fx::gltf::Accessor const & accessor)
     {
-        fx::gltf::BufferView const & bufferView = doc_.bufferViews[accessor.bufferView];
-        fx::gltf::Buffer const & buffer = doc_.buffers[bufferView.buffer];
+        fx::gltf::BufferView const & bufferView = doc.bufferViews[accessor.bufferView];
+        fx::gltf::Buffer const & buffer = doc.buffers[bufferView.buffer];
 
         uint32_t dataTypeSize = CalculateDataTypeSize(accessor);
         return BufferInfo{ &accessor, &buffer.data[bufferView.byteOffset + accessor.byteOffset], dataTypeSize, accessor.count * dataTypeSize };
