@@ -34,7 +34,6 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
-    UINT                                            m_descriptorSize{};
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_lambertPipelineState;
 
@@ -52,19 +51,19 @@ private:
 
     std::vector<D3DMesh>                    m_meshes{};
 
-    void PrepareRender();
-    void CompleteRender(int frameIdx);
-
     void CreateDeviceDependentResources();
     void CreateWindowSizeDependentResources();
 
-    void BuildRootSignature();
-    void BuildFrameResources();
-    void BuildPipelineStateObjects();
-    void BuildDescriptorHeaps();
-    void BuildConstantBufferUploadBuffers();
+    void PrepareRender();
+    void CompleteRender(int frameIdx);
 
     void BuildScene();
+
+    void BuildRootSignature();
+    void BuildFrameResources();
+    void BuildDescriptorHeaps();
+    void BuildPipelineStateObjects();
+    void BuildConstantBufferUploadBuffers();
 
     std::vector<uint8_t> ReadData(const wchar_t * name);
 };

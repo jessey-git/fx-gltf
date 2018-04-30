@@ -451,13 +451,14 @@ void D3DDeviceResources::HandleDeviceLost()
 void D3DDeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState)
 {
     // Reset command list and allocator.
-    ThrowIfFailed(m_frameResources[m_backBufferIndex].CommandAllocator->Reset());
-    ThrowIfFailed(m_commandList->Reset(m_frameResources[m_backBufferIndex].CommandAllocator.Get(), nullptr));
+    D3DFrameResource & currentFrame = m_frameResources[m_backBufferIndex];
+    ThrowIfFailed(currentFrame.CommandAllocator->Reset());
+    ThrowIfFailed(m_commandList->Reset(currentFrame.CommandAllocator.Get(), nullptr));
 
     if (beforeState != D3D12_RESOURCE_STATE_RENDER_TARGET)
     {
         // Transition the render target into the correct state to allow for drawing into it.
-        D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_frameResources[m_backBufferIndex].RenderTarget.Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(currentFrame.RenderTarget.Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_commandList->ResourceBarrier(1, &barrier);
     }
 }
