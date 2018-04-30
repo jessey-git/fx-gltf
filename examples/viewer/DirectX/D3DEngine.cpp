@@ -63,15 +63,15 @@ void D3DEngine::Render()
     }
 
     SceneConstantBuffer sceneParameters{};
-    sceneParameters.viewMatrix = XMMatrixTranspose(XMLoadFloat4x4(&m_viewMatrix));
-    sceneParameters.projectionMatrix = XMMatrixTranspose(XMLoadFloat4x4(&m_projectionMatrix));
     sceneParameters.lightDir[0] = XMLoadFloat4(&m_lightDirs[0]);
     sceneParameters.lightDir[1] = XMLoadFloat4(&m_lightDirs[1]);
     sceneParameters.lightColor[0] = XMLoadFloat4(&m_lightColors[0]);
     sceneParameters.lightColor[1] = XMLoadFloat4(&m_lightColors[1]);
 
     MeshConstantBuffer meshParameters{};
-    meshParameters.worldMatrix = XMMatrixTranspose(XMLoadFloat4x4(&m_d3dMesh.WorldMatrix()));
+    DirectX::CXMMATRIX viewProj = XMLoadFloat4x4(&m_viewMatrix) * XMLoadFloat4x4(&m_projectionMatrix);
+    meshParameters.worldViewProj = DirectX::XMMatrixTranspose(XMLoadFloat4x4(&m_d3dMesh.WorldMatrix()) * viewProj);
+    meshParameters.world = DirectX::XMMatrixTranspose(XMLoadFloat4x4(&m_d3dMesh.WorldMatrix()));
 
     D3DFrameResource & currentFrame = m_deviceResources->GetCurrentFrameResource();
     currentFrame.SceneCB->CopyData(0, sceneParameters);

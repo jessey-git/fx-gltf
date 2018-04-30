@@ -15,10 +15,13 @@ public:
     Engine(UINT width, UINT height)
         : m_width(width), m_height(height)
     {
-        m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-
         m_scene = std::make_unique<D3DEngine>();
     }
+
+    Engine(Engine const &) = delete;
+    Engine(Engine &&) = delete;
+    Engine & operator=(Engine const &) = delete;
+    Engine & operator=(Engine &&) = delete;
 
     ~Engine() = default;
 
@@ -34,26 +37,22 @@ public:
         m_scene->Render();
     }
 
+    void OnResize(UINT width, UINT height)
+    {
+        m_width = width;
+        m_height = height;
+        m_scene->WindowSizeChanged(m_width, m_height);
+    }
+
     void OnDestroy() {}
 
     void OnKeyDown(UINT8) {}
     void OnKeyUp(UINT8) {}
 
-    UINT Width() const
-    {
-        return m_width;
-    }
-
-    UINT Height() const
-    {
-        return m_height;
-    }
-
 private:
-    UINT m_width;
-    UINT m_height;
-    float m_aspectRatio;
+    UINT m_width{};
+    UINT m_height{};
 
-    std::unique_ptr<D3DEngine> m_scene;
-    DX::StepTimer m_timer;
+    std::unique_ptr<D3DEngine> m_scene{};
+    StepTimer m_timer{};
 };

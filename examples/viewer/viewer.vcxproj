@@ -185,6 +185,7 @@
   <ItemGroup>
     <None Include=".clang-format" />
     <None Include="DirectX\Shaders\SimpleLighting.hlsli" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="DirectX\Shaders\LambertPS.hlsl">

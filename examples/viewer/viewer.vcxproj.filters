@@ -78,6 +78,7 @@
   <ItemGroup>
     <None Include="DirectX\Shaders\SimpleLighting.hlsli" />
     <None Include=".clang-format" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="DirectX\Shaders\TriangleVS.hlsl" />

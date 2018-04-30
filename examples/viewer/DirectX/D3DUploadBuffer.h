@@ -33,10 +33,10 @@ public:
         m_uploadBuffer->Map(0, nullptr, reinterpret_cast<void **>(&m_mappedData));
     }
 
-    D3DUploadBuffer(D3DUploadBuffer const & rhs) = delete;
-    D3DUploadBuffer(D3DUploadBuffer && rhs) = delete;
-    D3DUploadBuffer & operator=(D3DUploadBuffer const & rhs) = delete;
-    D3DUploadBuffer & operator=(D3DUploadBuffer && rhs) = delete;
+    D3DUploadBuffer(D3DUploadBuffer const &) = delete;
+    D3DUploadBuffer(D3DUploadBuffer &&) = delete;
+    D3DUploadBuffer & operator=(D3DUploadBuffer const &) = delete;
+    D3DUploadBuffer & operator=(D3DUploadBuffer &&) = delete;
 
     ~D3DUploadBuffer()
     {

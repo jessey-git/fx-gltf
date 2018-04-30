@@ -32,9 +32,9 @@ namespace DX
     class com_exception : public std::exception
     {
     public:
-        com_exception(HRESULT hr) : result(hr) {}
+        explicit com_exception(HRESULT hr) : result(hr) {}
 
-        virtual const char* what() const override
+        const char* what() const override
         {
             static char s_str[64] = {};
             sprintf_s(s_str, "Failure with HRESULT of %08X", result);
@@ -53,4 +53,4 @@ namespace DX
             throw com_exception(hr);
         }
     }
-}
+} // namespace DX

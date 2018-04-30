@@ -13,10 +13,12 @@ public:
     {
         // Parse the command line parameters
         int argc;
-        LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+        LPWSTR * argv = CommandLineToArgvW(GetCommandLineW(), &argc);
         LocalFree(argv);
 
-        std::unique_ptr<Engine> engine = std::make_unique<Engine>(960, 540);
+        const UINT DefaultWidth = 960;
+        const UINT DefaultHeight = 540;
+        std::unique_ptr<Engine> engine = std::make_unique<Engine>(DefaultWidth, DefaultHeight);
 
         // Initialize the window class.
         WNDCLASSEX windowClass = { 0 };
@@ -28,7 +30,7 @@ public:
         windowClass.lpszClassName = L"viewer";
         RegisterClassEx(&windowClass);
 
-        RECT windowRect = { 0, 0, static_cast<LONG>(engine->Width()), static_cast<LONG>(engine->Height()) };
+        RECT windowRect = { 0, 0, static_cast<LONG>(DefaultWidth), static_cast<LONG>(DefaultHeight) };
         AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
         // Create the window and store a handle to it.
@@ -40,8 +42,8 @@ public:
             CW_USEDEFAULT,
             windowRect.right - windowRect.left,
             windowRect.bottom - windowRect.top,
-            nullptr,		// We have no parent window.
-            nullptr,		// We aren't using menus.
+            nullptr, // We have no parent window.
+            nullptr, // We aren't using menus.
             hInstance,
             engine.get());
 
@@ -55,7 +57,7 @@ public:
         while (msg.message != WM_QUIT)
         {
             // Process any messages in the queue.
-            if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
@@ -76,17 +78,18 @@ private:
         switch (message)
         {
         case WM_CREATE:
-        {
-            LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
-            SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
-        }
-        return 0;
+            {
+                LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
+                SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+            }
+            return 0;
 
         case WM_KEYDOWN:
             if (engine)
             {
                 engine->OnKeyDown(static_cast<UINT8>(wParam));
             }
+
             return 0;
 
         case WM_KEYUP:
@@ -94,6 +97,7 @@ private:
             {
                 engine->OnKeyUp(static_cast<UINT8>(wParam));
             }
+
             return 0;
 
         case WM_PAINT:
@@ -101,6 +105,15 @@ private:
             {
                 engine->Tick();
             }
+
+            return 0;
+
+        case WM_SIZE:
+            if (engine)
+            {
+                engine->OnResize(LOWORD(lParam), HIWORD(lParam));
+            }
+
             return 0;
 
         case WM_DESTROY:
@@ -113,7 +126,7 @@ private:
     }
 };
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdShow)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
 {
     return Win32Application::Run(hInstance, nCmdShow);
 }

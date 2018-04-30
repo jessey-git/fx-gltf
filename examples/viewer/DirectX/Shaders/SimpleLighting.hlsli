@@ -13,14 +13,13 @@
 //--------------------------------------------------------------------------------------
 cbuffer SceneConstants : register(b0)
 {
-    float4x4 mView;
-    float4x4 mProjection;
     float4   lightDir[2];
     float4   lightColor[2];
 };
 
 cbuffer MeshConstants : register(b1)
 {
+    float4x4 mWorldViewProj;
     float4x4 mWorld;
 };
 
@@ -47,9 +46,7 @@ struct PS_INPUT
 PS_INPUT TriangleVS(VS_INPUT input)
 {
     PS_INPUT output = (PS_INPUT)0;
-    output.Pos = mul(input.Pos, mWorld);
-    output.Pos = mul(output.Pos, mView);
-    output.Pos = mul(output.Pos, mProjection);
+    output.Pos = mul(input.Pos, mWorldViewProj);
     output.Normal = mul(input.Normal, ((float3x3) mWorld));
 
     return output;
