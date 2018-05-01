@@ -16,13 +16,15 @@ public:
     void CreateDeviceDependentResources(
         fx::gltf::Document const & doc, std::size_t meshIndex, std::unique_ptr<DX::D3DDeviceResources> const & deviceResources);
 
-    void Render(ID3D12GraphicsCommandList * commandList);
+    void InitWorldMatrix() { DirectX::XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixIdentity()); }
+
+    void Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex);
 
     void Rotate(float rotationAngleRad);
 
     void Reset();
 
-    DirectX::XMFLOAT4X4 & WorldMatrix() { return m_worldMatrix; }
+    std::size_t MeshPartCount() { return m_meshParts.size(); }
 
 private:
     struct D3DMeshPart
@@ -36,9 +38,13 @@ private:
         D3D12_INDEX_BUFFER_VIEW m_indexBufferView{};
 
         uint32_t m_indexCount{};
+
+        DirectX::XMFLOAT3 m_meshPartColor{};
     };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};
 
     std::vector<D3DMeshPart> m_meshParts{};
+
+    static uint32_t CurrentMeshPartId;
 };

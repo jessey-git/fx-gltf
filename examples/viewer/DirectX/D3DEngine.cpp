@@ -6,11 +6,14 @@
 #include "stdafx.h"
 
 #include "D3DEngine.h"
+#include "EngineOptions.h"
 
 using Microsoft::WRL::ComPtr;
 
-D3DEngine::D3DEngine()
+D3DEngine::D3DEngine(std::string modelPath)
 {
+    m_doc = fx::gltf::LoadFromText(modelPath);
+
     m_deviceResources = std::make_unique<DX::D3DDeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
     m_deviceResources->RegisterDeviceNotify(this);
 }
@@ -72,14 +75,6 @@ void D3DEngine::Render()
     currentFrame.SceneCB->CopyData(0, sceneParameters);
 
     DirectX::CXMMATRIX viewProj = XMLoadFloat4x4(&m_viewMatrix) * XMLoadFloat4x4(&m_projectionMatrix);
-    for (std::size_t i = 0; i < m_meshes.size(); i++)
-    {
-        MeshConstantBuffer meshParameters{};
-        meshParameters.worldViewProj = DirectX::XMMatrixTranspose(XMLoadFloat4x4(&m_meshes[i].WorldMatrix()) * viewProj);
-        meshParameters.world = DirectX::XMMatrixTranspose(XMLoadFloat4x4(&m_meshes[i].WorldMatrix()));
-
-        currentFrame.MeshCB->CopyData(i, meshParameters);
-    }
 
     // Prepare the command list to render a new frame.
     PrepareRender();
@@ -95,10 +90,11 @@ void D3DEngine::Render()
 
     commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
 
+    std::size_t currentCBIndex = 0;
     for (std::size_t i = 0; i < m_meshes.size(); i++)
     {
-        commandList->SetGraphicsRootConstantBufferView(1, currentFrame.MeshCB->GetGPUVirtualAddress(i));
-        m_meshes[i].Render(commandList);
+        m_meshes[i].Render(commandList, currentFrame, viewProj, currentCBIndex);
+        currentCBIndex += m_meshes[i].MeshPartCount();
     }
 
     CompleteRender(frameIdx);
@@ -134,7 +130,7 @@ void D3DEngine::CreateDeviceDependentResources()
     // Initialize the world matrix
     for (auto & mesh : m_meshes)
     {
-        DirectX::XMStoreFloat4x4(&mesh.WorldMatrix(), DirectX::XMMatrixIdentity());
+        mesh.InitWorldMatrix();
     }
 
     // Initialize the view matrix
@@ -201,12 +197,10 @@ void D3DEngine::CompleteRender(int frameIdx)
 
 void D3DEngine::BuildScene()
 {
-    //fx::gltf::Document doc = fx::gltf::LoadFromText("E:/source/fx-gltf/test/data/glTF-Sample-Models/2.0/SciFiHelmet/glTF/SciFiHelmet.gltf");
-    fx::gltf::Document doc = fx::gltf::LoadFromText("E:/source/fx-gltf/test/data/glTF-Sample-Models/2.0/CesiumMilkTruck/glTF/CesiumMilkTruck.gltf");
-    m_meshes.resize(doc.meshes.size());
-    for (std::size_t i = 0; i < doc.meshes.size(); i++)
+    m_meshes.resize(m_doc.meshes.size());
+    for (std::size_t i = 0; i < m_doc.meshes.size(); i++)
     {
-        m_meshes[i].CreateDeviceDependentResources(doc, i, m_deviceResources);
+        m_meshes[i].CreateDeviceDependentResources(m_doc, i, m_deviceResources);
     }
 }
 
@@ -293,7 +287,13 @@ void D3DEngine::BuildPipelineStateObjects()
 
 void D3DEngine::BuildConstantBufferUploadBuffers()
 {
-    m_deviceResources->CreateConstantBuffers(1, m_meshes.size());
+    std::size_t cbCount = 0;
+    for (auto & mesh : m_meshes)
+    {
+        cbCount += mesh.MeshPartCount();
+    }
+
+    m_deviceResources->CreateConstantBuffers(1, cbCount);
 }
 
 void D3DEngine::OnDeviceLost()

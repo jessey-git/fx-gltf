@@ -17,4 +17,5 @@ struct MeshConstantBuffer
 {
     DirectX::XMMATRIX worldViewProj;
     DirectX::XMMATRIX world;
+    DirectX::XMFLOAT3 meshColor;
 };

@@ -26,3 +26,22 @@ DXGI_FORMAT GetFormat(fx::gltf::Accessor const * accessor)
         throw std::runtime_error("Unknown accessor types");
     }
 }
+
+DirectX::XMFLOAT3 HSVtoRBG(float hue, float saturation, float value)
+{
+    DirectX::XMFLOAT3 rgb;
+
+    rgb.x = fabsf(hue * 6.0f - 3.0f) - 1.0f;
+    rgb.y = 2.0f - fabsf(hue * 6.0f - 2.0f);
+    rgb.z = 2.0f - fabsf(hue * 6.0f - 4.0f);
+
+    rgb.x = std::clamp(rgb.x, 0.0f, 1.0f);
+    rgb.y = std::clamp(rgb.y, 0.0f, 1.0f);
+    rgb.z = std::clamp(rgb.z, 0.0f, 1.0f);
+
+    rgb.x = ((rgb.x - 1.0f) * saturation + 1.0f) * value;
+    rgb.y = ((rgb.y - 1.0f) * saturation + 1.0f) * value;
+    rgb.z = ((rgb.z - 1.0f) * saturation + 1.0f) * value;
+
+    return rgb;
+}

@@ -4,21 +4,22 @@
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
 #include "stdafx.h"
+#include <string>
+#include <vector>
+#include <iostream>
+
+#include "clara/clara.hpp"
 #include "Engine.h"
+#include "EngineOptions.h"
 
 class Win32Application
 {
 public:
     static int Run(HINSTANCE hInstance, int nCmdShow)
     {
-        // Parse the command line parameters
-        int argc;
-        LPWSTR * argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-        LocalFree(argv);
+        EngineOptions options = ParseCommandLine();
 
-        const UINT DefaultWidth = 960;
-        const UINT DefaultHeight = 540;
-        std::unique_ptr<Engine> engine = std::make_unique<Engine>(DefaultWidth, DefaultHeight);
+        std::unique_ptr<Engine> engine = std::make_unique<Engine>(options);
 
         // Initialize the window class.
         WNDCLASSEX windowClass = { 0 };
@@ -30,7 +31,7 @@ public:
         windowClass.lpszClassName = L"viewer";
         RegisterClassEx(&windowClass);
 
-        RECT windowRect = { 0, 0, static_cast<LONG>(DefaultWidth), static_cast<LONG>(DefaultHeight) };
+        RECT windowRect = { 0, 0, static_cast<LONG>(options.Width), static_cast<LONG>(options.Height) };
         AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
         // Create the window and store a handle to it.
@@ -68,6 +69,43 @@ public:
 
         // Return this part of the WM_QUIT message to Windows.
         return static_cast<char>(msg.wParam);
+    }
+
+    static EngineOptions ParseCommandLine()
+    {
+        EngineOptions options{};
+        auto cli
+            = clara::Opt(options.Width, "width")
+                ["-w"]["--width"]("Initial window width")
+            | clara::Opt(options.Height, "height")
+                ["-h"]["--height"]("Initial window height")
+            | clara::Arg(options.ModelPath, "model")
+                ("Model to load").required(); // Clara does not support required arguments right now :-/
+
+        int argc;
+        LPWSTR * argv = CommandLineToArgvW(GetCommandLine(), &argc);
+        std::vector<std::string> args(argc - 1);
+        for (int i = 1; i < argc; i++)
+        {
+            std::wstring arg(argv[i]);
+            for (auto c : arg)
+            {
+                args[i - 1].push_back(static_cast<char>(c));
+            }
+        }
+        LocalFree(argv);
+
+        auto results = cli.parse("viewer.exe", clara::detail::TokenStream(args.begin(), args.end()));
+        if (!results)
+        {
+            throw std::runtime_error(results.errorMessage().c_str());
+        }
+        else if (options.ModelPath.empty())
+        {
+            throw std::runtime_error("A model path must be provided");
+        }
+
+        return options;
     }
 
 private:
@@ -128,5 +166,29 @@ private:
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
 {
-    return Win32Application::Run(hInstance, nCmdShow);
+    FILE * attachedOut = nullptr;
+    FILE * attachedIn = nullptr;
+    if (AllocConsole() == TRUE)
+    {
+        freopen_s(&attachedOut, "CONOUT$", "w", stdout);
+        freopen_s(&attachedIn, "CONIN$", "r", stdin);
+    }
+
+    int result = 0;
+    try
+    {
+        result = Win32Application::Run(hInstance, nCmdShow);
+    }
+    catch (std::exception & e)
+    {
+        std::cout << e.what() << std::endl;
+        std::cout << "Press [ENTER] to continue" << std::endl;
+
+        std::cin.get();
+    }
+
+    fclose(attachedOut);
+    fclose(attachedIn);
+
+    return result;
 }

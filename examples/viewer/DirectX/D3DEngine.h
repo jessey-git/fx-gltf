@@ -15,7 +15,7 @@
 class D3DEngine : public DX::IDeviceNotify
 {
 public:
-    D3DEngine();
+    D3DEngine(std::string modelPath);
 
     void Initialize(HWND window, int width, int height);
 
@@ -29,6 +29,8 @@ public:
     void OnDeviceRestored() override;
 
 private:
+    fx::gltf::Document                              m_doc{};
+
     // Device and Frame resources.
     std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};
 

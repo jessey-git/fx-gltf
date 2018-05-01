@@ -11,6 +11,8 @@
 #include "D3DUtil.h"
 #include "MeshData.h"
 
+uint32_t D3DMesh::CurrentMeshPartId = 1;
+
 void D3DMesh::CreateDeviceDependentResources(
     fx::gltf::Document const & doc, std::size_t meshIndex, std::unique_ptr<DX::D3DDeviceResources> const & deviceResources)
 {
@@ -99,20 +101,33 @@ void D3DMesh::CreateDeviceDependentResources(
 
             meshPart.m_indexCount = buffer.accessor->count;
         }
+
+        meshPart.m_meshPartColor = HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895, 1.0), 0.5f, 0.5f);
     }
 }
 
-void D3DMesh::Render(ID3D12GraphicsCommandList * commandList)
+void D3DMesh::Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex)
 {
+    MeshConstantBuffer meshParameters{};
+    meshParameters.worldViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix) * viewProj);
+    meshParameters.world = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix));
+
+    std::size_t meshCBIndex = 0;
     for (auto & meshPart : m_meshParts)
     {
-        D3D12_VERTEX_BUFFER_VIEW * views[2] = { &meshPart.m_vertexBufferView, &meshPart.m_normalBufferView };
+        const std::size_t cbIndex = currentCBIndex + meshCBIndex;
 
+        meshParameters.meshColor = meshPart.m_meshPartColor;
+        currentFrame.MeshCB->CopyData(cbIndex, meshParameters);
+
+        D3D12_VERTEX_BUFFER_VIEW * views[2] = { &meshPart.m_vertexBufferView, &meshPart.m_normalBufferView };
         commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         commandList->IASetVertexBuffers(0, 2, views[0]);
         commandList->IASetIndexBuffer(&meshPart.m_indexBufferView);
-
+        commandList->SetGraphicsRootConstantBufferView(1, currentFrame.MeshCB->GetGPUVirtualAddress(cbIndex));
         commandList->DrawIndexedInstanced(meshPart.m_indexCount, 1, 0, 0, 0);
+
+        meshCBIndex++;
     }
 }
 

@@ -21,6 +21,7 @@ cbuffer MeshConstants : register(b1)
 {
     float4x4 mWorldViewProj;
     float4x4 mWorld;
+    float3 mMeshColor;
 };
 
 
@@ -59,10 +60,10 @@ PS_INPUT TriangleVS(VS_INPUT input)
 //--------------------------------------------------------------------------------------
 float4 LambertPS(PS_INPUT input) : SV_Target
 {
-    float4 finalColor = 0;
+    float4 finalColor = float4(mMeshColor, 1.0f);
 
     //do NdotL lighting for 2 lights
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 1; i++)
     {
         finalColor += saturate(dot((float3) lightDir[i], input.Normal) * lightColor[i]);
     }

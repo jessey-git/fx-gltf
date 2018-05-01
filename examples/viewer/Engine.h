@@ -6,16 +6,17 @@
 #pragma once
 
 #include "DirectX/D3DEngine.h"
+#include "EngineOptions.h"
 #include "StepTimer.h"
 #include "platform.h"
 
 class Engine
 {
 public:
-    Engine(UINT width, UINT height)
-        : m_width(width), m_height(height)
+    Engine(EngineOptions const & options)
+        : m_width(options.Width), m_height(options.Height)
     {
-        m_scene = std::make_unique<D3DEngine>();
+        m_scene = std::make_unique<D3DEngine>(options.ModelPath);
     }
 
     Engine(Engine const &) = delete;
