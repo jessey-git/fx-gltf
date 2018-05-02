@@ -26,6 +26,9 @@
 
 #include "DirectX/d3dx12.h"
 
+#include "StringFormatter.h"
+#include "Logger.h"
+
 namespace DX
 {
     // Helper class for COM exceptions

@@ -102,7 +102,7 @@ void D3DMesh::CreateDeviceDependentResources(
             meshPart.m_indexCount = buffer.accessor->count;
         }
 
-        meshPart.m_meshPartColor = HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895, 1.0), 0.5f, 0.5f);
+        meshPart.m_meshPartColor = HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.70f, 0.80f);
     }
 }
 

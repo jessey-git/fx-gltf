@@ -10,6 +10,7 @@
 #include "D3DDeviceResources.h"
 #include "D3DFrameResources.h"
 #include "D3DMesh.h"
+#include "D3DMeshInstance.h"
 #include "D3DUploadBuffer.h"
 
 class D3DEngine : public DX::IDeviceNotify
@@ -24,34 +25,35 @@ public:
 
     void WindowSizeChanged(int width, int height);
 
+    void Shutdown();
+
     // IDeviceNotify
     void OnDeviceLost() override;
     void OnDeviceRestored() override;
 
 private:
+    // clang-format off
     fx::gltf::Document                              m_doc{};
 
-    // Device and Frame resources.
     std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};
-
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
 
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> m_lambertPipelineState;
+    Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_lambertPipelineState{};
 
-    Microsoft::WRL::ComPtr<ID3D12Fence>     m_fence{};
-    Microsoft::WRL::Wrappers::Event         m_fenceEvent{};
+    Microsoft::WRL::ComPtr<ID3D12Fence>             m_fence{};
+    Microsoft::WRL::Wrappers::Event                 m_fenceEvent{};
 
-    // These computed values will be loaded into a ConstantBuffer
-    // during Render
-    DirectX::XMFLOAT4X4                     m_viewMatrix{};
-    DirectX::XMFLOAT4X4                     m_projectionMatrix{};
-    DirectX::XMFLOAT4                       m_lightDirs[2]{};
-    DirectX::XMFLOAT4                       m_lightColors[2]{};
+    DirectX::XMFLOAT4X4                             m_viewMatrix{};
+    DirectX::XMFLOAT4X4                             m_projectionMatrix{};
+    DirectX::XMFLOAT4                               m_lightDirs[2]{};
+    DirectX::XMFLOAT4                               m_lightColors[2]{};
 
-    float                                   m_curRotationAngleRad{};
+    std::vector<D3DMesh>                            m_meshes{};
+    std::vector<D3DMeshInstance>                    m_meshInstances{};
 
-    std::vector<D3DMesh>                    m_meshes{};
+    float                                           m_curRotationAngleRad{};
+    // clang-format on
 
     void CreateDeviceDependentResources();
     void CreateWindowSizeDependentResources();
@@ -62,7 +64,6 @@ private:
     void BuildScene();
 
     void BuildRootSignature();
-    void BuildFrameResources();
     void BuildDescriptorHeaps();
     void BuildPipelineStateObjects();
     void BuildConstantBufferUploadBuffers();

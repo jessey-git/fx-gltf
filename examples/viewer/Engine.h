@@ -45,7 +45,10 @@ public:
         m_scene->WindowSizeChanged(m_width, m_height);
     }
 
-    void OnDestroy() {}
+    void OnDestroy()
+    {
+        m_scene->Shutdown();
+    }
 
     void OnKeyDown(UINT8) {}
     void OnKeyUp(UINT8) {}

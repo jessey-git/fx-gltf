@@ -6,6 +6,8 @@
 #include "stdafx.h"
 
 #include "D3DEngine.h"
+#include "D3DGraph.h"
+#include "D3DMeshInstance.h"
 #include "EngineOptions.h"
 
 using Microsoft::WRL::ComPtr;
@@ -91,10 +93,12 @@ void D3DEngine::Render()
     commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
 
     std::size_t currentCBIndex = 0;
-    for (std::size_t i = 0; i < m_meshes.size(); i++)
+    for (auto & meshInstance : m_meshInstances)
     {
-        m_meshes[i].Render(commandList, currentFrame, viewProj, currentCBIndex);
-        currentCBIndex += m_meshes[i].MeshPartCount();
+        D3DMesh & mesh = m_meshes[meshInstance.MeshIndex];
+        mesh.SetWorldMatrix(meshInstance.Transform);
+        mesh.Render(commandList, currentFrame, viewProj, currentCBIndex);
+        currentCBIndex += mesh.MeshPartCount();
     }
 
     CompleteRender(frameIdx);
@@ -106,6 +110,11 @@ void D3DEngine::WindowSizeChanged(int width, int height)
         return;
 
     CreateWindowSizeDependentResources();
+}
+
+void D3DEngine::Shutdown()
+{
+    m_deviceResources->WaitForGpu();
 }
 
 void D3DEngine::CreateDeviceDependentResources()
@@ -134,7 +143,7 @@ void D3DEngine::CreateDeviceDependentResources()
     }
 
     // Initialize the view matrix
-    static const DirectX::XMVECTORF32 c_eye = { 4.0f, 2.0f, 10.0f, 0.0f };
+    static const DirectX::XMVECTORF32 c_eye = { 3.0f, 2.0f, 5.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_at = { 0.0f, 0.0f, 0.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_up = { 0.0f, 1.0f, 0.0f, 0.0 };
     DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(c_eye, c_at, c_up));
@@ -174,7 +183,7 @@ void D3DEngine::PrepareRender()
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
 
     // Use linear clear color for gamma-correct rendering.
-    DirectX::XMVECTORF32 Background = { 0.38f, 0.36f, 0.36f, 1.f };
+    DirectX::XMVECTORF32 Background = { 0.26f, 0.24f, 0.24f, 1.0f };
     commandList->ClearRenderTargetView(rtvDescriptor, Background, 0, nullptr);
 
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -197,11 +206,35 @@ void D3DEngine::CompleteRender(int frameIdx)
 
 void D3DEngine::BuildScene()
 {
+    Logger::WriteLine("Building scene...");
+
+    Logger::WriteLine("Building meshes...");
     m_meshes.resize(m_doc.meshes.size());
     for (std::size_t i = 0; i < m_doc.meshes.size(); i++)
     {
         m_meshes[i].CreateDeviceDependentResources(m_doc, i, m_deviceResources);
     }
+
+    Logger::WriteLine("Building scene graph...");
+    std::vector<Graph::Node> graphNodes(m_doc.nodes.size());
+    DirectX::XMMATRIX rootTransform = DirectX::XMMatrixIdentity();
+    for (uint32_t sceneNode : m_doc.scenes[0].nodes)
+    {
+        Graph::Visit(m_doc, sceneNode, rootTransform, graphNodes);
+    }
+
+    Logger::WriteLine("Traversing scene...");
+    for (auto & graphNode : graphNodes)
+    {
+        if (graphNode.meshIndex >= 0)
+        {
+            D3DMeshInstance instance{ static_cast<uint32_t>(graphNode.meshIndex) };
+            instance.Transform = graphNode.currentTransform;
+            m_meshInstances.push_back(instance);
+        }
+    }
+
+    Logger::WriteLine("Found {0} mesh instances", m_meshInstances.size());
 }
 
 void D3DEngine::BuildRootSignature()
@@ -233,10 +266,6 @@ void D3DEngine::BuildRootSignature()
     ID3D12Device * device = m_deviceResources->GetD3DDevice();
     DX::ThrowIfFailed(device->CreateRootSignature(
         0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(m_rootSignature.ReleaseAndGetAddressOf())));
-}
-
-void D3DEngine::BuildFrameResources()
-{
 }
 
 void D3DEngine::BuildDescriptorHeaps()
@@ -288,8 +317,9 @@ void D3DEngine::BuildPipelineStateObjects()
 void D3DEngine::BuildConstantBufferUploadBuffers()
 {
     std::size_t cbCount = 0;
-    for (auto & mesh : m_meshes)
+    for (auto & meshInstance : m_meshInstances)
     {
+        D3DMesh & mesh = m_meshes[meshInstance.MeshIndex];
         cbCount += mesh.MeshPartCount();
     }
 

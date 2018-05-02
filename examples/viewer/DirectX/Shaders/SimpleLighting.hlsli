@@ -62,12 +62,8 @@ float4 LambertPS(PS_INPUT input) : SV_Target
 {
     float4 finalColor = float4(mMeshColor, 1.0f);
 
-    //do NdotL lighting for 2 lights
-    for (int i = 0; i < 1; i++)
-    {
-        finalColor += saturate(dot((float3) lightDir[i], input.Normal) * lightColor[i]);
-    }
-    finalColor.a = 1;
+    finalColor += saturate(dot((float3) lightDir[0], input.Normal) * lightColor[0]);
+    //finalColor += saturate(dot((float3) lightDir[1], input.Normal) * lightColor[1]);
 
     return finalColor;
 }

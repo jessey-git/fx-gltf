@@ -18,6 +18,12 @@ public:
 
     void InitWorldMatrix() { DirectX::XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixIdentity()); }
 
+    void SetWorldMatrix(DirectX::XMMATRIX m)
+    {
+        XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixMultiply(m, DirectX::XMMatrixScaling(m_scalingFactor, m_scalingFactor, m_scalingFactor)));
+        //DirectX::XMStoreFloat4x4(&m_worldMatrix, m);
+    }
+
     void Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex);
 
     void Rotate(float rotationAngleRad);
@@ -45,6 +51,8 @@ private:
     DirectX::XMFLOAT4X4 m_worldMatrix{};
 
     std::vector<D3DMeshPart> m_meshParts{};
+
+    float m_scalingFactor = 1.0f;
 
     static uint32_t CurrentMeshPartId;
 };
