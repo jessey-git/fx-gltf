@@ -5,8 +5,8 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 ## Features
 * DirectX 12
 
-<img style="float:left;width:50%;" src="screenshots/screenshot00.png">
-<img style="float:left;width:50%;" src="screenshots/screenshot01.png">
+![screenshot](screenshots/screenshot00.png)
+![screenshot](screenshots/screenshot01.png)
 
 ## Design
 
