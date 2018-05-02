@@ -7,6 +7,11 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 
 ![screenshot](screenshots/screenshot00.png)
 ![screenshot](screenshots/screenshot01.png)
+![screenshot](screenshots/screenshot02.png)
+![screenshot](screenshots/screenshot03.png)
+
+## Usage
+```viewer.exe [--width: width] [--height: height] model```
 
 ## Design
 
@@ -47,4 +52,5 @@ SOFTWARE.
 
 This software would not be possible without the help of these great resources. Thanks a lot!
 
-* [d3dx12.h](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12)
+* [d3dx12.h](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12) containing helper structures and functions for D3D12
+* [Clara](https://github.com/catchorg/Clara) for command-line parsing

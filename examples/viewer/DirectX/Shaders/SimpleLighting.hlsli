@@ -62,6 +62,7 @@ float4 LambertPS(PS_INPUT input) : SV_Target
 {
     float4 finalColor = float4(mMeshColor, 1.0f);
 
+    input.Normal = normalize(input.Normal);
     finalColor += saturate(dot((float3) lightDir[0], input.Normal) * lightColor[0]);
     //finalColor += saturate(dot((float3) lightDir[1], input.Normal) * lightColor[1]);
 
