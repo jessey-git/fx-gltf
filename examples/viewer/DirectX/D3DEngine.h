@@ -53,6 +53,8 @@ private:
     std::vector<D3DMeshInstance>                    m_meshInstances{};
 
     float                                           m_curRotationAngleRad{};
+    float                                           m_autoScaleFactor{};
+    Util::BBox                                      m_boundingBox{};
     // clang-format on
 
     void CreateDeviceDependentResources();

@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "D3DMesh.h"
-#include "D3DUtil.h"
 #include "MeshData.h"
 
 uint32_t D3DMesh::CurrentMeshPartId = 1;
@@ -48,6 +47,11 @@ void D3DMesh::CreateDeviceDependentResources(
             meshPart.m_vertexBufferView.BufferLocation = meshPart.m_vertexBuffer->GetGPUVirtualAddress();
             meshPart.m_vertexBufferView.StrideInBytes = buffer.dataStride;
             meshPart.m_vertexBufferView.SizeInBytes = buffer.totalSize;
+
+            Util::BBox boundingBox{};
+            boundingBox.min = DirectX::XMFLOAT3(buffer.accessor->min.data());
+            boundingBox.max = DirectX::XMFLOAT3(buffer.accessor->max.data());
+            Util::GrowBbox(m_boundingBox, boundingBox);
         }
 
         // Create the vertex buffer
@@ -96,13 +100,13 @@ void D3DMesh::CreateDeviceDependentResources(
 
             // Initialize the index buffer view.
             meshPart.m_indexBufferView.BufferLocation = meshPart.m_indexBuffer->GetGPUVirtualAddress();
-            meshPart.m_indexBufferView.Format = GetFormat(buffer.accessor);
+            meshPart.m_indexBufferView.Format = Util::GetFormat(buffer.accessor);
             meshPart.m_indexBufferView.SizeInBytes = buffer.totalSize;
 
             meshPart.m_indexCount = buffer.accessor->count;
         }
 
-        meshPart.m_meshPartColor = HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.70f, 0.80f);
+        meshPart.m_meshPartColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
     }
 }
 

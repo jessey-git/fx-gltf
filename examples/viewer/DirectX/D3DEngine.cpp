@@ -96,7 +96,7 @@ void D3DEngine::Render()
     for (auto & meshInstance : m_meshInstances)
     {
         D3DMesh & mesh = m_meshes[meshInstance.MeshIndex];
-        mesh.SetWorldMatrix(meshInstance.Transform);
+        mesh.SetWorldMatrix(meshInstance.Transform, m_autoScaleFactor);
         mesh.Render(commandList, currentFrame, viewProj, currentCBIndex);
         currentCBIndex += mesh.MeshPartCount();
     }
@@ -149,7 +149,7 @@ void D3DEngine::CreateDeviceDependentResources()
     DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(c_eye, c_at, c_up));
 
     // Initialize the lighting parameters
-    m_lightDirs[0] = DirectX::XMFLOAT4(-0.67f, 0.67f, 0.67f, 1.0f);
+    m_lightDirs[0] = DirectX::XMFLOAT4(-0.57f, 0.57f, 0.57f, 1.0f);
     m_lightDirs[1] = DirectX::XMFLOAT4(0.57f, 0.0f, -0.57f, 1.0f);
 
     m_lightColors[0] = DirectX::XMFLOAT4(1.0f, 0.83f, 0.57f, 1.0f);
@@ -213,6 +213,7 @@ void D3DEngine::BuildScene()
     for (std::size_t i = 0; i < m_doc.meshes.size(); i++)
     {
         m_meshes[i].CreateDeviceDependentResources(m_doc, i, m_deviceResources);
+        Util::GrowBbox(m_boundingBox, m_meshes[i].MeshBBox());
     }
 
     Logger::WriteLine("Building scene graph...");
@@ -234,7 +235,15 @@ void D3DEngine::BuildScene()
         }
     }
 
+    float distance;
+    DirectX::XMVECTOR sub = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.max), DirectX::XMLoadFloat3(&m_boundingBox.min));
+    DirectX::XMVECTOR length = DirectX::XMVector3Length(sub);
+    DirectX::XMStoreFloat(&distance, length);
+    m_autoScaleFactor = 5.19f / distance;
+
     Logger::WriteLine("Found {0} mesh instances", m_meshInstances.size());
+    Logger::WriteLine("Scene bbox: [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.min.x, m_boundingBox.min.y, m_boundingBox.min.z, m_boundingBox.max.x, m_boundingBox.max.y, m_boundingBox.max.z);
+    Logger::WriteLine("Auto-scale factor: {0:F4}", m_autoScaleFactor);
 }
 
 void D3DEngine::BuildRootSignature()

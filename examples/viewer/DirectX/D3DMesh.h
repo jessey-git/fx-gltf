@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "D3DDeviceResources.h"
+#include "D3DUtil.h"
 
 class D3DMesh
 {
@@ -18,10 +19,9 @@ public:
 
     void InitWorldMatrix() { DirectX::XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixIdentity()); }
 
-    void SetWorldMatrix(DirectX::XMMATRIX m)
+    void SetWorldMatrix(DirectX::XMMATRIX m, float scalingFactor)
     {
-        XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixMultiply(m, DirectX::XMMatrixScaling(m_scalingFactor, m_scalingFactor, m_scalingFactor)));
-        //DirectX::XMStoreFloat4x4(&m_worldMatrix, m);
+        XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixMultiply(m, DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor)));
     }
 
     void Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex);
@@ -29,6 +29,8 @@ public:
     void Rotate(float rotationAngleRad);
 
     void Reset();
+
+    Util::BBox MeshBBox() { return m_boundingBox; }
 
     std::size_t MeshPartCount() { return m_meshParts.size(); }
 
@@ -52,7 +54,7 @@ private:
 
     std::vector<D3DMeshPart> m_meshParts{};
 
-    float m_scalingFactor = 1.0f;
+    Util::BBox m_boundingBox;
 
     static uint32_t CurrentMeshPartId;
 };
