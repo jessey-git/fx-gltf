@@ -50,7 +50,7 @@ namespace Util
 
     static DirectX::XMFLOAT3 HSVtoRBG(float hue, float saturation, float value)
     {
-        DirectX::XMFLOAT3 rgb;
+        DirectX::XMFLOAT3 rgb{};
 
         rgb.x = fabsf(hue * 6.0f - 3.0f) - 1.0f;
         rgb.y = 2.0f - fabsf(hue * 6.0f - 2.0f);
@@ -66,4 +66,4 @@ namespace Util
 
         return rgb;
     }
-}
+} // namespace Util

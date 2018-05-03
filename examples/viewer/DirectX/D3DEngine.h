@@ -16,7 +16,7 @@
 class D3DEngine : public DX::IDeviceNotify
 {
 public:
-    D3DEngine(std::string modelPath);
+    D3DEngine(std::string const & modelPath);
 
     void Initialize(HWND window, int width, int height);
 
@@ -41,11 +41,9 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_lambertPipelineState{};
 
-    Microsoft::WRL::ComPtr<ID3D12Fence>             m_fence{};
-    Microsoft::WRL::Wrappers::Event                 m_fenceEvent{};
-
     DirectX::XMFLOAT4X4                             m_viewMatrix{};
     DirectX::XMFLOAT4X4                             m_projectionMatrix{};
+    DirectX::XMFLOAT4X4                             m_viewProjectionMatrix{};
     DirectX::XMFLOAT4                               m_lightDirs[2]{};
     DirectX::XMFLOAT4                               m_lightColors[2]{};
 
@@ -61,7 +59,7 @@ private:
     void CreateWindowSizeDependentResources();
 
     void PrepareRender();
-    void CompleteRender(int frameIdx);
+    void CompleteRender();
 
     void BuildScene();
 

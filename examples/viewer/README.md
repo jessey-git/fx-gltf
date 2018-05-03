@@ -15,9 +15,41 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 
 ## Design
 
-| Entry Point      | Engine control | Device Specific Engine    |
-| -----------------| -------------- | --------------------------|
-| Win32Application | Engine         | D3DEngine or VulkanEngine |
+### Code
+
+#### ```MeshData.h```
+* Processes a given ```fx::gltf::Mesh```/```fx::gltf::Mesh::Primitive``` pair using its ```fx::gltf::Buffer``` and ```fx::gltf::Accessor``` information and exposes it in a more graphics-api friendly manner
+
+#### ```DirectX/D3DMeshData.h```
+* Uses ```MeshData``` to build the actual vertex/normal/index etc. buffers for DirectX 12
+* Performs the mesh's command list drawing during scene render
+
+#### ```DirectX/D3DGraph.h```
+* Uses ```fx::gltf::Document``` and ```fx::gltf::Node``` to visit each node in the scene-graph
+* Applies the node's transformation data so we can use it during update/render
+
+#### ```DirectX/D3DScene.h```
+* Builds all DirectX 12 resources necessary for rendering
+* Uses ```D3DGraph``` to build/traverse the scene-graph, building up ```D3DMeshInstance```s along the way
+* Coordinates the update/render sequencing flow
+
+### Psuedo call-graph
+ * Win32Application
+ * Engine
+     * D3DEngine
+         * Initialization
+             * Load glTF document
+             * Build glTF mesh pieces
+             * Build glTF scene-graph
+             * Build device-dependant DirectX 12 resources
+             * Build window-size-dependant DirectX 12 resources
+         * Update/Render loop
+             * Set Root Signature + PSO
+             * Set scene constant buffers
+             * Draw each mesh
+                 * Set mesh constant buffers
+                 * Set mesh vertex/normal/index buffers
+                 * Perform actual draw
 
 ## Supported Compilers
 * Microsoft Visual C++ 2017 15.6+ (and possibly earlier)

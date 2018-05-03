@@ -12,7 +12,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-D3DEngine::D3DEngine(std::string modelPath)
+D3DEngine::D3DEngine(std::string const & modelPath)
 {
     m_doc = fx::gltf::LoadFromText(modelPath);
 
@@ -29,12 +29,6 @@ void D3DEngine::Initialize(HWND window, int width, int height)
 
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
-
-    m_fenceEvent.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
-    if (!m_fenceEvent.IsValid())
-    {
-        throw std::exception("CreateEvent");
-    }
 }
 
 void D3DEngine::Update(float elapsedTime)
@@ -55,17 +49,8 @@ void D3DEngine::Update(float elapsedTime)
 
 void D3DEngine::Render()
 {
-    // Check to see if the GPU is keeping up
-    int frameIdx = m_deviceResources->GetCurrentFrameIndex();
-    int numBackBuffers = m_deviceResources->GetBackBufferCount();
-    uint64_t completedValue = m_fence->GetCompletedValue();
-    if ((frameIdx > completedValue) // if frame index is reset to zero it may temporarily be smaller than the last GPU signal
-        && (frameIdx - completedValue > numBackBuffers))
-    {
-        // GPU not caught up, wait for at least one available frame
-        DX::ThrowIfFailed(m_fence->SetEventOnCompletion(frameIdx - numBackBuffers, m_fenceEvent.Get()));
-        WaitForSingleObjectEx(m_fenceEvent.Get(), INFINITE, FALSE);
-    }
+    // Prepare the command list to render a new frame.
+    PrepareRender();
 
     D3DFrameResource & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
@@ -76,32 +61,28 @@ void D3DEngine::Render()
     sceneParameters.lightColor[1] = XMLoadFloat4(&m_lightColors[1]);
     currentFrame.SceneCB->CopyData(0, sceneParameters);
 
-    DirectX::CXMMATRIX viewProj = XMLoadFloat4x4(&m_viewMatrix) * XMLoadFloat4x4(&m_projectionMatrix);
-
-    // Prepare the command list to render a new frame.
-    PrepareRender();
-
-    auto commandList = m_deviceResources->GetCommandList();
+    ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
 
     ID3D12DescriptorHeap * descriptorHeaps[] = { m_cbvHeap.Get() };
     commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
     // Set the root signature and pipeline state for the command list
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+    commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
     commandList->SetPipelineState(m_lambertPipelineState.Get());
 
-    commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
-
     std::size_t currentCBIndex = 0;
+    DirectX::CXMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
     for (auto & meshInstance : m_meshInstances)
     {
         D3DMesh & mesh = m_meshes[meshInstance.MeshIndex];
         mesh.SetWorldMatrix(meshInstance.Transform, m_autoScaleFactor);
         mesh.Render(commandList, currentFrame, viewProj, currentCBIndex);
+
         currentCBIndex += mesh.MeshPartCount();
     }
 
-    CompleteRender(frameIdx);
+    CompleteRender();
 }
 
 void D3DEngine::WindowSizeChanged(int width, int height)
@@ -132,10 +113,6 @@ void D3DEngine::CreateDeviceDependentResources()
     // Wait until assets have been uploaded to the GPU.
     m_deviceResources->WaitForGpu();
 
-    // Create a fence for synchronizing between the CPU and the GPU
-    DX::ThrowIfFailed(
-        device->CreateFence(m_deviceResources->GetCurrentFrameIndex(), D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));
-
     // Initialize the world matrix
     for (auto & mesh : m_meshes)
     {
@@ -159,15 +136,12 @@ void D3DEngine::CreateDeviceDependentResources()
 void D3DEngine::CreateWindowSizeDependentResources()
 {
     // Initialize the projection matrix
-    auto size = m_deviceResources->GetOutputSize();
-    DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, float(size.right) / float(size.bottom), 0.01f, 400.0f);
+    const auto size = m_deviceResources->GetOutputSize();
+    DirectX::CXMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, float(size.right) / float(size.bottom), 0.01f, 400.0f);
+    DirectX::CXMMATRIX viewProj = XMLoadFloat4x4(&m_viewMatrix) * projection;
 
-    XMStoreFloat4x4(&m_projectionMatrix, projection);
-
-    // The frame index will be reset to zero when the window size changes
-    // So we need to tell the GPU to signal our fence starting with zero
-    uint64_t currentIdx = m_deviceResources->GetCurrentFrameIndex();
-    m_deviceResources->GetCommandQueue()->Signal(m_fence.Get(), currentIdx);
+    DirectX::XMStoreFloat4x4(&m_projectionMatrix, projection);
+    DirectX::XMStoreFloat4x4(&m_viewProjectionMatrix, viewProj);
 }
 
 void D3DEngine::PrepareRender()
@@ -195,13 +169,10 @@ void D3DEngine::PrepareRender()
     commandList->RSSetScissorRects(1, &scissorRect);
 }
 
-void D3DEngine::CompleteRender(int frameIdx)
+void D3DEngine::CompleteRender()
 {
     // Show the new frame.
     m_deviceResources->Present();
-
-    // GPU will signal an increasing value each frame
-    m_deviceResources->GetCommandQueue()->Signal(m_fence.Get(), frameIdx);
 }
 
 void D3DEngine::BuildScene()
@@ -338,8 +309,6 @@ void D3DEngine::BuildConstantBufferUploadBuffers()
 void D3DEngine::OnDeviceLost()
 {
     m_rootSignature.Reset();
-
-    m_fence.Reset();
 
     for (auto & mesh : m_meshes)
     {
