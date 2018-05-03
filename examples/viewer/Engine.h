@@ -16,7 +16,7 @@ public:
     Engine(EngineOptions const & options)
         : m_width(options.Width), m_height(options.Height)
     {
-        m_scene = std::make_unique<D3DEngine>(options.ModelPath);
+        m_scene = std::make_unique<D3DEngine>(options);
     }
 
     Engine(Engine const &) = delete;

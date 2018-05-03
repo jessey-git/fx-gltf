@@ -12,9 +12,9 @@
 
 using Microsoft::WRL::ComPtr;
 
-D3DEngine::D3DEngine(std::string const & modelPath)
+D3DEngine::D3DEngine(EngineOptions const & options) : m_options(options)
 {
-    m_doc = fx::gltf::LoadFromText(modelPath);
+    m_doc = fx::gltf::LoadFromText(options.ModelPath);
 
     m_deviceResources = std::make_unique<DX::D3DDeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
     m_deviceResources->RegisterDeviceNotify(this);
@@ -33,17 +33,18 @@ void D3DEngine::Initialize(HWND window, int width, int height)
 
 void D3DEngine::Update(float elapsedTime)
 {
-    // Update the rotation constant
-    m_curRotationAngleRad += elapsedTime / 2.f;
-    if (m_curRotationAngleRad >= DirectX::XM_2PI)
+    if (m_options.AutoRotate)
     {
-        m_curRotationAngleRad -= DirectX::XM_2PI;
-    }
+        m_curRotationAngleRad += elapsedTime / 2.f;
+        if (m_curRotationAngleRad >= DirectX::XM_2PI)
+        {
+            m_curRotationAngleRad -= DirectX::XM_2PI;
+        }
 
-    // Rotate the cube around the origin
-    for (auto & mesh : m_meshes)
-    {
-        mesh.Rotate(m_curRotationAngleRad);
+        for (auto & meshInstance : m_meshInstances)
+        {
+            meshInstance.Transform = meshInstance.BaseTransform * DirectX::XMMatrixRotationY(m_curRotationAngleRad);
+        }
     }
 }
 
@@ -55,10 +56,10 @@ void D3DEngine::Render()
     D3DFrameResource & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
     SceneConstantBuffer sceneParameters{};
-    sceneParameters.lightDir[0] = XMLoadFloat4(&m_lightDirs[0]);
-    sceneParameters.lightDir[1] = XMLoadFloat4(&m_lightDirs[1]);
-    sceneParameters.lightColor[0] = XMLoadFloat4(&m_lightColors[0]);
-    sceneParameters.lightColor[1] = XMLoadFloat4(&m_lightColors[1]);
+    sceneParameters.lightDir[0] = DirectX::XMLoadFloat4(&m_lightDirs[0]);
+    sceneParameters.lightDir[1] = DirectX::XMLoadFloat4(&m_lightDirs[1]);
+    sceneParameters.lightColor[0] = DirectX::XMLoadFloat4(&m_lightColors[0]);
+    sceneParameters.lightColor[1] = DirectX::XMLoadFloat4(&m_lightColors[1]);
     currentFrame.SceneCB->CopyData(0, sceneParameters);
 
     ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
@@ -113,10 +114,18 @@ void D3DEngine::CreateDeviceDependentResources()
     // Wait until assets have been uploaded to the GPU.
     m_deviceResources->WaitForGpu();
 
-    // Initialize the world matrix
-    for (auto & mesh : m_meshes)
+    // Initialize the world matrix for each mesh instance...
+    DirectX::XMVECTOR scale{ m_autoScaleFactor, m_autoScaleFactor, m_autoScaleFactor };
+    DirectX::XMVECTOR mid = DirectX::XMVectorDivide(
+        DirectX::XMVectorMultiply(
+            DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&m_boundingBox.min), DirectX::XMLoadFloat3(&m_boundingBox.max)),
+            { m_autoScaleFactor, m_autoScaleFactor, m_autoScaleFactor }),
+        { 2.0f, 2.0f, 2.0f });
+    mid = DirectX::XMVectorNegate(mid);
+
+    for (auto & meshInstance : m_meshInstances)
     {
-        mesh.InitWorldMatrix();
+        meshInstance.BaseTransform = meshInstance.BaseTransform * DirectX::XMMatrixTranslationFromVector(mid);
     }
 
     // Initialize the view matrix
@@ -138,7 +147,7 @@ void D3DEngine::CreateWindowSizeDependentResources()
     // Initialize the projection matrix
     const auto size = m_deviceResources->GetOutputSize();
     DirectX::CXMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, float(size.right) / float(size.bottom), 0.01f, 400.0f);
-    DirectX::CXMMATRIX viewProj = XMLoadFloat4x4(&m_viewMatrix) * projection;
+    DirectX::CXMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewMatrix) * projection;
 
     DirectX::XMStoreFloat4x4(&m_projectionMatrix, projection);
     DirectX::XMStoreFloat4x4(&m_viewProjectionMatrix, viewProj);
@@ -201,7 +210,7 @@ void D3DEngine::BuildScene()
         if (graphNode.meshIndex >= 0)
         {
             D3DMeshInstance instance{ static_cast<uint32_t>(graphNode.meshIndex) };
-            instance.Transform = graphNode.currentTransform;
+            instance.Transform = instance.BaseTransform = graphNode.currentTransform;
             m_meshInstances.push_back(instance);
         }
     }
@@ -212,7 +221,7 @@ void D3DEngine::BuildScene()
     DirectX::XMStoreFloat(&distance, length);
     m_autoScaleFactor = 5.19f / distance;
 
-    Logger::WriteLine("Found {0} mesh instances", m_meshInstances.size());
+    Logger::WriteLine("Found {0} mesh instance(s)", m_meshInstances.size());
     Logger::WriteLine("Scene bbox: [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.min.x, m_boundingBox.min.y, m_boundingBox.min.z, m_boundingBox.max.x, m_boundingBox.max.y, m_boundingBox.max.z);
     Logger::WriteLine("Auto-scale factor: {0:F4}", m_autoScaleFactor);
 }

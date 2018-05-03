@@ -17,16 +17,12 @@ public:
     void CreateDeviceDependentResources(
         fx::gltf::Document const & doc, std::size_t meshIndex, std::unique_ptr<DX::D3DDeviceResources> const & deviceResources);
 
-    void InitWorldMatrix() { DirectX::XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixIdentity()); }
-
     void SetWorldMatrix(DirectX::XMMATRIX m, float scalingFactor)
     {
         XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixMultiply(m, DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor)));
     }
 
     void Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex);
-
-    void Rotate(float rotationAngleRad);
 
     void Reset();
 

@@ -135,11 +135,6 @@ void D3DMesh::Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource c
     }
 }
 
-void D3DMesh::Rotate(float rotationAngleRad)
-{
-    XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixMultiply(DirectX::XMMatrixRotationY(rotationAngleRad), DirectX::XMMatrixScaling(1, 1, 1)));
-}
-
 void D3DMesh::Reset()
 {
     for (auto & meshPart : m_meshParts)

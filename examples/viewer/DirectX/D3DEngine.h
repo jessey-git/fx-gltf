@@ -12,11 +12,12 @@
 #include "D3DMesh.h"
 #include "D3DMeshInstance.h"
 #include "D3DUploadBuffer.h"
+#include "EngineOptions.h"
 
 class D3DEngine : public DX::IDeviceNotify
 {
 public:
-    D3DEngine(std::string const & modelPath);
+    D3DEngine(EngineOptions const & options);
 
     void Initialize(HWND window, int width, int height);
 
@@ -33,6 +34,7 @@ public:
 
 private:
     // clang-format off
+    EngineOptions                                   m_options{};
     fx::gltf::Document                              m_doc{};
 
     std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};

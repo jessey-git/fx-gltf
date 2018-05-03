@@ -11,5 +11,6 @@ struct D3DMeshInstance
 {
     uint32_t MeshIndex;
 
+    DirectX::XMMATRIX BaseTransform;
     DirectX::XMMATRIX Transform;
 };

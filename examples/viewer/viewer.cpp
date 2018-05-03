@@ -17,7 +17,11 @@ class Win32Application
 public:
     static int Run(HINSTANCE hInstance, int nCmdShow)
     {
-        EngineOptions options = ParseCommandLine();
+        EngineOptions options{};
+        if (!TryParseCommandLine(options))
+        {
+            return -1;
+        }
 
         std::unique_ptr<Engine> engine = std::make_unique<Engine>(options);
 
@@ -71,16 +75,19 @@ public:
         return static_cast<char>(msg.wParam);
     }
 
-    static EngineOptions ParseCommandLine()
+    static bool TryParseCommandLine(EngineOptions & options)
     {
-        EngineOptions options{};
+        bool showHelp{};
         auto cli
-            = clara::Opt(options.Width, "width")
-                ["-w"]["--width"]("Initial window width")
+            = clara::Help(showHelp)
+            | clara::Opt(options.Width, "width")
+                ["--width"]("Initial window width")
             | clara::Opt(options.Height, "height")
-                ["-h"]["--height"]("Initial window height")
+                ["--height"]("Initial window height")
+            | clara::Opt(options.AutoRotate)
+                ["-r"]["--rotate"]("Auto rotate model")
             | clara::Arg(options.ModelPath, "model")
-                ("Model to load").required(); // Clara does not support required arguments right now :-/
+                ("Model to load").required(); // Clara does not enforce required arguments right now :-/
 
         int argc;
         LPWSTR * argv = CommandLineToArgvW(GetCommandLine(), &argc);
@@ -96,6 +103,12 @@ public:
         LocalFree(argv);
 
         auto results = cli.parse("viewer.exe", clara::detail::TokenStream(args.begin(), args.end()));
+        if (showHelp)
+        {
+            std::cout << cli << std::endl << std::endl;
+            return false;
+        }
+
         if (!results)
         {
             throw std::runtime_error(results.errorMessage().c_str());
@@ -105,7 +118,7 @@ public:
             throw std::runtime_error("A model path must be provided");
         }
 
-        return options;
+        return true;
     }
 
 private:
@@ -174,7 +187,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
         freopen_s(&attachedIn, "CONIN$", "r", stdin);
     }
 
-    int result = 0;
+    int result = -1;
     try
     {
         result = Win32Application::Run(hInstance, nCmdShow);
@@ -182,8 +195,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
     catch (std::exception & e)
     {
         std::cout << e.what() << std::endl;
-        std::cout << "Press [ENTER] to continue" << std::endl;
+    }
 
+    if (result < 0)
+    {
+        std::cout << "Press [ENTER] to continue" << std::endl;
         std::cin.get();
     }
 
