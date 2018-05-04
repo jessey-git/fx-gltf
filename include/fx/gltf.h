@@ -306,7 +306,7 @@ namespace gltf
             uint32_t version{};
             uint32_t length{};
 
-            ChunkHeader jsonHeader;
+            ChunkHeader jsonHeader{};
         };
 
         constexpr uint32_t DefaultMaxBufferCount = 8;

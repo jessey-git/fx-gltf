@@ -21,7 +21,6 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
     * [Safety and Robustness](#safety-and-robustness)
     * [Performance](#performance)
 
-
 ## Usage and Integration
 
 ### Installation
@@ -68,6 +67,9 @@ readQuotas.MaxFileSize = 8 * 1024 * 1024;          // default: 32mb (applies to 
 
 fx::gltf::Document docFromInternet = fx::gltf::LoadFromBinary("untrusted.glb", readQuotas);
 ```
+
+### Applied Integration
+See the DirectX 12 enabled [viewer](examples/viewer) example for a demonstration of how to leverage ```fx-gltf``` in a full application context.
 
 ## Safety and Robustness
 
@@ -228,7 +230,7 @@ $ ctest --output-on-failure -C [Debug or Release]
 * Clang 5.0+
 * GCC 6.1+
 
-## Known Issues
+## Known Issues and TODOs
 ### glTF 2.0 support
 * No known issues or missing features
 
@@ -236,8 +238,8 @@ $ ctest --output-on-failure -C [Debug or Release]
 * No known issues
 
 ### Packaging
- * Publish to [vcpkg](https://github.com/Microsoft/vcpkg) for easier package maintenance within MSVC environments
- * Ship a C++20 Modules file in addition to the header
+ * TODO: Publish to [vcpkg](https://github.com/Microsoft/vcpkg) for easier package maintenance within MSVC environments
+ * TODO: Ship a C++20 Modules file in addition to the header
 
 ### General (future)
 * API: Improvement: Make creation of objects easier when building documents by hand (C++20 will allow aggregate struct initialization so maybe that's all that is needed...)
