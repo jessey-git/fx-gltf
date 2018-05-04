@@ -179,8 +179,8 @@ private:
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
 {
-    FILE * attachedOut = nullptr;
-    FILE * attachedIn = nullptr;
+    FILE * attachedOut{};
+    FILE * attachedIn{};
     if (AllocConsole() == TRUE)
     {
         freopen_s(&attachedOut, "CONOUT$", "w", stdout);
@@ -203,8 +203,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
         std::cin.get();
     }
 
-    fclose(attachedOut);
-    fclose(attachedIn);
+    if (attachedOut != nullptr)
+    {
+        fclose(attachedOut);
+    }
+
+    if (attachedIn != nullptr)
+    {
+        fclose(attachedIn);
+    }
 
     return result;
 }

@@ -17,7 +17,7 @@
 class D3DEngine : public DX::IDeviceNotify
 {
 public:
-    D3DEngine(EngineOptions const & options);
+    explicit D3DEngine(EngineOptions const & options);
 
     void Initialize(HWND window, int width, int height);
 
@@ -26,7 +26,7 @@ public:
 
     void WindowSizeChanged(int width, int height);
 
-    void Shutdown();
+    void Shutdown() noexcept;
 
     // IDeviceNotify
     void OnDeviceLost() override;

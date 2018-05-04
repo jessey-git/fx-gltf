@@ -48,7 +48,7 @@ public:
         m_mappedData = nullptr;
     }
 
-    ID3D12Resource * Resource() const
+    ID3D12Resource * Resource() const noexcept
     {
         return m_uploadBuffer.Get();
     }
@@ -58,7 +58,7 @@ public:
         return Resource()->GetGPUVirtualAddress() + (elementIndex * m_elementByteSize);
     }
 
-    void CopyData(std::size_t elementIndex, T const & data)
+    void CopyData(std::size_t elementIndex, T const & data) noexcept
     {
         std::memcpy(&m_mappedData[elementIndex * m_elementByteSize], &data, sizeof(T));
     }

@@ -26,9 +26,9 @@ public:
 
     void Reset();
 
-    Util::BBox MeshBBox() { return m_boundingBox; }
+    Util::BBox MeshBBox() noexcept { return m_boundingBox; }
 
-    std::size_t MeshPartCount() { return m_meshParts.size(); }
+    std::size_t MeshPartCount() noexcept { return m_meshParts.size(); }
 
 private:
     struct D3DMeshPart

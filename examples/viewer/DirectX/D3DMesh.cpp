@@ -27,7 +27,7 @@ void D3DMesh::CreateDeviceDependentResources(
         D3DMeshPart & meshPart = m_meshParts[i];
         if (mesh.HasVertexData())
         {
-            MeshData::BufferInfo buffer = mesh.VertexBuffer();
+            const MeshData::BufferInfo buffer = mesh.VertexBuffer();
             const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(buffer.totalSize);
             DX::ThrowIfFailed(device->CreateCommittedResource(
                 &uploadHeapProperties,
@@ -51,14 +51,13 @@ void D3DMesh::CreateDeviceDependentResources(
             Util::BBox boundingBox{};
             boundingBox.min = DirectX::XMFLOAT3(buffer.accessor->min.data());
             boundingBox.max = DirectX::XMFLOAT3(buffer.accessor->max.data());
-            Util::GrowBbox(m_boundingBox, boundingBox);
+            Util::AdjustBBox(m_boundingBox, boundingBox);
         }
 
         // Create the vertex buffer
         if (mesh.HasNormalData())
         {
-            MeshData::BufferInfo buffer = mesh.NormalBuffer();
-
+            const MeshData::BufferInfo buffer = mesh.NormalBuffer();
             const CD3DX12_RESOURCE_DESC resourceDescN = CD3DX12_RESOURCE_DESC::Buffer(buffer.totalSize);
             DX::ThrowIfFailed(device->CreateCommittedResource(
                 &uploadHeapProperties,
@@ -82,7 +81,7 @@ void D3DMesh::CreateDeviceDependentResources(
         // Create the index buffer
         if (mesh.HasIndexData())
         {
-            MeshData::BufferInfo buffer = mesh.IndexBuffer();
+            const MeshData::BufferInfo buffer = mesh.IndexBuffer();
             const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(buffer.totalSize);
             DX::ThrowIfFailed(device->CreateCommittedResource(
                 &uploadHeapProperties,

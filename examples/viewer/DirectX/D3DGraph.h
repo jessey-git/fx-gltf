@@ -17,7 +17,7 @@ namespace Graph
         DirectX::XMMATRIX currentTransform{};
     };
 
-    void Visit(fx::gltf::Document & doc, uint32_t nodeIndex, DirectX::XMMATRIX & parentTransform, std::vector<Node> & graphNodes)
+    void Visit(fx::gltf::Document const & doc, uint32_t nodeIndex, DirectX::XMMATRIX const & parentTransform, std::vector<Node> & graphNodes)
     {
         Node & graphNode = graphNodes[nodeIndex];
         graphNode.currentTransform = parentTransform;
@@ -25,26 +25,26 @@ namespace Graph
         fx::gltf::Node const & node = doc.nodes[nodeIndex];
         if (node.matrix != fx::gltf::defaults::IdentityMatrix)
         {
-            DirectX::XMFLOAT4X4 local(node.matrix.data());
+            const DirectX::XMFLOAT4X4 local(node.matrix.data());
             graphNode.currentTransform = XMLoadFloat4x4(&local) * graphNode.currentTransform;
         }
         else
         {
             if (node.scale != fx::gltf::defaults::IdentityVec3)
             {
-                DirectX::XMFLOAT3 local(node.scale.data());
+                const DirectX::XMFLOAT3 local(node.scale.data());
                 graphNode.currentTransform = DirectX::XMMatrixScalingFromVector(DirectX::XMLoadFloat3(&local)) * graphNode.currentTransform;
             }
 
             if (node.rotation != fx::gltf::defaults::IdentityVec4)
             {
-                DirectX::XMFLOAT4 local(node.rotation.data());
+                const DirectX::XMFLOAT4 local(node.rotation.data());
                 graphNode.currentTransform = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&local)) * graphNode.currentTransform;
             }
 
             if (node.translation != fx::gltf::defaults::NullVec3)
             {
-                DirectX::XMFLOAT3 local(node.translation.data());
+                const DirectX::XMFLOAT3 local(node.translation.data());
                 graphNode.currentTransform = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&local)) * graphNode.currentTransform;
             }
         }

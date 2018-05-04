@@ -45,7 +45,7 @@ public:
         m_scene->WindowSizeChanged(m_width, m_height);
     }
 
-    void OnDestroy()
+    void OnDestroy() noexcept
     {
         m_scene->Shutdown();
     }

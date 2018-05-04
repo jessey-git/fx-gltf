@@ -39,32 +39,32 @@ public:
         indexBuffer = GetData(doc, doc.accessors[primitive.indices]);
     }
 
-    bool HasIndexData()
+    bool HasIndexData() noexcept
     {
         return indexBuffer.data != nullptr;
     }
 
-    bool HasVertexData()
+    bool HasVertexData() noexcept
     {
         return vertexBuffer.data != nullptr;
     }
 
-    bool HasNormalData()
+    bool HasNormalData() noexcept
     {
         return normalBuffer.data != nullptr;
     }
 
-    BufferInfo IndexBuffer()
+    BufferInfo IndexBuffer() noexcept
     {
         return indexBuffer;
     }
 
-    BufferInfo VertexBuffer()
+    BufferInfo VertexBuffer() noexcept
     {
         return vertexBuffer;
     }
 
-    BufferInfo NormalBuffer()
+    BufferInfo NormalBuffer() noexcept
     {
         return normalBuffer;
     }
@@ -79,11 +79,11 @@ private:
         fx::gltf::BufferView const & bufferView = doc.bufferViews[accessor.bufferView];
         fx::gltf::Buffer const & buffer = doc.buffers[bufferView.buffer];
 
-        uint32_t dataTypeSize = CalculateDataTypeSize(accessor);
+        const uint32_t dataTypeSize = CalculateDataTypeSize(accessor);
         return BufferInfo{ &accessor, &buffer.data[bufferView.byteOffset + accessor.byteOffset], dataTypeSize, accessor.count * dataTypeSize };
     }
 
-    static uint32_t CalculateDataTypeSize(fx::gltf::Accessor const & accessor)
+    static uint32_t CalculateDataTypeSize(fx::gltf::Accessor const & accessor) noexcept
     {
         uint32_t elementSize = 0;
         switch (accessor.componentType)

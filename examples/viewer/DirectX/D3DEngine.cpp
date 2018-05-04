@@ -12,17 +12,18 @@
 
 using Microsoft::WRL::ComPtr;
 
-D3DEngine::D3DEngine(EngineOptions const & options) : m_options(options)
+D3DEngine::D3DEngine(EngineOptions const & options)
+    : m_options(options)
 {
-    m_doc = fx::gltf::LoadFromText(options.ModelPath);
-
-    m_deviceResources = std::make_unique<DX::D3DDeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
-    m_deviceResources->RegisterDeviceNotify(this);
 }
 
 void D3DEngine::Initialize(HWND window, int width, int height)
 {
+    m_doc = fx::gltf::LoadFromText(m_options.ModelPath);
+
+    m_deviceResources = std::make_unique<DX::D3DDeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
     m_deviceResources->SetWindow(window, width, height);
+    m_deviceResources->RegisterDeviceNotify(this);
 
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
@@ -53,7 +54,7 @@ void D3DEngine::Render()
     // Prepare the command list to render a new frame.
     PrepareRender();
 
-    D3DFrameResource & currentFrame = m_deviceResources->GetCurrentFrameResource();
+    D3DFrameResource const & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
     SceneConstantBuffer sceneParameters{};
     sceneParameters.lightDir[0] = DirectX::XMLoadFloat4(&m_lightDirs[0]);
@@ -94,15 +95,13 @@ void D3DEngine::WindowSizeChanged(int width, int height)
     CreateWindowSizeDependentResources();
 }
 
-void D3DEngine::Shutdown()
+void D3DEngine::Shutdown() noexcept
 {
     m_deviceResources->WaitForGpu();
 }
 
 void D3DEngine::CreateDeviceDependentResources()
 {
-    ID3D12Device * device = m_deviceResources->GetD3DDevice();
-
     BuildRootSignature();
     BuildPipelineStateObjects();
 
@@ -113,20 +112,6 @@ void D3DEngine::CreateDeviceDependentResources()
 
     // Wait until assets have been uploaded to the GPU.
     m_deviceResources->WaitForGpu();
-
-    // Initialize the world matrix for each mesh instance...
-    DirectX::XMVECTOR scale{ m_autoScaleFactor, m_autoScaleFactor, m_autoScaleFactor };
-    DirectX::XMVECTOR mid = DirectX::XMVectorDivide(
-        DirectX::XMVectorMultiply(
-            DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&m_boundingBox.min), DirectX::XMLoadFloat3(&m_boundingBox.max)),
-            { m_autoScaleFactor, m_autoScaleFactor, m_autoScaleFactor }),
-        { 2.0f, 2.0f, 2.0f });
-    mid = DirectX::XMVectorNegate(mid);
-
-    for (auto & meshInstance : m_meshInstances)
-    {
-        meshInstance.BaseTransform = meshInstance.BaseTransform * DirectX::XMMatrixTranslationFromVector(mid);
-    }
 
     // Initialize the view matrix
     static const DirectX::XMVECTORF32 c_eye = { 3.0f, 2.0f, 5.0f, 0.0f };
@@ -146,7 +131,7 @@ void D3DEngine::CreateWindowSizeDependentResources()
 {
     // Initialize the projection matrix
     const auto size = m_deviceResources->GetOutputSize();
-    DirectX::CXMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, float(size.right) / float(size.bottom), 0.01f, 400.0f);
+    DirectX::CXMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, static_cast<float>(size.right) / size.bottom, 0.01f, 400.0f);
     DirectX::CXMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewMatrix) * projection;
 
     DirectX::XMStoreFloat4x4(&m_projectionMatrix, projection);
@@ -193,36 +178,38 @@ void D3DEngine::BuildScene()
     for (std::size_t i = 0; i < m_doc.meshes.size(); i++)
     {
         m_meshes[i].CreateDeviceDependentResources(m_doc, i, m_deviceResources);
-        Util::GrowBbox(m_boundingBox, m_meshes[i].MeshBBox());
+        Util::AdjustBBox(m_boundingBox, m_meshes[i].MeshBBox());
     }
 
     Logger::WriteLine("Building scene graph...");
     std::vector<Graph::Node> graphNodes(m_doc.nodes.size());
-    DirectX::XMMATRIX rootTransform = DirectX::XMMatrixIdentity();
-    for (uint32_t sceneNode : m_doc.scenes[0].nodes)
+    const DirectX::XMMATRIX rootTransform = DirectX::XMMatrixIdentity();
+    for (const uint32_t sceneNode : m_doc.scenes[0].nodes)
     {
         Graph::Visit(m_doc, sceneNode, rootTransform, graphNodes);
     }
 
     Logger::WriteLine("Traversing scene...");
+    DirectX::XMFLOAT3 midTranslation{};
     for (auto & graphNode : graphNodes)
     {
         if (graphNode.meshIndex >= 0)
         {
             D3DMeshInstance instance{ static_cast<uint32_t>(graphNode.meshIndex) };
-            instance.Transform = instance.BaseTransform = graphNode.currentTransform;
+            instance.Transform = instance.BaseTransform = Util::CenterBBox(graphNode.currentTransform, m_boundingBox, midTranslation);
             m_meshInstances.push_back(instance);
         }
     }
 
     float distance;
-    DirectX::XMVECTOR sub = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.max), DirectX::XMLoadFloat3(&m_boundingBox.min));
-    DirectX::XMVECTOR length = DirectX::XMVector3Length(sub);
+    DirectX::FXMVECTOR sub = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.max), DirectX::XMLoadFloat3(&m_boundingBox.min));
+    DirectX::FXMVECTOR length = DirectX::XMVector3Length(sub);
     DirectX::XMStoreFloat(&distance, length);
     m_autoScaleFactor = 5.19f / distance;
 
     Logger::WriteLine("Found {0} mesh instance(s)", m_meshInstances.size());
-    Logger::WriteLine("Scene bbox: [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.min.x, m_boundingBox.min.y, m_boundingBox.min.z, m_boundingBox.max.x, m_boundingBox.max.y, m_boundingBox.max.z);
+    Logger::WriteLine("Scene bbox       : [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.min.x, m_boundingBox.min.y, m_boundingBox.min.z, m_boundingBox.max.x, m_boundingBox.max.y, m_boundingBox.max.z);
+    Logger::WriteLine("Scene translation: [{0},{1},{2}]", midTranslation.x, midTranslation.y, midTranslation.z);
     Logger::WriteLine("Auto-scale factor: {0:F4}", m_autoScaleFactor);
 }
 
@@ -242,7 +229,7 @@ void D3DEngine::BuildRootSignature()
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
-    HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
+    const HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
     if (FAILED(hr))
     {
         if (error)
@@ -259,7 +246,7 @@ void D3DEngine::BuildRootSignature()
 
 void D3DEngine::BuildDescriptorHeaps()
 {
-    UINT numDescriptors = 2 * m_deviceResources->GetBackBufferCount();
+    const UINT numDescriptors = 2 * m_deviceResources->GetBackBufferCount();
 
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
     cbvHeapDesc.NumDescriptors = numDescriptors;
@@ -277,11 +264,11 @@ void D3DEngine::BuildPipelineStateObjects()
 
     UINT inputSlot = 0;
     std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
-    {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-    };
+        {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        };
 
     auto triangleVSBlob = ReadData(L"TriangleVS.cso");
     auto lambertPSBlob = ReadData(L"LambertPS.cso");
@@ -331,13 +318,13 @@ void D3DEngine::OnDeviceRestored()
     CreateWindowSizeDependentResources();
 }
 
-std::vector<uint8_t> D3DEngine::ReadData(const wchar_t * name)
+std::vector<uint8_t> D3DEngine::ReadData(wchar_t const * name)
 {
     std::ifstream inFile(name, std::ios::in | std::ios::binary | std::ios::ate);
     if (!inFile)
         throw std::exception("ReadData");
 
-    std::streampos len = inFile.tellg();
+    const std::streampos len = inFile.tellg();
 
     std::vector<uint8_t> blob;
     blob.resize(size_t(len));

@@ -37,7 +37,7 @@ namespace Util
         }
     }
 
-    static void GrowBbox(BBox & currentBBox, BBox const & other)
+    static void AdjustBBox(BBox & currentBBox, BBox const & other) noexcept
     {
         currentBBox.min.x = std::min(currentBBox.min.x, other.min.x);
         currentBBox.min.y = std::min(currentBBox.min.y, other.min.y);
@@ -48,7 +48,18 @@ namespace Util
         currentBBox.max.z = std::max(currentBBox.max.z, other.max.z);
     }
 
-    static DirectX::XMFLOAT3 HSVtoRBG(float hue, float saturation, float value)
+    static DirectX::XMMATRIX CenterBBox(DirectX::XMMATRIX const & currentTransform, BBox const & currentBBox, DirectX::XMFLOAT3 & midTranslation)
+    {
+        DirectX::XMVECTOR mid = DirectX::XMVectorDivide(
+            DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&currentBBox.min), DirectX::XMLoadFloat3(&currentBBox.max)),
+            { 2.0f, 2.0f, 2.0f });
+        mid = DirectX::XMVectorNegate(mid);
+
+        DirectX::XMStoreFloat3(&midTranslation, mid);
+        return currentTransform * DirectX::XMMatrixTranslationFromVector(mid);
+    }
+
+    static DirectX::XMFLOAT3 HSVtoRBG(float hue, float saturation, float value) noexcept
     {
         DirectX::XMFLOAT3 rgb{};
 
