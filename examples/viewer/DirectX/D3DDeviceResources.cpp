@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 #include "stdafx.h"
 #include "D3DDeviceResources.h"
+#include "D3DUtil.h"
 
 using namespace DirectX;
 using namespace DX;
@@ -13,7 +14,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    inline DXGI_FORMAT NoSRGB(DXGI_FORMAT fmt)
+    inline DXGI_FORMAT NoSRGB(DXGI_FORMAT fmt) noexcept
     {
         switch (fmt)
         {
@@ -153,7 +154,7 @@ void D3DDeviceResources::CreateDeviceResources()
             static_cast<UINT>(std::size(s_featureLevels)), s_featureLevels, D3D_FEATURE_LEVEL_11_0
         };
 
-    HRESULT hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
+    const HRESULT hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
     if (SUCCEEDED(hr))
     {
         m_d3dFeatureLevel = featLevels.MaxSupportedFeatureLevel;
@@ -230,15 +231,15 @@ void D3DDeviceResources::CreateWindowSizeDependentResources()
     }
 
     // Determine the render target size in pixels.
-    UINT backBufferWidth = std::max<UINT>(m_outputSize.right - m_outputSize.left, 1);
-    UINT backBufferHeight = std::max<UINT>(m_outputSize.bottom - m_outputSize.top, 1);
-    DXGI_FORMAT backBufferFormat = NoSRGB(m_backBufferFormat);
+    const UINT backBufferWidth = std::max<UINT>(m_outputSize.right - m_outputSize.left, 1);
+    const UINT backBufferHeight = std::max<UINT>(m_outputSize.bottom - m_outputSize.top, 1);
+    const DXGI_FORMAT backBufferFormat = NoSRGB(m_backBufferFormat);
 
     // If the swap chain already exists, resize it, otherwise create one.
     if (m_swapChain)
     {
         // If the swap chain already exists, resize it.
-        HRESULT hr = m_swapChain->ResizeBuffers(
+        const HRESULT hr = m_swapChain->ResizeBuffers(
             m_backBufferCount,
             backBufferWidth,
             backBufferHeight,
@@ -313,7 +314,7 @@ void D3DDeviceResources::CreateWindowSizeDependentResources()
         rtvDesc.Format = m_backBufferFormat;
         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), n, m_rtvDescriptorSize);
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), n, m_rtvDescriptorSize);
         m_d3dDevice->CreateRenderTargetView(m_frameResources[n].RenderTarget.Get(), &rtvDesc, rtvDescriptor);
     }
 
@@ -324,7 +325,7 @@ void D3DDeviceResources::CreateWindowSizeDependentResources()
     {
         // Allocate a 2-D surface as the depth/stencil buffer and create a depth/stencil view
         // on this surface.
-        CD3DX12_HEAP_PROPERTIES depthHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+        const CD3DX12_HEAP_PROPERTIES depthHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
         D3D12_RESOURCE_DESC depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
             m_depthBufferFormat,
@@ -378,7 +379,7 @@ void D3DDeviceResources::CreateConstantBuffers(std::size_t sceneCount, std::size
 }
 
 // This method is called when the Win32 window is created (or re-created).
-void D3DDeviceResources::SetWindow(HWND window, int width, int height)
+void D3DDeviceResources::SetWindow(HWND window, int width, int height) noexcept
 {
     m_window = window;
 
@@ -414,8 +415,7 @@ void D3DDeviceResources::HandleDeviceLost()
 
     for (UINT n = 0; n < m_backBufferCount; n++)
     {
-        m_frameResources[n].CommandAllocator.Reset();
-        m_frameResources[n].RenderTarget.Reset();
+        m_frameResources[n].Reset();
     }
 
     m_depthStencil.Reset();
@@ -451,14 +451,14 @@ void D3DDeviceResources::HandleDeviceLost()
 void D3DDeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState)
 {
     // Reset command list and allocator.
-    D3DFrameResource & currentFrame = m_frameResources[m_backBufferIndex];
+    D3DFrameResource const & currentFrame = m_frameResources[m_backBufferIndex];
     ThrowIfFailed(currentFrame.CommandAllocator->Reset());
     ThrowIfFailed(m_commandList->Reset(currentFrame.CommandAllocator.Get(), nullptr));
 
     if (beforeState != D3D12_RESOURCE_STATE_RENDER_TARGET)
     {
         // Transition the render target into the correct state to allow for drawing into it.
-        D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(currentFrame.RenderTarget.Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(currentFrame.RenderTarget.Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_commandList->ResourceBarrier(1, &barrier);
     }
 }
@@ -469,7 +469,7 @@ void D3DDeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
     if (beforeState != D3D12_RESOURCE_STATE_PRESENT)
     {
         // Transition the render target to the state that allows it to be presented to the display.
-        D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_frameResources[m_backBufferIndex].RenderTarget.Get(), beforeState, D3D12_RESOURCE_STATE_PRESENT);
+        const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_frameResources[m_backBufferIndex].RenderTarget.Get(), beforeState, D3D12_RESOURCE_STATE_PRESENT);
         m_commandList->ResourceBarrier(1, &barrier);
     }
 
@@ -477,7 +477,7 @@ void D3DDeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
     ThrowIfFailed(m_commandList->Close());
     m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_commandList.GetAddressOf()));
 
-    HRESULT hr;
+    HRESULT hr{};
     if (m_options & c_AllowTearing)
     {
         // Recommended to always use tearing if supported when using a sync interval of 0.
@@ -516,7 +516,7 @@ void D3DDeviceResources::WaitForGpu() noexcept
     if (m_commandQueue && m_fence && m_fenceEvent.IsValid())
     {
         // Schedule a Signal command in the GPU queue.
-        UINT64 fenceValue = m_frameResources[m_backBufferIndex].Fence;
+        const UINT64 fenceValue = m_frameResources[m_backBufferIndex].Fence;
         if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), fenceValue)))
         {
             // Wait until the Signal has been processed.

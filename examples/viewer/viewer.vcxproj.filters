@@ -42,9 +42,6 @@
     <ClInclude Include="DirectX\D3DDeviceResources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DirectX\D3DUtil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DirectX\D3DEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -67,6 +64,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DirectX\D3DGraph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectX\D3DUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

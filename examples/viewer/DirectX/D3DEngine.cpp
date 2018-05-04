@@ -8,21 +8,37 @@
 #include "D3DEngine.h"
 #include "D3DGraph.h"
 #include "D3DMeshInstance.h"
+#include "Engine.h"
 #include "EngineOptions.h"
 
 using Microsoft::WRL::ComPtr;
 
-D3DEngine::D3DEngine(EngineOptions const & options)
-    : m_options(options)
+D3DEngine::D3DEngine(EngineOptions const & config)
+    : Engine(config)
 {
 }
 
-void D3DEngine::Initialize(HWND window, int width, int height)
+D3DEngine::~D3DEngine()
 {
-    m_doc = fx::gltf::LoadFromText(m_options.ModelPath);
+    if (m_deviceResources != nullptr)
+    {
+        m_deviceResources->WaitForGpu();
+    }
+}
+
+void D3DEngine::InitializeCore(HWND window)
+{
+    if (Config().ModelPath.rfind(".glb") != std::string::npos)
+    {
+        m_doc = fx::gltf::LoadFromBinary(Config().ModelPath);
+    }
+    else
+    {
+        m_doc = fx::gltf::LoadFromText(Config().ModelPath);
+    }
 
     m_deviceResources = std::make_unique<DX::D3DDeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
-    m_deviceResources->SetWindow(window, width, height);
+    m_deviceResources->SetWindow(window, Config().Width, Config().Height);
     m_deviceResources->RegisterDeviceNotify(this);
 
     m_deviceResources->CreateDeviceResources();
@@ -34,7 +50,7 @@ void D3DEngine::Initialize(HWND window, int width, int height)
 
 void D3DEngine::Update(float elapsedTime)
 {
-    if (m_options.AutoRotate)
+    if (Config().AutoRotate)
     {
         m_curRotationAngleRad += elapsedTime / 2.f;
         if (m_curRotationAngleRad >= DirectX::XM_2PI)
@@ -87,17 +103,12 @@ void D3DEngine::Render()
     CompleteRender();
 }
 
-void D3DEngine::WindowSizeChanged(int width, int height)
+void D3DEngine::WindowSizeChangedCore(int width, int height)
 {
     if (!m_deviceResources->WindowSizeChanged(width, height))
         return;
 
     CreateWindowSizeDependentResources();
-}
-
-void D3DEngine::Shutdown() noexcept
-{
-    m_deviceResources->WaitForGpu();
 }
 
 void D3DEngine::CreateDeviceDependentResources()
@@ -145,20 +156,20 @@ void D3DEngine::PrepareRender()
     auto commandList = m_deviceResources->GetCommandList();
 
     // Clear the views.
-    auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
-    auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
 
     // Use linear clear color for gamma-correct rendering.
-    DirectX::XMVECTORF32 Background = { 0.26f, 0.24f, 0.24f, 1.0f };
+    const DirectX::XMVECTORF32 Background = { 0.26f, 0.24f, 0.24f, 1.0f };
     commandList->ClearRenderTargetView(rtvDescriptor, Background, 0, nullptr);
 
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto viewport = m_deviceResources->GetScreenViewport();
-    auto scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 }
@@ -175,28 +186,41 @@ void D3DEngine::BuildScene()
 
     Logger::WriteLine("Building meshes...");
     m_meshes.resize(m_doc.meshes.size());
-    for (std::size_t i = 0; i < m_doc.meshes.size(); i++)
+    for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
     {
-        m_meshes[i].CreateDeviceDependentResources(m_doc, i, m_deviceResources);
+        m_meshes[i].CreateDeviceDependentResources(m_doc, i, m_deviceResources->GetD3DDevice());
         Util::AdjustBBox(m_boundingBox, m_meshes[i].MeshBBox());
     }
 
-    Logger::WriteLine("Building scene graph...");
-    std::vector<Graph::Node> graphNodes(m_doc.nodes.size());
-    const DirectX::XMMATRIX rootTransform = DirectX::XMMatrixIdentity();
-    for (const uint32_t sceneNode : m_doc.scenes[0].nodes)
-    {
-        Graph::Visit(m_doc, sceneNode, rootTransform, graphNodes);
-    }
-
-    Logger::WriteLine("Traversing scene...");
     DirectX::XMFLOAT3 midTranslation{};
-    for (auto & graphNode : graphNodes)
+    if (!m_doc.scenes.empty())
     {
-        if (graphNode.meshIndex >= 0)
+        Logger::WriteLine("Building scene graph...");
+        std::vector<Graph::Node> graphNodes(m_doc.nodes.size());
+        const DirectX::XMMATRIX rootTransform = DirectX::XMMatrixIdentity();
+        for (const uint32_t sceneNode : m_doc.scenes[0].nodes)
         {
-            D3DMeshInstance instance{ static_cast<uint32_t>(graphNode.meshIndex) };
-            instance.Transform = instance.BaseTransform = Util::CenterBBox(graphNode.currentTransform, m_boundingBox, midTranslation);
+            Graph::Visit(m_doc, sceneNode, rootTransform, graphNodes);
+        }
+
+        Logger::WriteLine("Traversing scene...");
+        for (auto & graphNode : graphNodes)
+        {
+            if (graphNode.meshIndex >= 0)
+            {
+                D3DMeshInstance instance{ static_cast<uint32_t>(graphNode.meshIndex) };
+                instance.Transform = instance.BaseTransform = Util::CenterBBox(graphNode.currentTransform, m_boundingBox, midTranslation);
+                m_meshInstances.push_back(instance);
+            }
+        }
+    }
+    else
+    {
+        Logger::WriteLine("No scene graph data. Displaying individual meshes...");
+        for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
+        {
+            D3DMeshInstance instance{ i };
+            instance.Transform = instance.BaseTransform = DirectX::XMMatrixIdentity();
             m_meshInstances.push_back(instance);
         }
     }

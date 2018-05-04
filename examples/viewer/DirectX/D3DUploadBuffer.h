@@ -63,9 +63,14 @@ public:
         std::memcpy(&m_mappedData[elementIndex * m_elementByteSize], &data, sizeof(T));
     }
 
+    void Reset()
+    {
+        m_uploadBuffer.Reset();
+    }
+
 private:
     Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer{};
-    BYTE * m_mappedData{};
+    uint8_t * m_mappedData{};
 
-    UINT m_elementByteSize{};
+    uint32_t m_elementByteSize{};
 };

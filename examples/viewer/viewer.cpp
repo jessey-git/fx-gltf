@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "clara/clara.hpp"
+#include "DirectX/D3DEngine.h"
 #include "Engine.h"
 #include "EngineOptions.h"
 
@@ -23,7 +24,7 @@ public:
             return -1;
         }
 
-        std::unique_ptr<Engine> engine = std::make_unique<Engine>(options);
+        std::unique_ptr<Engine> engine = std::make_unique<D3DEngine>(options);
 
         // Initialize the window class.
         WNDCLASSEX windowClass = { 0 };
@@ -53,7 +54,7 @@ public:
             engine.get());
 
         // Initialize the sample. OnInit is defined in each child-implementation of DXSample.
-        engine->OnInit(hwnd);
+        engine->Initialize(hwnd);
 
         ShowWindow(hwnd, nCmdShow);
 
@@ -69,10 +70,47 @@ public:
             }
         }
 
-        engine->OnDestroy();
-
         // Return this part of the WM_QUIT message to Windows.
         return static_cast<char>(msg.wParam);
+    }
+
+private:
+    static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+    {
+        Engine * engine = reinterpret_cast<Engine *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
+        switch (message)
+        {
+        case WM_CREATE:
+            {
+                LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
+                SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+            }
+            return 0;
+
+        case WM_PAINT:
+            if (engine)
+            {
+                engine->Tick();
+            }
+
+            return 0;
+
+        case WM_SIZE:
+            if (engine)
+            {
+                engine->WindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
+            }
+
+            return 0;
+
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+        }
+
+        // Handle any messages the switch statement didn't.
+        return DefWindowProc(hWnd, message, wParam, lParam);
     }
 
     static bool TryParseCommandLine(EngineOptions & options)
@@ -81,26 +119,34 @@ public:
         auto cli
             = clara::Help(showHelp)
             | clara::Opt(options.Width, "width")
-                ["--width"]("Initial window width")
+            ["--width"]("Initial window width")
             | clara::Opt(options.Height, "height")
-                ["--height"]("Initial window height")
+            ["--height"]("Initial window height")
             | clara::Opt(options.AutoRotate)
-                ["-r"]["--rotate"]("Auto rotate model")
+            ["-r"]["--rotate"]("Auto rotate model")
             | clara::Arg(options.ModelPath, "model")
-                ("Model to load").required(); // Clara does not enforce required arguments right now :-/
+            ("Model to load").required(); // Clara does not enforce required arguments right now :-/
 
         int argc;
+        std::vector<std::string> args{};
         LPWSTR * argv = CommandLineToArgvW(GetCommandLine(), &argc);
-        std::vector<std::string> args(argc - 1);
-        for (int i = 1; i < argc; i++)
+        if (argv != nullptr && argc > 0)
         {
-            std::wstring arg(argv[i]);
-            for (auto c : arg)
+            args.resize(argc - 1);
+            for (int i = 1; i < argc; i++)
             {
-                args[i - 1].push_back(static_cast<char>(c));
+                std::wstring arg(argv[i]);
+                for (auto c : arg)
+                {
+                    args[i - 1].push_back(static_cast<char>(c));
+                }
             }
+            LocalFree(argv);
         }
-        LocalFree(argv);
+        else
+        {
+            showHelp = true;
+        }
 
         auto results = cli.parse("viewer.exe", clara::detail::TokenStream(args.begin(), args.end()));
         if (showHelp)
@@ -119,61 +165,6 @@ public:
         }
 
         return true;
-    }
-
-private:
-    static LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-    {
-        Engine * engine = reinterpret_cast<Engine *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-
-        switch (message)
-        {
-        case WM_CREATE:
-            {
-                LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
-                SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
-            }
-            return 0;
-
-        case WM_KEYDOWN:
-            if (engine)
-            {
-                engine->OnKeyDown(static_cast<UINT8>(wParam));
-            }
-
-            return 0;
-
-        case WM_KEYUP:
-            if (engine)
-            {
-                engine->OnKeyUp(static_cast<UINT8>(wParam));
-            }
-
-            return 0;
-
-        case WM_PAINT:
-            if (engine)
-            {
-                engine->Tick();
-            }
-
-            return 0;
-
-        case WM_SIZE:
-            if (engine)
-            {
-                engine->OnResize(LOWORD(lParam), HIWORD(lParam));
-            }
-
-            return 0;
-
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            return 0;
-        }
-
-        // Handle any messages the switch statement didn't.
-        return DefWindowProc(hWnd, message, wParam, lParam);
     }
 };
 

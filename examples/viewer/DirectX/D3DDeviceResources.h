@@ -31,8 +31,8 @@ namespace DX
 
         D3DDeviceResources(D3DDeviceResources const &) = delete;
         D3DDeviceResources(D3DDeviceResources &&) = delete;
-        D3DDeviceResources & operator=(const D3DDeviceResources & rhs) = delete;
-        D3DDeviceResources & operator=(D3DDeviceResources && rhs) = delete;
+        D3DDeviceResources & operator=(D3DDeviceResources const &) = delete;
+        D3DDeviceResources & operator=(D3DDeviceResources &&) = delete;
 
         ~D3DDeviceResources();
 
@@ -40,10 +40,10 @@ namespace DX
         void CreateWindowSizeDependentResources();
         void CreateConstantBuffers(std::size_t sceneCount, std::size_t meshCount);
 
-        void SetWindow(HWND window, int width, int height);
+        void SetWindow(HWND window, int width, int height) noexcept;
         bool WindowSizeChanged(int width, int height);
         void HandleDeviceLost();
-        void RegisterDeviceNotify(IDeviceNotify * deviceNotify)
+        void RegisterDeviceNotify(IDeviceNotify * deviceNotify) noexcept
         {
             m_deviceNotify = deviceNotify;
         }
@@ -53,73 +53,73 @@ namespace DX
         void WaitForGpu() noexcept;
 
         // Device Accessors.
-        RECT GetOutputSize() const
+        RECT GetOutputSize() const noexcept
         {
             return m_outputSize;
         }
 
         // Direct3D Accessors.
-        ID3D12Device * GetD3DDevice() const
+        ID3D12Device * GetD3DDevice() const noexcept
         {
             return m_d3dDevice.Get();
         }
 
-        IDXGISwapChain3 * GetSwapChain() const
+        IDXGISwapChain3 * GetSwapChain() const noexcept
         {
             return m_swapChain.Get();
         }
 
-        D3D_FEATURE_LEVEL GetDeviceFeatureLevel() const
+        D3D_FEATURE_LEVEL GetDeviceFeatureLevel() const noexcept
         {
             return m_d3dFeatureLevel;
         }
 
-        ID3D12Resource * GetDepthStencil() const
+        ID3D12Resource * GetDepthStencil() const noexcept
         {
             return m_depthStencil.Get();
         }
 
-        ID3D12CommandQueue * GetCommandQueue() const
+        ID3D12CommandQueue * GetCommandQueue() const noexcept
         {
             return m_commandQueue.Get();
         }
 
-        ID3D12GraphicsCommandList * GetCommandList() const
+        ID3D12GraphicsCommandList * GetCommandList() const noexcept
         {
             return m_commandList.Get();
         }
 
-        DXGI_FORMAT GetBackBufferFormat() const
+        DXGI_FORMAT GetBackBufferFormat() const noexcept
         {
             return m_backBufferFormat;
         }
 
-        DXGI_FORMAT GetDepthBufferFormat() const
+        DXGI_FORMAT GetDepthBufferFormat() const noexcept
         {
             return m_depthBufferFormat;
         }
 
-        D3D12_VIEWPORT GetScreenViewport() const
+        D3D12_VIEWPORT GetScreenViewport() const noexcept
         {
             return m_screenViewport;
         }
 
-        D3D12_RECT GetScissorRect() const
+        D3D12_RECT GetScissorRect() const noexcept
         {
             return m_scissorRect;
         }
 
-        UINT GetCurrentFrameIndex() const
+        UINT GetCurrentFrameIndex() const noexcept
         {
             return m_backBufferIndex;
         }
 
-        UINT GetBackBufferCount() const
+        UINT GetBackBufferCount() const noexcept
         {
             return m_backBufferCount;
         }
 
-        unsigned int GetDeviceOptions() const
+        unsigned int GetDeviceOptions() const noexcept
         {
             return m_options;
         }

@@ -7,8 +7,8 @@
 
 struct EngineOptions
 {
-    UINT Width{ 960 };
-    UINT Height{ 540 };
+    int Width{ 960 };
+    int Height{ 540 };
 
     bool AutoRotate{};
 

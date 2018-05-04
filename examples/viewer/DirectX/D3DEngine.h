@@ -12,21 +12,27 @@
 #include "D3DMesh.h"
 #include "D3DMeshInstance.h"
 #include "D3DUploadBuffer.h"
+#include "Engine.h"
 #include "EngineOptions.h"
 
-class D3DEngine : public DX::IDeviceNotify
+class D3DEngine : public Engine, public DX::IDeviceNotify
 {
 public:
-    explicit D3DEngine(EngineOptions const & options);
+    explicit D3DEngine(EngineOptions const & config);
 
-    void Initialize(HWND window, int width, int height);
+    D3DEngine(D3DEngine const &) = delete;
+    D3DEngine(D3DEngine &&) = delete;
+    D3DEngine & operator=(D3DEngine const &) = delete;
+    D3DEngine & operator=(D3DEngine &&) = delete;
 
-    void Update(float elapsedTime);
-    void Render();
+    ~D3DEngine();
 
-    void WindowSizeChanged(int width, int height);
+    void InitializeCore(HWND window) override;
 
-    void Shutdown() noexcept;
+    void Update(float elapsedTime) override;
+    void Render() override;
+
+    void WindowSizeChangedCore(int width, int height) override;
 
     // IDeviceNotify
     void OnDeviceLost() override;
@@ -34,7 +40,6 @@ public:
 
 private:
     // clang-format off
-    EngineOptions                                   m_options{};
     fx::gltf::Document                              m_doc{};
 
     std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};

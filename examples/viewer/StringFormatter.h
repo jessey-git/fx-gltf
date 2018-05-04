@@ -195,12 +195,12 @@ namespace FXCommon
         class FormatState final
         {
         public:
-            FormatState(StringType & buffer)
+            FormatState(StringType & buffer) noexcept
                 : ios_(), buffer_(buffer), index_(0), width_(0), leftJustify_(false)
             {
             }
 
-            int Index() const
+            int Index() const noexcept
             {
                 return index_;
             }
@@ -239,14 +239,14 @@ namespace FXCommon
 
 #pragma warning(push)
 #pragma warning(disable : 4127) // conditional expression is constant
-                if (std::is_floating_point_v<Arg>)
+                if constexpr (std::is_floating_point_v<Arg>)
                 {
                     ios_.precision(std::min(static_cast<int>(ios_.precision()), std::numeric_limits<Arg>::max_digits10));
                     const auto argAbs = std::fabs(arg);
                     if (argAbs > 1e46)
                     {
                         // Large numbers may exceed the size of our stack buffer...
-                        std::size_t num = static_cast<std::size_t>(std::ceil(std::log10(argAbs))) + ios_.precision() + 2;
+                        const std::size_t num = static_cast<std::size_t>(std::ceil(std::log10(argAbs))) + ios_.precision() + 2;
                         if (num > 64)
                         {
                             scratch = std::make_unique<T[]>(num);
@@ -266,7 +266,7 @@ namespace FXCommon
             class IosBase final : public std::basic_ios<T>
             {
             public:
-                IosBase()
+                IosBase() noexcept
                     : std::basic_ios<T>()
                 {
                     std::basic_ios<T>::init(nullptr);
@@ -355,7 +355,7 @@ namespace FXCommon
             }
         };
 
-        static bool TryExtractInteger(StringViewType view, std::size_t & pos, int & out)
+        static bool TryExtractInteger(StringViewType view, std::size_t & pos, int & out) noexcept
         {
             if (pos == view.length())
                 return false;

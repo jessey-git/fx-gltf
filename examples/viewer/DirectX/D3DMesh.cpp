@@ -13,19 +13,22 @@
 uint32_t D3DMesh::CurrentMeshPartId = 1;
 
 void D3DMesh::CreateDeviceDependentResources(
-    fx::gltf::Document const & doc, std::size_t meshIndex, std::unique_ptr<DX::D3DDeviceResources> const & deviceResources)
+    fx::gltf::Document const & doc, std::size_t meshIndex, ID3D12Device * device)
 {
-    ID3D12Device * device = deviceResources->GetD3DDevice();
-
     const D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 
     m_meshParts.resize(doc.meshes[meshIndex].primitives.size());
     for (std::size_t i = 0; i < doc.meshes[meshIndex].primitives.size(); i++)
     {
         MeshData mesh(doc, meshIndex, i);
+        if (!mesh.HasVertexData() || !mesh.HasNormalData() || !mesh.HasIndexData())
+        {
+            throw std::runtime_error("Only meshes with vertex, normal, and index buffers are supported");
+        }
 
         D3DMeshPart & meshPart = m_meshParts[i];
-        if (mesh.HasVertexData())
+
+        // Create the vertex buffer
         {
             const MeshData::BufferInfo buffer = mesh.VertexBuffer();
             const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(buffer.totalSize);
@@ -54,8 +57,7 @@ void D3DMesh::CreateDeviceDependentResources(
             Util::AdjustBBox(m_boundingBox, boundingBox);
         }
 
-        // Create the vertex buffer
-        if (mesh.HasNormalData())
+        // Create the normal buffer
         {
             const MeshData::BufferInfo buffer = mesh.NormalBuffer();
             const CD3DX12_RESOURCE_DESC resourceDescN = CD3DX12_RESOURCE_DESC::Buffer(buffer.totalSize);

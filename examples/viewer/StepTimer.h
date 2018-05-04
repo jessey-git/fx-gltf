@@ -13,7 +13,7 @@
 class StepTimer
 {
 public:
-    StepTimer()
+    StepTimer() noexcept
         : m_targetElapsedTicks(TicksPerSecond / 60)
     {
         QueryPerformanceFrequency(&m_qpcFrequency);
@@ -24,49 +24,49 @@ public:
     }
 
     // Get elapsed time since the previous Update call.
-    uint64_t GetElapsedTicks() const
+    uint64_t GetElapsedTicks() const noexcept
     {
         return m_elapsedTicks;
     }
-    double GetElapsedSeconds() const
+    double GetElapsedSeconds() const noexcept
     {
         return TicksToSeconds(m_elapsedTicks);
     }
 
     // Get total time since the start of the program.
-    uint64_t GetTotalTicks() const
+    uint64_t GetTotalTicks() const noexcept
     {
         return m_totalTicks;
     }
-    double GetTotalSeconds() const
+    double GetTotalSeconds() const noexcept
     {
         return TicksToSeconds(m_totalTicks);
     }
 
     // Get total number of updates since start of the program.
-    uint32_t GetFrameCount() const
+    uint32_t GetFrameCount() const noexcept
     {
         return m_frameCount;
     }
 
     // Get the current framerate.
-    uint32_t GetFramesPerSecond() const
+    uint32_t GetFramesPerSecond() const noexcept
     {
         return m_framesPerSecond;
     }
 
     // Set whether to use fixed or variable timestep mode.
-    void SetFixedTimeStep(bool isFixedTimestep)
+    void SetFixedTimeStep(bool isFixedTimestep) noexcept
     {
         m_isFixedTimeStep = isFixedTimestep;
     }
 
     // Set how often to call Update when in fixed timestep mode.
-    void SetTargetElapsedTicks(uint64_t targetElapsed)
+    void SetTargetElapsedTicks(uint64_t targetElapsed) noexcept
     {
         m_targetElapsedTicks = targetElapsed;
     }
-    void SetTargetElapsedSeconds(double targetElapsed)
+    void SetTargetElapsedSeconds(double targetElapsed) noexcept
     {
         m_targetElapsedTicks = SecondsToTicks(targetElapsed);
     }
@@ -74,11 +74,11 @@ public:
     // Integer format represents time using 10,000,000 ticks per second.
     static const uint64_t TicksPerSecond = 10000000;
 
-    static double TicksToSeconds(uint64_t ticks)
+    static double TicksToSeconds(uint64_t ticks) noexcept
     {
         return static_cast<double>(ticks) / TicksPerSecond;
     }
-    static uint64_t SecondsToTicks(double seconds)
+    static uint64_t SecondsToTicks(double seconds) noexcept
     {
         return static_cast<uint64_t>(seconds * TicksPerSecond);
     }
@@ -87,7 +87,7 @@ public:
     // call this to avoid having the fixed timestep logic attempt a set of catch-up
     // Update calls.
 
-    void ResetElapsedTime()
+    void ResetElapsedTime() noexcept
     {
         QueryPerformanceCounter(&m_qpcLastTime);
 
@@ -120,7 +120,7 @@ public:
         timeDelta *= TicksPerSecond;
         timeDelta /= m_qpcFrequency.QuadPart;
 
-        uint32_t lastFrameCount = m_frameCount;
+        const uint32_t lastFrameCount = m_frameCount;
 
         if (m_isFixedTimeStep)
         {

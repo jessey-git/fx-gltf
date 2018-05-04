@@ -80,7 +80,7 @@ private:
         fx::gltf::Buffer const & buffer = doc.buffers[bufferView.buffer];
 
         const uint32_t dataTypeSize = CalculateDataTypeSize(accessor);
-        return BufferInfo{ &accessor, &buffer.data[bufferView.byteOffset + accessor.byteOffset], dataTypeSize, accessor.count * dataTypeSize };
+        return BufferInfo{ &accessor, &buffer.data[static_cast<uint64_t>(bufferView.byteOffset) + accessor.byteOffset], dataTypeSize, accessor.count * dataTypeSize };
     }
 
     static uint32_t CalculateDataTypeSize(fx::gltf::Accessor const & accessor) noexcept

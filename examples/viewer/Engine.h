@@ -13,10 +13,9 @@
 class Engine
 {
 public:
-    Engine(EngineOptions const & options)
-        : m_width(options.Width), m_height(options.Height)
+    Engine(EngineOptions const & config)
+        : m_config(config)
     {
-        m_scene = std::make_unique<D3DEngine>(options);
     }
 
     Engine(Engine const &) = delete;
@@ -24,39 +23,35 @@ public:
     Engine & operator=(Engine const &) = delete;
     Engine & operator=(Engine &&) = delete;
 
-    ~Engine() = default;
+    virtual ~Engine() = default;
 
-    void OnInit(HWND hwnd)
+    void Initialize(HWND hwnd)
     {
-        m_scene->Initialize(hwnd, m_width, m_height);
+        InitializeCore(hwnd);
     }
 
     void Tick()
     {
-        m_timer.Tick([&]() { m_scene->Update(float(m_timer.GetElapsedSeconds())); });
+        m_timer.Tick([&]() { Update(static_cast<float>(m_timer.GetElapsedSeconds())); });
 
-        m_scene->Render();
+        Render();
     }
 
-    void OnResize(UINT width, UINT height)
+    void WindowSizeChanged(int width, int height)
     {
-        m_width = width;
-        m_height = height;
-        m_scene->WindowSizeChanged(m_width, m_height);
+        WindowSizeChangedCore(width, height);
     }
 
-    void OnDestroy() noexcept
-    {
-        m_scene->Shutdown();
-    }
+protected:
+    EngineOptions const & Config() noexcept { return m_config; }
 
-    void OnKeyDown(UINT8) {}
-    void OnKeyUp(UINT8) {}
+    virtual void InitializeCore(HWND hwnd) = 0;
+    virtual void Update(float elapsedTime) = 0;
+    virtual void Render() = 0;
+    virtual void WindowSizeChangedCore(int width, int height) = 0;
 
 private:
-    UINT m_width{};
-    UINT m_height{};
+    EngineOptions m_config{};
 
-    std::unique_ptr<D3DEngine> m_scene{};
     StepTimer m_timer{};
 };

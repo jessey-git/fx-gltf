@@ -12,14 +12,16 @@ struct D3DFrameResource
 {
     explicit D3DFrameResource(ID3D12Device * device);
 
-    D3DFrameResource(D3DFrameResource const & rhs) = delete;
-    D3DFrameResource(D3DFrameResource && rhs) = default;
+    D3DFrameResource(D3DFrameResource const &) = delete;
+    D3DFrameResource(D3DFrameResource &&) = default;
 
-    D3DFrameResource & operator=(const D3DFrameResource & rhs) = delete;
-    D3DFrameResource & operator=(D3DFrameResource && rhs) = delete;
+    D3DFrameResource & operator=(const D3DFrameResource &) = delete;
+    D3DFrameResource & operator=(D3DFrameResource &&) = delete;
     ~D3DFrameResource() = default;
 
     void AllocateConstantBuffers(ID3D12Device * device, std::size_t sceneCount, std::size_t meshCount);
+
+    void Reset();
 
     // clang-format off
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator>          CommandAllocator{};

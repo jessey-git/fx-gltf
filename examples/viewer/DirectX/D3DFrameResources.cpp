@@ -6,6 +6,7 @@
 #include "stdafx.h"
 
 #include "D3DFrameResources.h"
+#include "D3DUtil.h"
 
 D3DFrameResource::D3DFrameResource(ID3D12Device * device)
 {
@@ -18,4 +19,12 @@ void D3DFrameResource::AllocateConstantBuffers(ID3D12Device * device, std::size_
 {
     SceneCB = std::make_unique<D3DUploadBuffer<SceneConstantBuffer>>(device, sceneCount, true);
     MeshCB = std::make_unique<D3DUploadBuffer<MeshConstantBuffer>>(device, meshCount, true);
+}
+
+void D3DFrameResource::Reset()
+{
+    CommandAllocator.Reset();
+    RenderTarget.Reset();
+    SceneCB->Reset();
+    MeshCB->Reset();
 }

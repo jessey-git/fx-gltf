@@ -15,7 +15,7 @@ class D3DMesh
 {
 public:
     void CreateDeviceDependentResources(
-        fx::gltf::Document const & doc, std::size_t meshIndex, std::unique_ptr<DX::D3DDeviceResources> const & deviceResources);
+        fx::gltf::Document const & doc, std::size_t meshIndex, ID3D12Device * device);
 
     void SetWorldMatrix(DirectX::XMMATRIX m, float scalingFactor)
     {

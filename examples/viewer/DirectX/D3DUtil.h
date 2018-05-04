@@ -7,7 +7,9 @@
 
 #include <algorithm>
 #include <dxgi1_5.h>
+#include <exception>
 #include <fx/gltf.h>
+#include <stdio.h>
 
 namespace Util
 {
@@ -78,3 +80,32 @@ namespace Util
         return rgb;
     }
 } // namespace Util
+
+namespace DX
+{
+    // Helper class for COM exceptions
+    class com_exception : public std::exception
+    {
+    public:
+        explicit com_exception(HRESULT hr) noexcept : result(hr) {}
+
+        const char* what() const override
+        {
+            static char s_str[64] = {};
+            sprintf_s(s_str, "Failure with HRESULT of %08X", result);
+            return s_str;
+        }
+
+    private:
+        HRESULT result;
+    };
+
+    // Helper utility converts D3D API failures into exceptions.
+    inline void ThrowIfFailed(HRESULT hr)
+    {
+        if (FAILED(hr))
+        {
+            throw com_exception(hr);
+        }
+    }
+} // namespace DX
