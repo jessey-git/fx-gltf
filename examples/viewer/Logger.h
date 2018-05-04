@@ -15,7 +15,7 @@ namespace Logger
     {
         if constexpr (sizeof...(args) > 0)
         {
-            std::cout << FXCommon::StringFormatter::Format(format, std::forward<Args>(args)...);
+            std::cout << fx::common::StringFormatter::Format(format, std::forward<Args>(args)...);
         }
         else
         {
@@ -29,4 +29,4 @@ namespace Logger
         Logger::Write(format, std::forward<Args>(args)...);
         std::cout << std::endl;
     }
-}
+} // namespace Logger

@@ -1,9 +1,11 @@
 # glTF Viewer
 
-An application for demonstrating the practical usage of [fx-gltf](https://github.com/jessey-git/fx-gltf) within the context of modern rendering APIs.
+An application for demonstrating the practical usage of [fx-gltf](https://github.com/jessey-git/fx-gltf) within the context of a modern rendering project.
 
 ## Features
-* DirectX 12
+* Lightly abstracted DirectX 12 rendering
+    * Enough abstraction to get out of the way, but not too much so-as to interfere with learning
+* Auto mesh coloring for easy debugging/experimentation
 
 ![screenshot](screenshots/screenshot00.png)
 ![screenshot](screenshots/screenshot01.png)
@@ -11,7 +13,16 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 ![screenshot](screenshots/screenshot03.png)
 
 ## Usage
-```viewer.exe [--width: width] [--height: height] model```
+```
+usage:
+  viewer.exe <model> options
+
+where options are:
+  -?, -h, --help       display usage information
+  --width <width>      Initial window width
+  --height <height>    Initial window height
+  -r, --rotate         Auto rotate model
+```
 
 ## Design
 
@@ -34,23 +45,45 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 * Coordinates the update/render sequencing flow
 
 ### Psuedo call-graph
- * Win32Application
- * Engine
-     * D3DEngine
-         * Initialization
-             * Load glTF document
-             * Build glTF mesh pieces
-             * Build glTF scene-graph
-             * Build device-dependant DirectX 12 resources
-             * Build window-size-dependant DirectX 12 resources
-         * Update/Render loop
-             * Set Root Signature + PSO
-             * Set scene constant buffers
-             * Draw each mesh
-                 * Set mesh constant buffers
-                 * Set mesh vertex/normal/index buffers
-                 * Perform actual draw
+ * Win32Application::Run
+ * D3DEngine / Engine
+     * Initialization
+         * Load glTF document
+         * Build glTF mesh pieces
+         * Build glTF scene-graph
+         * Build device-dependent DirectX 12 resources
+         * Build window-size-dependent DirectX 12 resources
+     * Update/Render loop
+         * Set Root Signature + PSO
+         * Set scene constant buffers
+         * Draw each mesh instance
+             * Set mesh constant buffers
+             * Set mesh vertex/normal/index buffers
+             * Perform actual draw call
 
+### DirectX 12 / glTF Integration Notes
+
+#### PipelineStateObject Input Layout
+glTF stores vertex/normal/tex-coord buffers separately from each other. For example, consider a simple 6 vertex mesh with vertex/normal/tex-coord formats of Vec3/Vec3/Vec2 respectively:
+
+```[vvvvvv][nnnnnn][tttttt] == 3 buffers: [72 bytes][72 bytes][48 bytes]```
+
+However, most DirectX tutorials assume a "combined" layout as follows:
+
+```[vntvntvntvntvntvnt] == 1 buffer: [192 bytes]```
+
+This matters when creating the PipelineStateObject's InputLayout.  To properly use glTF data without extra data manipulation, make use of the ```D3D12_INPUT_ELEMENT_DESC.InputSlot``` field.  See ```D3DEngine::BuildPipelineStateObjects``` for reference.
+
+## Known Issues and TODOs
+ * DirectX 12
+     * Usage of the "default" upload heap is not used in all circumstances
+     * Materials are not loaded/processed (need image loader and mip-map generation etc.)
+     * Input from keyboard/mouse (i.e. simple arcball rotation control etc.)
+     * Scene centering does not seem to be working for all tested models. Some scenes still seem shifted away from 0,0,0
+
+ * Vulkan
+     * Needs implementing (patches welcome)
+ 
 ## Supported Compilers
 * Microsoft Visual C++ 2017 15.6+ (and possibly earlier)
 
@@ -82,7 +115,9 @@ SOFTWARE.
 
 ## Used third-party tools
 
-This software would not be possible without the help of these great resources. Thanks a lot!
+This software would not be possible without the help of the following resources.
 
 * [d3dx12.h](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12) containing helper structures and functions for D3D12
+* [DirectX-Graphics-Samples](https://github.com/Microsoft/DirectX-Graphics-Samples) for usage examples and API inspiration
+* [Xbox-ATG-Samples](https://github.com/Microsoft/Xbox-ATG-Samples) for usage examples and API inspiration
 * [Clara](https://github.com/catchorg/Clara) for command-line parsing

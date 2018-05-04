@@ -14,7 +14,7 @@
 #include <string_view>
 #include <type_traits>
 
-namespace FXCommon
+namespace fx::common
 {
     namespace detail
     {
@@ -27,7 +27,7 @@ namespace FXCommon
             typename std::conditional_t<std::is_same_v<unsigned long long, T>, unsigned long long,
             typename std::conditional_t<std::is_same_v<float, T> || std::is_same_v<double, T>, double,
             typename std::conditional_t<std::is_same_v<long double, T>, long double, T>>>>>>>;
-    }
+    } // namespace detail
 
     // Custom formatting for user-defined types
     template <typename Type, typename T>
@@ -411,4 +411,4 @@ namespace FXCommon
 
     using StringFormatter = BasicStringFormatter<char>;
     using WStringFormatter = BasicStringFormatter<wchar_t>;
-}
+} // namespace FXCommon

@@ -6,10 +6,10 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdio>
 #include <dxgi1_5.h>
 #include <exception>
 #include <fx/gltf.h>
-#include <stdio.h>
 
 namespace Util
 {
