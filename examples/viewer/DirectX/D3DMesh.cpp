@@ -42,7 +42,7 @@ void D3DMesh::CreateDeviceDependentResources(
 
             // Copy the data to the vertex buffer.
             UINT8 * pVertexDataBegin;
-            CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
+            const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
             DX::ThrowIfFailed(meshPart.m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
             std::memcpy(pVertexDataBegin, buffer.data, buffer.totalSize);
             meshPart.m_vertexBuffer->Unmap(0, nullptr);
@@ -70,7 +70,7 @@ void D3DMesh::CreateDeviceDependentResources(
                 IID_PPV_ARGS(meshPart.m_normalBuffer.ReleaseAndGetAddressOf())));
 
             UINT8 * pVertexDataBegin;
-            CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
+            const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
             DX::ThrowIfFailed(meshPart.m_normalBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
             std::memcpy(pVertexDataBegin, buffer.data, buffer.totalSize);
             meshPart.m_normalBuffer->Unmap(0, nullptr);
@@ -94,7 +94,7 @@ void D3DMesh::CreateDeviceDependentResources(
                 IID_PPV_ARGS(meshPart.m_indexBuffer.ReleaseAndGetAddressOf())));
 
             UINT8 * pVertexDataBegin;
-            CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
+            const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
             DX::ThrowIfFailed(meshPart.m_indexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
             std::memcpy(pVertexDataBegin, buffer.data, buffer.totalSize);
             meshPart.m_indexBuffer->Unmap(0, nullptr);
@@ -125,7 +125,7 @@ void D3DMesh::Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource c
         meshParameters.meshColor = meshPart.m_meshPartColor;
         currentFrame.MeshCB->CopyData(cbIndex, meshParameters);
 
-        D3D12_VERTEX_BUFFER_VIEW * views[2] = { &meshPart.m_vertexBufferView, &meshPart.m_normalBufferView };
+        D3D12_VERTEX_BUFFER_VIEW const * views[2] = { &meshPart.m_vertexBufferView, &meshPart.m_normalBufferView };
         commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         commandList->IASetVertexBuffers(0, 2, views[0]);
         commandList->IASetIndexBuffer(&meshPart.m_indexBufferView);

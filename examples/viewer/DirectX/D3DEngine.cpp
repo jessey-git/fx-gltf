@@ -37,7 +37,8 @@ void D3DEngine::InitializeCore(HWND window)
         m_doc = fx::gltf::LoadFromText(Config().ModelPath);
     }
 
-    m_deviceResources = std::make_unique<DX::D3DDeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+    const uint32_t BackBufferCount = 3;
+    m_deviceResources = std::make_unique<DX::D3DDeviceResources>(BackBufferCount, D3D_FEATURE_LEVEL_12_0, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
     m_deviceResources->SetWindow(window, Config().Width, Config().Height);
     m_deviceResources->RegisterDeviceNotify(this);
 

@@ -168,7 +168,7 @@ namespace gltf
     class invalid_gltf_document : public std::runtime_error
     {
     public:
-        explicit invalid_gltf_document(char const * message) noexcept
+        explicit invalid_gltf_document(char const * message)
             : std::runtime_error(message)
         {
         }
@@ -626,7 +626,7 @@ namespace gltf
 
             nlohmann::json extensionsAndExtras{};
 
-            bool empty() const noexcept
+            bool empty() const
             {
                 return baseColorTexture.empty() && metallicRoughnessTexture.empty() && metallicFactor == 1.0f && roughnessFactor == 1.0f && baseColorFactor == defaults::IdentityVec4;
             }

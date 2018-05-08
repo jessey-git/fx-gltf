@@ -31,7 +31,7 @@ namespace
 };
 
 // Constructor for DeviceResources.
-D3DDeviceResources::D3DDeviceResources(DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, unsigned int flags)
+D3DDeviceResources::D3DDeviceResources(UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, unsigned int flags)
     : m_backBufferIndex(0), m_rtvDescriptorSize(0), m_screenViewport{}, m_scissorRect{}, m_backBufferFormat(backBufferFormat), m_depthBufferFormat(depthBufferFormat), m_backBufferCount(backBufferCount), m_d3dMinFeatureLevel(minFeatureLevel), m_window(nullptr), m_d3dFeatureLevel(D3D_FEATURE_LEVEL_11_0), m_outputSize{ 0, 0, 1, 1 }, m_options(flags), m_deviceNotify(nullptr)
 {
     if (backBufferCount > MAX_BACK_BUFFER_COUNT)
@@ -433,7 +433,7 @@ void D3DDeviceResources::HandleDeviceLost()
         ComPtr<IDXGIDebug1> dxgiDebug;
         if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
         {
-            dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+            dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, static_cast<DXGI_DEBUG_RLO_FLAGS>(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
         }
     }
 #endif
@@ -511,7 +511,7 @@ void D3DDeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
 }
 
 // Wait for pending GPU work to complete.
-void D3DDeviceResources::WaitForGpu() noexcept
+void D3DDeviceResources::WaitForGpu()
 {
     if (m_commandQueue && m_fence && m_fenceEvent.IsValid())
     {

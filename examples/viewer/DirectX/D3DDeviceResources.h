@@ -27,7 +27,7 @@ namespace DX
     public:
         static const unsigned int c_AllowTearing = 0x1;
 
-        explicit D3DDeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT, UINT backBufferCount = 2, D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_11_0, unsigned int flags = 0);
+        D3DDeviceResources(UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT, unsigned int flags = 0);
 
         D3DDeviceResources(D3DDeviceResources const &) = delete;
         D3DDeviceResources(D3DDeviceResources &&) = delete;
@@ -50,7 +50,7 @@ namespace DX
 
         void Prepare(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_PRESENT);
         void Present(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET);
-        void WaitForGpu() noexcept;
+        void WaitForGpu();
 
         // Device Accessors.
         RECT GetOutputSize() const noexcept
@@ -156,34 +156,34 @@ namespace DX
         std::vector<D3DFrameResource>                       m_frameResources;
 
         // Swap chain objects.
-        Microsoft::WRL::ComPtr<IDXGIFactory4>   m_dxgiFactory;
-        Microsoft::WRL::ComPtr<IDXGISwapChain3> m_swapChain;
-        Microsoft::WRL::ComPtr<ID3D12Resource>  m_depthStencil;
+        Microsoft::WRL::ComPtr<IDXGIFactory4>           m_dxgiFactory;
+        Microsoft::WRL::ComPtr<IDXGISwapChain3>         m_swapChain;
+        Microsoft::WRL::ComPtr<ID3D12Resource>          m_depthStencil;
 
         // Presentation fence objects.
-        Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
-        Microsoft::WRL::Wrappers::Event     m_fenceEvent;
+        Microsoft::WRL::ComPtr<ID3D12Fence>             m_fence;
+        Microsoft::WRL::Wrappers::Event                 m_fenceEvent;
 
         // Direct3D rendering objects.
+        UINT                                            m_rtvDescriptorSize;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_rtvDescriptorHeap;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_dsvDescriptorHeap;
-        UINT                                            m_rtvDescriptorSize;
         D3D12_VIEWPORT                                  m_screenViewport;
         D3D12_RECT                                      m_scissorRect;
 
         // Direct3D properties.
+        UINT                m_backBufferCount;
         DXGI_FORMAT         m_backBufferFormat;
         DXGI_FORMAT         m_depthBufferFormat;
-        UINT                m_backBufferCount;
         D3D_FEATURE_LEVEL   m_d3dMinFeatureLevel;
+        D3D_FEATURE_LEVEL   m_d3dFeatureLevel;
 
         // Cached device properties.
         HWND                m_window;
-        D3D_FEATURE_LEVEL   m_d3dFeatureLevel;
         RECT                m_outputSize;
 
         // DeviceResources options (see flags above)
-        unsigned int        m_options;
+        uint32_t            m_options;
 
         // The IDeviceNotify can be held directly as it owns the DeviceResources.
         IDeviceNotify *     m_deviceNotify;
