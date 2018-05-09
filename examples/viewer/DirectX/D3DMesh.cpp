@@ -12,7 +12,7 @@
 
 uint32_t D3DMesh::CurrentMeshPartId = 1;
 
-void D3DMesh::CreateDeviceDependentResources(
+void D3DMesh::Create(
     fx::gltf::Document const & doc, std::size_t meshIndex, ID3D12Device * device)
 {
     const D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -109,6 +109,15 @@ void D3DMesh::CreateDeviceDependentResources(
 
         meshPart.m_meshPartColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
     }
+}
+
+void D3DMesh::SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor)
+{
+    using namespace DirectX;
+    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
+    DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(rotationY);
+    DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
+    DirectX::XMStoreFloat4x4(&m_worldMatrix, baseTransform * translation * rotation * scale);
 }
 
 void D3DMesh::Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex)

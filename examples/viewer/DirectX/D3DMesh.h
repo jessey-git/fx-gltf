@@ -14,13 +14,10 @@
 class D3DMesh
 {
 public:
-    void CreateDeviceDependentResources(
+    void Create(
         fx::gltf::Document const & doc, std::size_t meshIndex, ID3D12Device * device);
 
-    void SetWorldMatrix(DirectX::XMMATRIX m, float scalingFactor)
-    {
-        XMStoreFloat4x4(&m_worldMatrix, DirectX::XMMatrixMultiply(m, DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor)));
-    }
+    void SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor);
 
     void Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex);
 
