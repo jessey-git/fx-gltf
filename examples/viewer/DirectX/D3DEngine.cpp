@@ -149,7 +149,7 @@ void D3DEngine::PrepareRender()
 {
     m_deviceResources->Prepare();
 
-    auto commandList = m_deviceResources->GetCommandList();
+    ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
 
     // Clear the views.
     const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();

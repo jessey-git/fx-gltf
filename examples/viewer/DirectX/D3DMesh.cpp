@@ -27,86 +27,55 @@ void D3DMesh::Create(
         }
 
         D3DMeshPart & meshPart = m_meshParts[i];
+        const MeshData::BufferInfo vBuffer = mesh.VertexBuffer();
+        const MeshData::BufferInfo nBuffer = mesh.NormalBuffer();
+        const MeshData::BufferInfo iBuffer = mesh.IndexBuffer();
+        const std::size_t totalBufferSize =
+            static_cast<std::size_t>(vBuffer.totalSize) +
+            static_cast<std::size_t>(nBuffer.totalSize) +
+            static_cast<std::size_t>(iBuffer.totalSize);
 
-        // Create the vertex buffer
-        {
-            const MeshData::BufferInfo buffer = mesh.VertexBuffer();
-            const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(buffer.totalSize);
-            DX::ThrowIfFailed(device->CreateCommittedResource(
-                &uploadHeapProperties,
-                D3D12_HEAP_FLAG_NONE,
-                &resourceDescV,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(meshPart.m_vertexBuffer.ReleaseAndGetAddressOf())));
+        const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
+        DX::ThrowIfFailed(device->CreateCommittedResource(
+            &uploadHeapProperties,
+            D3D12_HEAP_FLAG_NONE,
+            &resourceDescV,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(meshPart.m_uploadBuffer.ReleaseAndGetAddressOf())));
 
-            // Copy the data to the vertex buffer.
-            UINT8 * pVertexDataBegin;
-            const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
-            DX::ThrowIfFailed(meshPart.m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
-            std::memcpy(pVertexDataBegin, buffer.data, buffer.totalSize);
-            meshPart.m_vertexBuffer->Unmap(0, nullptr);
+        uint8_t * bufferStart{};
+        uint32_t offset{};
+        const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
+        DX::ThrowIfFailed(meshPart.m_uploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
 
-            meshPart.m_vertexBufferView.BufferLocation = meshPart.m_vertexBuffer->GetGPUVirtualAddress();
-            meshPart.m_vertexBufferView.StrideInBytes = buffer.dataStride;
-            meshPart.m_vertexBufferView.SizeInBytes = buffer.totalSize;
+        // Copy over vertex buffer
+        std::memcpy(bufferStart, vBuffer.data, vBuffer.totalSize);
+        meshPart.m_vertexBufferView.BufferLocation = meshPart.m_uploadBuffer->GetGPUVirtualAddress();
+        meshPart.m_vertexBufferView.StrideInBytes = vBuffer.dataStride;
+        meshPart.m_vertexBufferView.SizeInBytes = vBuffer.totalSize;
+        offset += vBuffer.totalSize;
 
-            Util::BBox boundingBox{};
-            boundingBox.min = DirectX::XMFLOAT3(buffer.accessor->min.data());
-            boundingBox.max = DirectX::XMFLOAT3(buffer.accessor->max.data());
-            Util::AdjustBBox(m_boundingBox, boundingBox);
-        }
+        // Copy over normal buffer
+        std::memcpy(bufferStart + offset, nBuffer.data, nBuffer.totalSize);
+        meshPart.m_normalBufferView.BufferLocation = meshPart.m_uploadBuffer->GetGPUVirtualAddress() + offset;
+        meshPart.m_normalBufferView.StrideInBytes = nBuffer.dataStride;
+        meshPart.m_normalBufferView.SizeInBytes = nBuffer.totalSize;
+        offset += nBuffer.totalSize;
 
-        // Create the normal buffer
-        {
-            const MeshData::BufferInfo buffer = mesh.NormalBuffer();
-            const CD3DX12_RESOURCE_DESC resourceDescN = CD3DX12_RESOURCE_DESC::Buffer(buffer.totalSize);
-            DX::ThrowIfFailed(device->CreateCommittedResource(
-                &uploadHeapProperties,
-                D3D12_HEAP_FLAG_NONE,
-                &resourceDescN,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(meshPart.m_normalBuffer.ReleaseAndGetAddressOf())));
+        // Copy over index buffer
+        std::memcpy(bufferStart + offset, iBuffer.data, iBuffer.totalSize);
+        meshPart.m_indexBufferView.BufferLocation = meshPart.m_uploadBuffer->GetGPUVirtualAddress() + offset;
+        meshPart.m_indexBufferView.Format = Util::GetFormat(iBuffer.accessor);
+        meshPart.m_indexBufferView.SizeInBytes = iBuffer.totalSize;
+        meshPart.m_indexCount = iBuffer.accessor->count;
 
-            UINT8 * pVertexDataBegin;
-            const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
-            DX::ThrowIfFailed(meshPart.m_normalBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
-            std::memcpy(pVertexDataBegin, buffer.data, buffer.totalSize);
-            meshPart.m_normalBuffer->Unmap(0, nullptr);
+        Util::BBox boundingBox{};
+        boundingBox.min = DirectX::XMFLOAT3(vBuffer.accessor->min.data());
+        boundingBox.max = DirectX::XMFLOAT3(vBuffer.accessor->max.data());
+        Util::AdjustBBox(m_boundingBox, boundingBox);
 
-            meshPart.m_normalBufferView.BufferLocation = meshPart.m_normalBuffer->GetGPUVirtualAddress();
-            meshPart.m_normalBufferView.StrideInBytes = buffer.dataStride;
-            meshPart.m_normalBufferView.SizeInBytes = buffer.totalSize;
-        }
-
-        // Create the index buffer
-        if (mesh.HasIndexData())
-        {
-            const MeshData::BufferInfo buffer = mesh.IndexBuffer();
-            const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(buffer.totalSize);
-            DX::ThrowIfFailed(device->CreateCommittedResource(
-                &uploadHeapProperties,
-                D3D12_HEAP_FLAG_NONE,
-                &resourceDesc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(meshPart.m_indexBuffer.ReleaseAndGetAddressOf())));
-
-            UINT8 * pVertexDataBegin;
-            const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
-            DX::ThrowIfFailed(meshPart.m_indexBuffer->Map(0, &readRange, reinterpret_cast<void **>(&pVertexDataBegin)));
-            std::memcpy(pVertexDataBegin, buffer.data, buffer.totalSize);
-            meshPart.m_indexBuffer->Unmap(0, nullptr);
-
-            // Initialize the index buffer view.
-            meshPart.m_indexBufferView.BufferLocation = meshPart.m_indexBuffer->GetGPUVirtualAddress();
-            meshPart.m_indexBufferView.Format = Util::GetFormat(buffer.accessor);
-            meshPart.m_indexBufferView.SizeInBytes = buffer.totalSize;
-
-            meshPart.m_indexCount = buffer.accessor->count;
-        }
-
+        meshPart.m_uploadBuffer->Unmap(0, nullptr);
         meshPart.m_meshPartColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
     }
 }
@@ -149,8 +118,6 @@ void D3DMesh::Reset()
 {
     for (auto & meshPart : m_meshParts)
     {
-        meshPart.m_vertexBuffer.Reset();
-        meshPart.m_normalBuffer.Reset();
-        meshPart.m_indexBuffer.Reset();
+        meshPart.m_uploadBuffer.Reset();
     }
 }
