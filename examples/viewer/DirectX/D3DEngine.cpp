@@ -37,7 +37,8 @@ void D3DEngine::InitializeCore(HWND window)
         m_doc = fx::gltf::LoadFromText(Config().ModelPath);
     }
 
-    m_deviceResources = std::make_unique<DX::D3DDeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+    const uint32_t BackBufferCount = 3;
+    m_deviceResources = std::make_unique<DX::D3DDeviceResources>(BackBufferCount, D3D_FEATURE_LEVEL_12_0, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
     m_deviceResources->SetWindow(window, Config().Width, Config().Height);
     m_deviceResources->RegisterDeviceNotify(this);
 
@@ -56,11 +57,6 @@ void D3DEngine::Update(float elapsedTime)
         if (m_curRotationAngleRad >= DirectX::XM_2PI)
         {
             m_curRotationAngleRad -= DirectX::XM_2PI;
-        }
-
-        for (auto & meshInstance : m_meshInstances)
-        {
-            meshInstance.Transform = meshInstance.BaseTransform * DirectX::XMMatrixRotationY(m_curRotationAngleRad);
         }
     }
 }
@@ -94,7 +90,7 @@ void D3DEngine::Render()
     for (auto & meshInstance : m_meshInstances)
     {
         D3DMesh & mesh = m_meshes[meshInstance.MeshIndex];
-        mesh.SetWorldMatrix(meshInstance.Transform, m_autoScaleFactor);
+        mesh.SetWorldMatrix(meshInstance.Transform, m_boundingBox.centerTranslation, m_curRotationAngleRad, m_autoScaleFactor);
         mesh.Render(commandList, currentFrame, viewProj, currentCBIndex);
 
         currentCBIndex += mesh.MeshPartCount();
@@ -113,6 +109,8 @@ void D3DEngine::WindowSizeChangedCore(int width, int height)
 
 void D3DEngine::CreateDeviceDependentResources()
 {
+    m_deviceResources->PrepareCommandList();
+
     BuildRootSignature();
     BuildPipelineStateObjects();
 
@@ -121,8 +119,13 @@ void D3DEngine::CreateDeviceDependentResources()
     BuildConstantBufferUploadBuffers();
     BuildDescriptorHeaps();
 
-    // Wait until assets have been uploaded to the GPU.
+    m_deviceResources->ExecuteCommandList();
     m_deviceResources->WaitForGpu();
+
+    for (auto & mesh : m_meshes)
+    {
+        mesh.FinishUpload();
+    }
 
     // Initialize the view matrix
     static const DirectX::XMVECTORF32 c_eye = { 3.0f, 2.0f, 5.0f, 0.0f };
@@ -153,7 +156,7 @@ void D3DEngine::PrepareRender()
 {
     m_deviceResources->Prepare();
 
-    auto commandList = m_deviceResources->GetCommandList();
+    ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
 
     // Clear the views.
     const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
@@ -188,11 +191,12 @@ void D3DEngine::BuildScene()
     m_meshes.resize(m_doc.meshes.size());
     for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
     {
-        m_meshes[i].CreateDeviceDependentResources(m_doc, i, m_deviceResources->GetD3DDevice());
+        m_meshes[i].Create(m_doc, i, m_deviceResources.get());
         Util::AdjustBBox(m_boundingBox, m_meshes[i].MeshBBox());
     }
 
-    DirectX::XMFLOAT3 midTranslation{};
+    Util::CenterBBox(m_boundingBox);
+
     if (!m_doc.scenes.empty())
     {
         Logger::WriteLine("Building scene graph...");
@@ -209,7 +213,7 @@ void D3DEngine::BuildScene()
             if (graphNode.meshIndex >= 0)
             {
                 D3DMeshInstance instance{ static_cast<uint32_t>(graphNode.meshIndex) };
-                instance.Transform = instance.BaseTransform = Util::CenterBBox(graphNode.currentTransform, m_boundingBox, midTranslation);
+                instance.Transform = graphNode.currentTransform;
                 m_meshInstances.push_back(instance);
             }
         }
@@ -220,20 +224,19 @@ void D3DEngine::BuildScene()
         for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
         {
             D3DMeshInstance instance{ i };
-            instance.Transform = instance.BaseTransform = DirectX::XMMatrixIdentity();
+            instance.Transform = DirectX::XMMatrixIdentity();
             m_meshInstances.push_back(instance);
         }
     }
 
-    float distance;
-    DirectX::FXMVECTOR sub = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.max), DirectX::XMLoadFloat3(&m_boundingBox.min));
-    DirectX::FXMVECTOR length = DirectX::XMVector3Length(sub);
-    DirectX::XMStoreFloat(&distance, length);
-    m_autoScaleFactor = 5.19f / distance;
+    DirectX::FXMVECTOR sizeVec = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.max), DirectX::XMLoadFloat3(&m_boundingBox.min));
+    DirectX::XMFLOAT3 size{};
+    DirectX::XMStoreFloat3(&size, sizeVec);
+    m_autoScaleFactor = 4.0f / std::max({ size.x, size.y, size.z });
 
     Logger::WriteLine("Found {0} mesh instance(s)", m_meshInstances.size());
     Logger::WriteLine("Scene bbox       : [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.min.x, m_boundingBox.min.y, m_boundingBox.min.z, m_boundingBox.max.x, m_boundingBox.max.y, m_boundingBox.max.z);
-    Logger::WriteLine("Scene translation: [{0},{1},{2}]", midTranslation.x, midTranslation.y, midTranslation.z);
+    Logger::WriteLine("Scene translation: [{0},{1},{2}]", m_boundingBox.centerTranslation.x, m_boundingBox.centerTranslation.y, m_boundingBox.centerTranslation.z);
     Logger::WriteLine("Auto-scale factor: {0:F4}", m_autoScaleFactor);
 }
 

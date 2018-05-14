@@ -17,6 +17,7 @@ namespace Util
     {
         DirectX::XMFLOAT3 min{};
         DirectX::XMFLOAT3 max{};
+        DirectX::XMFLOAT3 centerTranslation{};
     };
 
     static DXGI_FORMAT GetFormat(fx::gltf::Accessor const * accessor)
@@ -50,15 +51,15 @@ namespace Util
         currentBBox.max.z = std::max(currentBBox.max.z, other.max.z);
     }
 
-    static DirectX::XMMATRIX CenterBBox(DirectX::XMMATRIX const & currentTransform, BBox const & currentBBox, DirectX::XMFLOAT3 & midTranslation)
+    static void CenterBBox(BBox & currentBBox)
     {
-        DirectX::XMVECTOR mid = DirectX::XMVectorDivide(
-            DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&currentBBox.min), DirectX::XMLoadFloat3(&currentBBox.max)),
-            { 2.0f, 2.0f, 2.0f });
+        using namespace DirectX;
+        DirectX::XMVECTOR min = DirectX::XMLoadFloat3(&currentBBox.min);
+        DirectX::XMVECTOR max = DirectX::XMLoadFloat3(&currentBBox.max);
+        DirectX::XMVECTOR mid = 0.5f * (min + max);
         mid = DirectX::XMVectorNegate(mid);
 
-        DirectX::XMStoreFloat3(&midTranslation, mid);
-        return currentTransform * DirectX::XMMatrixTranslationFromVector(mid);
+        DirectX::XMStoreFloat3(&currentBBox.centerTranslation, mid);
     }
 
     static DirectX::XMFLOAT3 HSVtoRBG(float hue, float saturation, float value) noexcept
@@ -89,7 +90,7 @@ namespace DX
     public:
         explicit com_exception(HRESULT hr) noexcept : result(hr) {}
 
-        const char* what() const override
+        const char* what() const noexcept override
         {
             static char s_str[64] = {};
             sprintf_s(s_str, "Failure with HRESULT of %08X", result);

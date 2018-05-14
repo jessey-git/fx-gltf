@@ -26,10 +26,16 @@ namespace Graph
         if (node.matrix != fx::gltf::defaults::IdentityMatrix)
         {
             const DirectX::XMFLOAT4X4 local(node.matrix.data());
-            graphNode.currentTransform = XMLoadFloat4x4(&local) * graphNode.currentTransform;
+            graphNode.currentTransform = DirectX::XMLoadFloat4x4(&local) * graphNode.currentTransform;
         }
         else
         {
+            if (node.translation != fx::gltf::defaults::NullVec3)
+            {
+                const DirectX::XMFLOAT3 local(node.translation.data());
+                graphNode.currentTransform = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&local)) * graphNode.currentTransform;
+            }
+
             if (node.scale != fx::gltf::defaults::IdentityVec3)
             {
                 const DirectX::XMFLOAT3 local(node.scale.data());
@@ -40,12 +46,6 @@ namespace Graph
             {
                 const DirectX::XMFLOAT4 local(node.rotation.data());
                 graphNode.currentTransform = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&local)) * graphNode.currentTransform;
-            }
-
-            if (node.translation != fx::gltf::defaults::NullVec3)
-            {
-                const DirectX::XMFLOAT3 local(node.translation.data());
-                graphNode.currentTransform = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&local)) * graphNode.currentTransform;
             }
         }
 

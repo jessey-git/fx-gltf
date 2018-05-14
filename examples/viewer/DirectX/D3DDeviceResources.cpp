@@ -31,7 +31,7 @@ namespace
 };
 
 // Constructor for DeviceResources.
-D3DDeviceResources::D3DDeviceResources(DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, unsigned int flags)
+D3DDeviceResources::D3DDeviceResources(UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, unsigned int flags)
     : m_backBufferIndex(0), m_rtvDescriptorSize(0), m_screenViewport{}, m_scissorRect{}, m_backBufferFormat(backBufferFormat), m_depthBufferFormat(depthBufferFormat), m_backBufferCount(backBufferCount), m_d3dMinFeatureLevel(minFeatureLevel), m_window(nullptr), m_d3dFeatureLevel(D3D_FEATURE_LEVEL_11_0), m_outputSize{ 0, 0, 1, 1 }, m_options(flags), m_deviceNotify(nullptr)
 {
     if (backBufferCount > MAX_BACK_BUFFER_COUNT)
@@ -433,7 +433,7 @@ void D3DDeviceResources::HandleDeviceLost()
         ComPtr<IDXGIDebug1> dxgiDebug;
         if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
         {
-            dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+            dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, static_cast<DXGI_DEBUG_RLO_FLAGS>(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
         }
     }
 #endif
@@ -447,17 +447,30 @@ void D3DDeviceResources::HandleDeviceLost()
     }
 }
 
-// Prepare the command list and render target for rendering.
-void D3DDeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState)
+void D3DDeviceResources::PrepareCommandList()
 {
     // Reset command list and allocator.
     D3DFrameResource const & currentFrame = m_frameResources[m_backBufferIndex];
     ThrowIfFailed(currentFrame.CommandAllocator->Reset());
     ThrowIfFailed(m_commandList->Reset(currentFrame.CommandAllocator.Get(), nullptr));
+}
+
+void D3DDeviceResources::ExecuteCommandList()
+{
+    // Send the command list off to the GPU for processing.
+    ThrowIfFailed(m_commandList->Close());
+    m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_commandList.GetAddressOf()));
+}
+
+// Prepare the command list and render target for rendering.
+void D3DDeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState)
+{
+    PrepareCommandList();
 
     if (beforeState != D3D12_RESOURCE_STATE_RENDER_TARGET)
     {
         // Transition the render target into the correct state to allow for drawing into it.
+        D3DFrameResource const & currentFrame = m_frameResources[m_backBufferIndex];
         const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(currentFrame.RenderTarget.Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_commandList->ResourceBarrier(1, &barrier);
     }
@@ -473,9 +486,7 @@ void D3DDeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
         m_commandList->ResourceBarrier(1, &barrier);
     }
 
-    // Send the command list off to the GPU for processing.
-    ThrowIfFailed(m_commandList->Close());
-    m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_commandList.GetAddressOf()));
+    ExecuteCommandList();
 
     HRESULT hr{};
     if (m_options & c_AllowTearing)
@@ -511,7 +522,7 @@ void D3DDeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
 }
 
 // Wait for pending GPU work to complete.
-void D3DDeviceResources::WaitForGpu() noexcept
+void D3DDeviceResources::WaitForGpu()
 {
     if (m_commandQueue && m_fence && m_fenceEvent.IsValid())
     {

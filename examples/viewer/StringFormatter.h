@@ -18,6 +18,7 @@ namespace fx::common
 {
     namespace detail
     {
+        // clang-format off
         template <typename T>
         using FormatType =
             typename std::conditional_t<std::is_same_v<bool, T>, bool,
@@ -27,6 +28,7 @@ namespace fx::common
             typename std::conditional_t<std::is_same_v<unsigned long long, T>, unsigned long long,
             typename std::conditional_t<std::is_same_v<float, T> || std::is_same_v<double, T>, double,
             typename std::conditional_t<std::is_same_v<long double, T>, long double, T>>>>>>>;
+        // clang-format on
     } // namespace detail
 
     // Custom formatting for user-defined types
@@ -235,7 +237,7 @@ namespace fx::common
                 T * end = begin;
                 std::unique_ptr<T[]> scratch;
 
-                FormatErrorIf(!ApplySpecForNumbers());
+                BasicStringFormatter<T>::FormatErrorIf(!ApplySpecForNumbers());
 
 #pragma warning(push)
 #pragma warning(disable : 4127) // conditional expression is constant
