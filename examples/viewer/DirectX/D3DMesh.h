@@ -15,11 +15,13 @@ class D3DMesh
 {
 public:
     void Create(
-        fx::gltf::Document const & doc, std::size_t meshIndex, ID3D12Device * device);
+        fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources * deviceResources);
 
     void SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor);
 
     void Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex);
+
+    void FinishUpload();
 
     void Reset();
 
@@ -30,6 +32,7 @@ public:
 private:
     struct D3DMeshPart
     {
+        Microsoft::WRL::ComPtr<ID3D12Resource> m_mainBuffer{};
         Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer{};
 
         D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};

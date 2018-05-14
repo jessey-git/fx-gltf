@@ -109,6 +109,8 @@ void D3DEngine::WindowSizeChangedCore(int width, int height)
 
 void D3DEngine::CreateDeviceDependentResources()
 {
+    m_deviceResources->PrepareCommandList();
+
     BuildRootSignature();
     BuildPipelineStateObjects();
 
@@ -117,8 +119,13 @@ void D3DEngine::CreateDeviceDependentResources()
     BuildConstantBufferUploadBuffers();
     BuildDescriptorHeaps();
 
-    // Wait until assets have been uploaded to the GPU.
+    m_deviceResources->ExecuteCommandList();
     m_deviceResources->WaitForGpu();
+
+    for (auto & mesh : m_meshes)
+    {
+        mesh.FinishUpload();
+    }
 
     // Initialize the view matrix
     static const DirectX::XMVECTORF32 c_eye = { 3.0f, 2.0f, 5.0f, 0.0f };
@@ -184,7 +191,7 @@ void D3DEngine::BuildScene()
     m_meshes.resize(m_doc.meshes.size());
     for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
     {
-        m_meshes[i].Create(m_doc, i, m_deviceResources->GetD3DDevice());
+        m_meshes[i].Create(m_doc, i, m_deviceResources.get());
         Util::AdjustBBox(m_boundingBox, m_meshes[i].MeshBBox());
     }
 

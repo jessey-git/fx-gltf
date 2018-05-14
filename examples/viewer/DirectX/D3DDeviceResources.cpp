@@ -447,17 +447,30 @@ void D3DDeviceResources::HandleDeviceLost()
     }
 }
 
-// Prepare the command list and render target for rendering.
-void D3DDeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState)
+void D3DDeviceResources::PrepareCommandList()
 {
     // Reset command list and allocator.
     D3DFrameResource const & currentFrame = m_frameResources[m_backBufferIndex];
     ThrowIfFailed(currentFrame.CommandAllocator->Reset());
     ThrowIfFailed(m_commandList->Reset(currentFrame.CommandAllocator.Get(), nullptr));
+}
+
+void D3DDeviceResources::ExecuteCommandList()
+{
+    // Send the command list off to the GPU for processing.
+    ThrowIfFailed(m_commandList->Close());
+    m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_commandList.GetAddressOf()));
+}
+
+// Prepare the command list and render target for rendering.
+void D3DDeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState)
+{
+    PrepareCommandList();
 
     if (beforeState != D3D12_RESOURCE_STATE_RENDER_TARGET)
     {
         // Transition the render target into the correct state to allow for drawing into it.
+        D3DFrameResource const & currentFrame = m_frameResources[m_backBufferIndex];
         const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(currentFrame.RenderTarget.Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
         m_commandList->ResourceBarrier(1, &barrier);
     }
@@ -473,9 +486,7 @@ void D3DDeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
         m_commandList->ResourceBarrier(1, &barrier);
     }
 
-    // Send the command list off to the GPU for processing.
-    ThrowIfFailed(m_commandList->Close());
-    m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_commandList.GetAddressOf()));
+    ExecuteCommandList();
 
     HRESULT hr{};
     if (m_options & c_AllowTearing)
