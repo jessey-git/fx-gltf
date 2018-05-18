@@ -152,6 +152,7 @@ TEST_CASE("roundtrip")
                 "data/glTF-Sample-Models/2.0/Suzanne/glTF/Suzanne.gltf",
                 "data/glTF-Sample-Models/2.0/TextureCoordinateTest/glTF/TextureCoordinateTest.gltf",
                 "data/glTF-Sample-Models/2.0/TextureSettingsTest/glTF/TextureSettingsTest.gltf",
+                "data/glTF-Sample-Models/2.0/TextureTransformTest/glTF/TextureTransformTest.gltf",
                 "data/glTF-Sample-Models/2.0/Triangle/glTF/Triangle.gltf",
                 "data/glTF-Sample-Models/2.0/TriangleWithoutIndices/glTF/TriangleWithoutIndices.gltf",
                 "data/glTF-Sample-Models/2.0/TwoSidedPlane/glTF/TwoSidedPlane.gltf",
