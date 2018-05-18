@@ -6,6 +6,7 @@
 #pragma once
 
 #include <fx/gltf.h>
+#include "MaterialData.h"
 
 class MeshData
 {
@@ -17,6 +18,11 @@ public:
         uint8_t const * data;
         uint32_t dataStride;
         uint32_t totalSize;
+
+        bool HasData() const noexcept
+        {
+            return data != nullptr;
+        }
     };
 
     MeshData(fx::gltf::Document const & doc, std::size_t meshIndex, std::size_t primitveIndex)
@@ -28,51 +34,68 @@ public:
         {
             if (attrib.first == "POSITION")
             {
-                vertexBuffer = GetData(doc, doc.accessors[attrib.second]);
+                m_vertexBuffer = GetData(doc, doc.accessors[attrib.second]);
             }
             else if (attrib.first == "NORMAL")
             {
-                normalBuffer = GetData(doc, doc.accessors[attrib.second]);
+                m_normalBuffer = GetData(doc, doc.accessors[attrib.second]);
+            }
+            else if (attrib.first == "TANGENT")
+            {
+                m_tangentBuffer = GetData(doc, doc.accessors[attrib.second]);
+            }
+            else if (attrib.first == "TEXCOORD_0")
+            {
+                m_texCoord0Buffer = GetData(doc, doc.accessors[attrib.second]);
             }
         }
 
-        indexBuffer = GetData(doc, doc.accessors[primitive.indices]);
+        m_indexBuffer = GetData(doc, doc.accessors[primitive.indices]);
+
+        if (primitive.material >= 0)
+        {
+            m_materialData.SetData(doc.materials[primitive.material]);
+        }
     }
 
-    bool HasIndexData() noexcept
+    BufferInfo const & IndexBuffer() const noexcept
     {
-        return indexBuffer.data != nullptr;
+        return m_indexBuffer;
     }
 
-    bool HasVertexData() noexcept
+    BufferInfo const & VertexBuffer() const noexcept
     {
-        return vertexBuffer.data != nullptr;
+        return m_vertexBuffer;
     }
 
-    bool HasNormalData() noexcept
+    BufferInfo const & NormalBuffer() const noexcept
     {
-        return normalBuffer.data != nullptr;
+        return m_normalBuffer;
     }
 
-    BufferInfo IndexBuffer() noexcept
+    BufferInfo const & TangentBuffer() const noexcept
     {
-        return indexBuffer;
+        return m_tangentBuffer;
     }
 
-    BufferInfo VertexBuffer() noexcept
+    BufferInfo const &  TexCoord0Buffer() const noexcept
     {
-        return vertexBuffer;
+        return m_texCoord0Buffer;
     }
 
-    BufferInfo NormalBuffer() noexcept
+    MaterialData const & Material() const noexcept
     {
-        return normalBuffer;
+        return m_materialData;
     }
 
 private:
-    BufferInfo indexBuffer{};
-    BufferInfo vertexBuffer{};
-    BufferInfo normalBuffer{};
+    BufferInfo m_indexBuffer{};
+    BufferInfo m_vertexBuffer{};
+    BufferInfo m_normalBuffer{};
+    BufferInfo m_tangentBuffer{};
+    BufferInfo m_texCoord0Buffer{};
+
+    MaterialData m_materialData{};
 
     static BufferInfo GetData(fx::gltf::Document const & doc, fx::gltf::Accessor const & accessor)
     {

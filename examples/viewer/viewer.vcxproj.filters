@@ -69,6 +69,12 @@
     <ClInclude Include="DirectX\D3DUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DirectX\D3DTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -89,6 +95,9 @@
     <ClCompile Include="DirectX\D3DFrameResources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DirectX\D3DTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="DirectX\Shaders\SimpleLighting.hlsli" />
@@ -98,5 +107,6 @@
   <ItemGroup>
     <FxCompile Include="DirectX\Shaders\TriangleVS.hlsl" />
     <FxCompile Include="DirectX\Shaders\LambertPS.hlsl" />
+    <FxCompile Include="DirectX\Shaders\PBRPS.hlsl" />
   </ItemGroup>
 </Project>

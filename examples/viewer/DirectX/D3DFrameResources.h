@@ -30,5 +30,6 @@ struct D3DFrameResource
 
     std::unique_ptr<D3DUploadBuffer<SceneConstantBuffer>>   SceneCB{};
     std::unique_ptr<D3DUploadBuffer<MeshConstantBuffer>>    MeshCB{};
+    std::unique_ptr<D3DUploadBuffer<MeshShaderData>>        MeshDataBuffer{};
     // clang-format on
 };

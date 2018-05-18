@@ -15,7 +15,7 @@ class D3DMesh
 {
 public:
     void Create(
-        fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources * deviceResources);
+        fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources const * deviceResources);
 
     void SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor);
 
@@ -25,9 +25,15 @@ public:
 
     void Reset();
 
-    Util::BBox MeshBBox() noexcept { return m_boundingBox; }
+    Util::BBox const & MeshBBox() const noexcept
+    {
+        return m_boundingBox;
+    }
 
-    std::size_t MeshPartCount() noexcept { return m_meshParts.size(); }
+    std::size_t MeshPartCount() const noexcept
+    {
+        return m_meshParts.size();
+    }
 
 private:
     struct D3DMeshPart
@@ -37,11 +43,13 @@ private:
 
         D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};
         D3D12_VERTEX_BUFFER_VIEW m_normalBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW m_tangentBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW m_texCoord0BufferView{};
         D3D12_INDEX_BUFFER_VIEW m_indexBufferView{};
 
         uint32_t m_indexCount{};
 
-        DirectX::XMFLOAT3 m_meshPartColor{};
+        MeshShaderData m_shaderData{};
     };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};

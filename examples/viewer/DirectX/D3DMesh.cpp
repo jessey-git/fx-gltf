@@ -13,7 +13,7 @@
 uint32_t D3DMesh::CurrentMeshPartId = 1;
 
 void D3DMesh::Create(
-    fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources * deviceResources)
+    fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources const * deviceResources)
 {
     ID3D12Device * device = deviceResources->GetD3DDevice();
     ID3D12GraphicsCommandList * commandList = deviceResources->GetCommandList();
@@ -25,20 +25,24 @@ void D3DMesh::Create(
     for (std::size_t i = 0; i < doc.meshes[meshIndex].primitives.size(); i++)
     {
         MeshData mesh(doc, meshIndex, i);
-        if (!mesh.HasVertexData() || !mesh.HasNormalData() || !mesh.HasIndexData())
+        MeshData::BufferInfo const & vBuffer = mesh.VertexBuffer();
+        MeshData::BufferInfo const & nBuffer = mesh.NormalBuffer();
+        MeshData::BufferInfo const & tBuffer = mesh.TangentBuffer();
+        MeshData::BufferInfo const & cBuffer = mesh.TexCoord0Buffer();
+        MeshData::BufferInfo const & iBuffer = mesh.IndexBuffer();
+        if (!vBuffer.HasData() || !nBuffer.HasData() || !iBuffer.HasData())
         {
             throw std::runtime_error("Only meshes with vertex, normal, and index buffers are supported");
         }
 
-        D3DMeshPart & meshPart = m_meshParts[i];
-        const MeshData::BufferInfo vBuffer = mesh.VertexBuffer();
-        const MeshData::BufferInfo nBuffer = mesh.NormalBuffer();
-        const MeshData::BufferInfo iBuffer = mesh.IndexBuffer();
         const std::size_t totalBufferSize =
             static_cast<std::size_t>(vBuffer.totalSize) +
             static_cast<std::size_t>(nBuffer.totalSize) +
+            static_cast<std::size_t>(tBuffer.totalSize) +
+            static_cast<std::size_t>(cBuffer.totalSize) +
             static_cast<std::size_t>(iBuffer.totalSize);
 
+        D3DMeshPart & meshPart = m_meshParts[i];
         const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
         DX::ThrowIfFailed(device->CreateCommittedResource(
             &defaultHeapProperties,
@@ -75,6 +79,26 @@ void D3DMesh::Create(
         meshPart.m_normalBufferView.SizeInBytes = nBuffer.totalSize;
         offset += nBuffer.totalSize;
 
+        if (tBuffer.HasData())
+        {
+            // Copy tex-coord buffer to upload...
+            std::memcpy(bufferStart + offset, tBuffer.data, tBuffer.totalSize);
+            meshPart.m_tangentBufferView.BufferLocation = meshPart.m_mainBuffer->GetGPUVirtualAddress() + offset;
+            meshPart.m_tangentBufferView.StrideInBytes = tBuffer.dataStride;
+            meshPart.m_tangentBufferView.SizeInBytes = tBuffer.totalSize;
+            offset += tBuffer.totalSize;
+        }
+
+        if (cBuffer.HasData())
+        {
+            // Copy tex-coord buffer to upload...
+            std::memcpy(bufferStart + offset, cBuffer.data, cBuffer.totalSize);
+            meshPart.m_texCoord0BufferView.BufferLocation = meshPart.m_mainBuffer->GetGPUVirtualAddress() + offset;
+            meshPart.m_texCoord0BufferView.StrideInBytes = cBuffer.dataStride;
+            meshPart.m_texCoord0BufferView.SizeInBytes = cBuffer.totalSize;
+            offset += cBuffer.totalSize;
+        }
+
         // Copy index buffer to upload...
         std::memcpy(bufferStart + offset, iBuffer.data, iBuffer.totalSize);
         meshPart.m_indexBufferView.BufferLocation = meshPart.m_mainBuffer->GetGPUVirtualAddress() + offset;
@@ -83,9 +107,8 @@ void D3DMesh::Create(
         meshPart.m_indexCount = iBuffer.accessor->count;
 
         // Copy from upload to default...
-        commandList->CopyBufferRegion(
-            meshPart.m_mainBuffer.Get(), 0, meshPart.m_uploadBuffer.Get(), 0, totalBufferSize);
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(meshPart.m_mainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        commandList->CopyBufferRegion(meshPart.m_mainBuffer.Get(), 0, meshPart.m_uploadBuffer.Get(), 0, totalBufferSize);
+        const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(meshPart.m_mainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER);
         commandList->ResourceBarrier(1, &barrier);
 
         Util::BBox boundingBox{};
@@ -94,16 +117,37 @@ void D3DMesh::Create(
         Util::AdjustBBox(m_boundingBox, boundingBox);
 
         meshPart.m_uploadBuffer->Unmap(0, nullptr);
-        meshPart.m_meshPartColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
+
+        // Set material properties for this mesh piece...
+        meshPart.m_shaderData.meshAutoColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
+        if (mesh.Material().HasData())
+        {
+            auto material = mesh.Material().Data();
+            meshPart.m_shaderData.baseColorIndex = material.pbrMetallicRoughness.baseColorTexture.index;
+            meshPart.m_shaderData.baseColorFactor = DirectX::XMFLOAT4(material.pbrMetallicRoughness.baseColorFactor.data());
+
+            meshPart.m_shaderData.metalRoughIndex = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
+            meshPart.m_shaderData.metallicFactor = material.pbrMetallicRoughness.metallicFactor;
+            meshPart.m_shaderData.roughnessFactor = material.pbrMetallicRoughness.roughnessFactor;
+
+            meshPart.m_shaderData.normalIndex = material.normalTexture.index;
+            meshPart.m_shaderData.normalScale = material.normalTexture.scale;
+
+            meshPart.m_shaderData.aoIndex = material.occlusionTexture.index;
+            meshPart.m_shaderData.aoStrength = material.occlusionTexture.strength;
+
+            meshPart.m_shaderData.emissiveIndex = material.emissiveTexture.index;
+            meshPart.m_shaderData.emissiveFactor = DirectX::XMFLOAT3(material.emissiveFactor.data());
+        }
     }
 }
 
 void D3DMesh::SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor)
 {
     using namespace DirectX;
-    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
-    DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(rotationY);
-    DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
+    const DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
+    const DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(rotationY);
+    const DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
     DirectX::XMStoreFloat4x4(&m_worldMatrix, baseTransform * translation * rotation * scale);
 }
 
@@ -118,12 +162,13 @@ void D3DMesh::Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource c
     {
         const std::size_t cbIndex = currentCBIndex + meshCBIndex;
 
-        meshParameters.meshColor = meshPart.m_meshPartColor;
+        meshParameters.materialIndex = static_cast<int>(cbIndex);
         currentFrame.MeshCB->CopyData(cbIndex, meshParameters);
+        currentFrame.MeshDataBuffer->CopyData(cbIndex, meshPart.m_shaderData);
 
-        D3D12_VERTEX_BUFFER_VIEW const * views[2] = { &meshPart.m_vertexBufferView, &meshPart.m_normalBufferView };
+        D3D12_VERTEX_BUFFER_VIEW const * views[4] = { &meshPart.m_vertexBufferView, &meshPart.m_normalBufferView, &meshPart.m_tangentBufferView, &meshPart.m_texCoord0BufferView };
         commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        commandList->IASetVertexBuffers(0, 2, views[0]);
+        commandList->IASetVertexBuffers(0, 4, views[0]);
         commandList->IASetIndexBuffer(&meshPart.m_indexBufferView);
         commandList->SetGraphicsRootConstantBufferView(1, currentFrame.MeshCB->GetGPUVirtualAddress(cbIndex));
         commandList->DrawIndexedInstanced(meshPart.m_indexCount, 1, 0, 0, 0);

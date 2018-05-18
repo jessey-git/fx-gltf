@@ -54,31 +54,31 @@ namespace Util
     static void CenterBBox(BBox & currentBBox)
     {
         using namespace DirectX;
-        DirectX::XMVECTOR min = DirectX::XMLoadFloat3(&currentBBox.min);
-        DirectX::XMVECTOR max = DirectX::XMLoadFloat3(&currentBBox.max);
-        DirectX::XMVECTOR mid = 0.5f * (min + max);
-        mid = DirectX::XMVectorNegate(mid);
+        const DirectX::XMVECTOR min = DirectX::XMLoadFloat3(&currentBBox.min);
+        const DirectX::XMVECTOR max = DirectX::XMLoadFloat3(&currentBBox.max);
+        const DirectX::XMVECTOR mid = DirectX::XMVectorNegate(0.5f * (min + max));
 
         DirectX::XMStoreFloat3(&currentBBox.centerTranslation, mid);
     }
 
-    static DirectX::XMFLOAT3 HSVtoRBG(float hue, float saturation, float value) noexcept
+    static DirectX::XMFLOAT4 HSVtoRBG(float hue, float saturation, float value) noexcept
     {
-        DirectX::XMFLOAT3 rgb{};
+        DirectX::XMFLOAT4 rgba{};
 
-        rgb.x = fabsf(hue * 6.0f - 3.0f) - 1.0f;
-        rgb.y = 2.0f - fabsf(hue * 6.0f - 2.0f);
-        rgb.z = 2.0f - fabsf(hue * 6.0f - 4.0f);
+        rgba.x = fabsf(hue * 6.0f - 3.0f) - 1.0f;
+        rgba.y = 2.0f - fabsf(hue * 6.0f - 2.0f);
+        rgba.z = 2.0f - fabsf(hue * 6.0f - 4.0f);
 
-        rgb.x = std::clamp(rgb.x, 0.0f, 1.0f);
-        rgb.y = std::clamp(rgb.y, 0.0f, 1.0f);
-        rgb.z = std::clamp(rgb.z, 0.0f, 1.0f);
+        rgba.x = std::clamp(rgba.x, 0.0f, 1.0f);
+        rgba.y = std::clamp(rgba.y, 0.0f, 1.0f);
+        rgba.z = std::clamp(rgba.z, 0.0f, 1.0f);
 
-        rgb.x = ((rgb.x - 1.0f) * saturation + 1.0f) * value;
-        rgb.y = ((rgb.y - 1.0f) * saturation + 1.0f) * value;
-        rgb.z = ((rgb.z - 1.0f) * saturation + 1.0f) * value;
+        rgba.x = ((rgba.x - 1.0f) * saturation + 1.0f) * value;
+        rgba.y = ((rgba.y - 1.0f) * saturation + 1.0f) * value;
+        rgba.z = ((rgba.z - 1.0f) * saturation + 1.0f) * value;
 
-        return rgb;
+        rgba.w = 1.0f;
+        return rgba;
     }
 } // namespace Util
 

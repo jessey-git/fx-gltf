@@ -9,6 +9,8 @@
 
 struct SceneConstantBuffer
 {
+    DirectX::XMVECTOR eye;
+
     DirectX::XMVECTOR lightDir[2];
     DirectX::XMVECTOR lightColor[2];
 };
@@ -17,5 +19,27 @@ struct MeshConstantBuffer
 {
     DirectX::XMMATRIX worldViewProj;
     DirectX::XMMATRIX world;
-    DirectX::XMFLOAT3 meshColor;
+
+    int materialIndex;
+};
+
+struct MeshShaderData
+{
+    DirectX::XMFLOAT4 meshAutoColor{};
+
+    int baseColorIndex{};
+    DirectX::XMFLOAT4 baseColorFactor{};
+
+    int normalIndex{};
+    float normalScale{};
+
+    int metalRoughIndex{};
+    float roughnessFactor{};
+    float metallicFactor{};
+
+    int aoIndex{};
+    float aoStrength{};
+
+    int emissiveIndex{};
+    DirectX::XMFLOAT3 emissiveFactor{};
 };

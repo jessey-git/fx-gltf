@@ -29,7 +29,7 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
   A typical installation will preserve the directory hierarchy: ```#include <fx/gltf.h>```
 
 ### Dependencies
-* [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp`)
+* [nlohmann::json](https://github.com/nlohmann/json) (must be referenceable using `#include <nlohmann/json.hpp>`)
 
 ### Code
 

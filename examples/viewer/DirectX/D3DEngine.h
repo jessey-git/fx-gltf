@@ -11,6 +11,7 @@
 #include "D3DFrameResources.h"
 #include "D3DMesh.h"
 #include "D3DMeshInstance.h"
+#include "D3DTexture.h"
 #include "D3DUploadBuffer.h"
 #include "Engine.h"
 #include "EngineOptions.h"
@@ -29,7 +30,7 @@ public:
 
     void InitializeCore(HWND window) override;
 
-    void Update(float elapsedTime) override;
+    void Update(float elapsedTime) noexcept override;
     void Render() override;
 
     void WindowSizeChangedCore(int width, int height) override;
@@ -46,14 +47,18 @@ private:
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
 
-    Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_lambertPipelineState{};
+    std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>>    m_pipelineStates{};
+    std::size_t                                                 m_currentPipelineState{};
 
     DirectX::XMFLOAT4X4                             m_viewMatrix{};
     DirectX::XMFLOAT4X4                             m_projectionMatrix{};
     DirectX::XMFLOAT4X4                             m_viewProjectionMatrix{};
+
+    DirectX::XMVECTORF32                            m_eye{};
     DirectX::XMFLOAT4                               m_lightDirs[2]{};
     DirectX::XMFLOAT4                               m_lightColors[2]{};
 
+    std::vector<D3DTexture>                         m_textures{};
     std::vector<D3DMesh>                            m_meshes{};
     std::vector<D3DMeshInstance>                    m_meshInstances{};
 

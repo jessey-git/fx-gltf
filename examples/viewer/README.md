@@ -76,14 +76,20 @@ This matters when creating the PipelineStateObject's InputLayout.  To properly u
 
 ## Known Issues and TODOs
  * DirectX 12
-     * Usage of the "default" upload heap is not used in all circumstances
-     * Materials are not loaded/processed (need image loader and mip-map generation etc.)
+     * Mip-maps are not generated for the textures
      * Input from keyboard/mouse (i.e. simple arcball rotation control etc.)
      * Scene centering does not seem to be working for all tested models. Some scenes still seem shifted away from 0,0,0
+     * A memory-manager with pooling / page management should be implemented
+     * A new set of abstractions for properly batching ResourceBarriers is needed (likely requires refactoring away DeviceResources + FrameResources into finer grained objects)
 
  * Vulkan
      * Needs implementing (patches welcome)
- 
+
+## Dependencies
+ * [libpng](https://github.com/glennrp/libpng) (must be referenceable using `#include <libpng16/png.h>`)
+
+    Install using vcpkg: ```vcpkg install libpng --triplet x64-windows```
+
 ## Supported Compilers
 * Microsoft Visual C++ 2017 15.6+ (and possibly earlier)
 

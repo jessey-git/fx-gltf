@@ -11,6 +11,7 @@ struct EngineOptions
     int Height{ 540 };
 
     bool AutoRotate{};
+    bool UseMaterials{};
 
     std::string ModelPath{};
 };

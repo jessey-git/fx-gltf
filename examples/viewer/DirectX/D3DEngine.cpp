@@ -49,11 +49,11 @@ void D3DEngine::InitializeCore(HWND window)
     CreateWindowSizeDependentResources();
 }
 
-void D3DEngine::Update(float elapsedTime)
+void D3DEngine::Update(float elapsedTime) noexcept
 {
     if (Config().AutoRotate)
     {
-        m_curRotationAngleRad += elapsedTime / 2.f;
+        m_curRotationAngleRad += elapsedTime / 3.0f;
         if (m_curRotationAngleRad >= DirectX::XM_2PI)
         {
             m_curRotationAngleRad -= DirectX::XM_2PI;
@@ -69,6 +69,7 @@ void D3DEngine::Render()
     D3DFrameResource const & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
     SceneConstantBuffer sceneParameters{};
+    sceneParameters.eye = m_eye;
     sceneParameters.lightDir[0] = DirectX::XMLoadFloat4(&m_lightDirs[0]);
     sceneParameters.lightDir[1] = DirectX::XMLoadFloat4(&m_lightDirs[1]);
     sceneParameters.lightColor[0] = DirectX::XMLoadFloat4(&m_lightColors[0]);
@@ -77,13 +78,20 @@ void D3DEngine::Render()
 
     ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
 
-    ID3D12DescriptorHeap * descriptorHeaps[] = { m_cbvHeap.Get() };
-    commandList->SetDescriptorHeaps(1, descriptorHeaps);
-
     // Set the root signature and pipeline state for the command list
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
     commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
-    commandList->SetPipelineState(m_lambertPipelineState.Get());
+    commandList->SetGraphicsRootShaderResourceView(2, currentFrame.MeshDataBuffer->GetGPUVirtualAddress(0));
+    commandList->SetPipelineState(m_pipelineStates[m_currentPipelineState].Get());
+
+    if (!m_textures.empty())
+    {
+        ID3D12DescriptorHeap * descriptorHeaps[] = { m_cbvHeap.Get() };
+        commandList->SetDescriptorHeaps(1, descriptorHeaps);
+
+        const CD3DX12_GPU_DESCRIPTOR_HANDLE tex(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+        commandList->SetGraphicsRootDescriptorTable(3, tex);
+    }
 
     std::size_t currentCBIndex = 0;
     DirectX::CXMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
@@ -128,10 +136,10 @@ void D3DEngine::CreateDeviceDependentResources()
     }
 
     // Initialize the view matrix
-    static const DirectX::XMVECTORF32 c_eye = { 3.0f, 2.0f, 5.0f, 0.0f };
+    m_eye = { 0.0f, 0.0f, 6.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_at = { 0.0f, 0.0f, 0.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_up = { 0.0f, 1.0f, 0.0f, 0.0 };
-    DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(c_eye, c_at, c_up));
+    DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(m_eye, c_at, c_up));
 
     // Initialize the lighting parameters
     m_lightDirs[0] = DirectX::XMFLOAT4(-0.57f, 0.57f, 0.57f, 1.0f);
@@ -187,6 +195,18 @@ void D3DEngine::BuildScene()
 {
     Logger::WriteLine("Building scene...");
 
+    if (Config().UseMaterials)
+    {
+        Logger::WriteLine("Building textures...");
+        m_textures.resize(m_doc.textures.size());
+        for (uint32_t i = 0; i < m_doc.textures.size(); i++)
+        {
+            std::string image = fx::gltf::detail::GetDocumentRootPath(Config().ModelPath) + "/" + m_doc.images[m_doc.textures[i].source].uri;
+            Logger::WriteLine("  {0}", image);
+            m_textures[i].Create(image, m_deviceResources.get());
+        }
+    }
+
     Logger::WriteLine("Building meshes...");
     m_meshes.resize(m_doc.meshes.size());
     for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
@@ -201,7 +221,7 @@ void D3DEngine::BuildScene()
     {
         Logger::WriteLine("Building scene graph...");
         std::vector<Graph::Node> graphNodes(m_doc.nodes.size());
-        const DirectX::XMMATRIX rootTransform = DirectX::XMMatrixIdentity();
+        const DirectX::XMMATRIX rootTransform = DirectX::XMMatrixMultiply(DirectX::XMMatrixIdentity(), DirectX::XMMatrixScaling(-1, 1, 1));
         for (const uint32_t sceneNode : m_doc.scenes[0].nodes)
         {
             Graph::Visit(m_doc, sceneNode, rootTransform, graphNodes);
@@ -212,9 +232,7 @@ void D3DEngine::BuildScene()
         {
             if (graphNode.meshIndex >= 0)
             {
-                D3DMeshInstance instance{ static_cast<uint32_t>(graphNode.meshIndex) };
-                instance.Transform = graphNode.currentTransform;
-                m_meshInstances.push_back(instance);
+                m_meshInstances.push_back({ static_cast<uint32_t>(graphNode.meshIndex), graphNode.currentTransform });
             }
         }
     }
@@ -223,9 +241,7 @@ void D3DEngine::BuildScene()
         Logger::WriteLine("No scene graph data. Displaying individual meshes...");
         for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
         {
-            D3DMeshInstance instance{ i };
-            instance.Transform = DirectX::XMMatrixIdentity();
-            m_meshInstances.push_back(instance);
+            m_meshInstances.push_back({ i, DirectX::XMMatrixIdentity() });
         }
     }
 
@@ -242,16 +258,31 @@ void D3DEngine::BuildScene()
 
 void D3DEngine::BuildRootSignature()
 {
-    CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+    CD3DX12_DESCRIPTOR_RANGE texTable;
+    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 64, 0);
+
+    CD3DX12_ROOT_PARAMETER slotRootParameter[4];
     slotRootParameter[0].InitAsConstantBufferView(0);
     slotRootParameter[1].InitAsConstantBufferView(1);
+    slotRootParameter[2].InitAsShaderResourceView(0, 1);
+    slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-    rootSignatureDesc.Init(
-        2,
+    const std::array<const CD3DX12_STATIC_SAMPLER_DESC, 1> staticSamplers{
+        CD3DX12_STATIC_SAMPLER_DESC(
+            0, // shaderRegister
+            D3D12_FILTER_ANISOTROPIC, // filter
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressW
+            0.0f, // mipLODBias
+            8) // maxAnisotropy
+    };
+
+    const CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
+        4,
         slotRootParameter,
-        0,
-        nullptr,
+        static_cast<UINT>(staticSamplers.size()),
+        staticSamplers.data(),
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> signature;
@@ -263,6 +294,7 @@ void D3DEngine::BuildRootSignature()
         {
             throw std::runtime_error(reinterpret_cast<const char *>(error->GetBufferPointer()));
         }
+
         throw DX::com_exception(hr);
     }
 
@@ -273,16 +305,26 @@ void D3DEngine::BuildRootSignature()
 
 void D3DEngine::BuildDescriptorHeaps()
 {
-    const UINT numDescriptors = 2 * m_deviceResources->GetBackBufferCount();
+    if (!m_textures.empty())
+    {
+        D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+        cbvHeapDesc.NumDescriptors = static_cast<UINT>(m_textures.size());
+        cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        cbvHeapDesc.NodeMask = 0;
 
-    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = numDescriptors;
-    cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    cbvHeapDesc.NodeMask = 0;
+        ID3D12Device * device = m_deviceResources->GetD3DDevice();
+        DX::ThrowIfFailed(device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
 
-    ID3D12Device * device = m_deviceResources->GetD3DDevice();
-    DX::ThrowIfFailed(device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+        const uint32_t size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        for (auto & texture : m_textures)
+        {
+            texture.CreateSRV(device, hDescriptor);
+            hDescriptor.Offset(1, size);
+        }
+    }
 }
 
 void D3DEngine::BuildPipelineStateObjects()
@@ -294,11 +336,16 @@ void D3DEngine::BuildPipelineStateObjects()
         {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
         };
 
     auto triangleVSBlob = ReadData(L"TriangleVS.cso");
     auto lambertPSBlob = ReadData(L"LambertPS.cso");
+    auto pbrPSBlob = ReadData(L"PBRPS.cso");
+
+    m_pipelineStates.resize(2);
+    m_currentPipelineState = Config().UseMaterials ? 1 : 0;
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { &inputLayout[0], static_cast<UINT>(inputLayout.size()) };
@@ -306,6 +353,7 @@ void D3DEngine::BuildPipelineStateObjects()
     psoDesc.VS = { triangleVSBlob.data(), triangleVSBlob.size() };
     psoDesc.PS = { lambertPSBlob.data(), lambertPSBlob.size() };
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.DSVFormat = m_deviceResources->GetDepthBufferFormat();
@@ -314,7 +362,10 @@ void D3DEngine::BuildPipelineStateObjects()
     psoDesc.NumRenderTargets = 1;
     psoDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
     psoDesc.SampleDesc.Count = 1;
-    DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_lambertPipelineState.ReleaseAndGetAddressOf())));
+    DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStates[0].ReleaseAndGetAddressOf())));
+
+    psoDesc.PS = { pbrPSBlob.data(), pbrPSBlob.size() };
+    DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStates[1].ReleaseAndGetAddressOf())));
 }
 
 void D3DEngine::BuildConstantBufferUploadBuffers()
@@ -322,7 +373,7 @@ void D3DEngine::BuildConstantBufferUploadBuffers()
     std::size_t cbCount = 0;
     for (auto & meshInstance : m_meshInstances)
     {
-        D3DMesh & mesh = m_meshes[meshInstance.MeshIndex];
+        D3DMesh const & mesh = m_meshes[meshInstance.MeshIndex];
         cbCount += mesh.MeshPartCount();
     }
 

@@ -46,7 +46,7 @@ protected:
     EngineOptions const & Config() noexcept { return m_config; }
 
     virtual void InitializeCore(HWND hwnd) = 0;
-    virtual void Update(float elapsedTime) = 0;
+    virtual void Update(float elapsedTime) noexcept = 0;
     virtual void Render() = 0;
     virtual void WindowSizeChangedCore(int width, int height) = 0;
 

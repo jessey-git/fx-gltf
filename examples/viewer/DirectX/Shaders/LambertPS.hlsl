@@ -1,2 +1,3 @@
-// LambertPS.hlsl file to provide an MSBuild target for the LambertPS pixel-shader entry point
+#define USE_AUTO_COLOR 1
+
 #include "SimpleLighting.hlsli"
