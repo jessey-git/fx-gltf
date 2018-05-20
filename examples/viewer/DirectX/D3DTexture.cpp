@@ -33,7 +33,7 @@ void D3DTexture::Create(std::string const & texture, DX::D3DDeviceResources cons
         texDesc.Height = (uint32_t)image.height;
         texDesc.DepthOrArraySize = 1;
         texDesc.MipLevels = 1;
-        texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+        texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         texDesc.SampleDesc.Count = 1;
         texDesc.SampleDesc.Quality = 0;
         texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;

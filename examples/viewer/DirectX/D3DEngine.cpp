@@ -69,11 +69,12 @@ void D3DEngine::Render()
     D3DFrameResource const & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
     SceneConstantBuffer sceneParameters{};
-    sceneParameters.eye = m_eye;
-    sceneParameters.lightDir[0] = DirectX::XMLoadFloat4(&m_lightDirs[0]);
-    sceneParameters.lightDir[1] = DirectX::XMLoadFloat4(&m_lightDirs[1]);
-    sceneParameters.lightColor[0] = DirectX::XMLoadFloat4(&m_lightColors[0]);
-    sceneParameters.lightColor[1] = DirectX::XMLoadFloat4(&m_lightColors[1]);
+    sceneParameters.ViewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
+    sceneParameters.Eye = m_eye;
+    sceneParameters.AutoLightDir = DirectX::XMLoadFloat4(&m_autoLightDir);
+    sceneParameters.AutoLightFactor = DirectX::XMLoadFloat4(&m_autoLightFactor);
+    sceneParameters.Lights[0] = m_lights[0];
+    sceneParameters.Lights[1] = m_lights[1];
     currentFrame.SceneCB->CopyData(0, sceneParameters);
 
     ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
@@ -90,7 +91,7 @@ void D3DEngine::Render()
         commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
         const CD3DX12_GPU_DESCRIPTOR_HANDLE tex(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
-        commandList->SetGraphicsRootDescriptorTable(3, tex);
+        commandList->SetGraphicsRootDescriptorTable(4, tex);
     }
 
     std::size_t currentCBIndex = 0;
@@ -119,11 +120,10 @@ void D3DEngine::CreateDeviceDependentResources()
 {
     m_deviceResources->PrepareCommandList();
 
-    BuildRootSignature();
-    BuildPipelineStateObjects();
-
     BuildScene();
 
+    BuildRootSignature();
+    BuildPipelineStateObjects();
     BuildConstantBufferUploadBuffers();
     BuildDescriptorHeaps();
 
@@ -142,11 +142,16 @@ void D3DEngine::CreateDeviceDependentResources()
     DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(m_eye, c_at, c_up));
 
     // Initialize the lighting parameters
-    m_lightDirs[0] = DirectX::XMFLOAT4(-0.57f, 0.57f, 0.57f, 1.0f);
-    m_lightDirs[1] = DirectX::XMFLOAT4(0.57f, 0.0f, -0.57f, 1.0f);
-
-    m_lightColors[0] = DirectX::XMFLOAT4(1.0f, 0.83f, 0.57f, 1.0f);
-    m_lightColors[1] = DirectX::XMFLOAT4(0.45f, 0.78f, 0.85f, 1.0f);
+    m_autoLightDir = DirectX::XMFLOAT4(-0.57f, 0.57f, 0.57f, 1.0f);
+    m_autoLightFactor = DirectX::XMFLOAT4(1.0f, 0.83f, 0.57f, 1.0f);
+    m_lights[0].Position = DirectX::XMFLOAT3(-6.0f, 6.0f, 6.0f);
+    m_lights[0].Strength = DirectX::XMFLOAT3(0.8f, 0.8f, 0.8f);
+    m_lights[0].FalloffStart = 0.0f;
+    m_lights[0].FalloffEnd = 100.0f;
+    m_lights[1].Position = DirectX::XMFLOAT3(6.0f, 6.0f, 6.0f);
+    m_lights[1].Strength = DirectX::XMFLOAT3(0.8f, 0.8f, 0.8f);
+    m_lights[1].FalloffStart = 0.0f;
+    m_lights[1].FalloffEnd = 100.0f;
 }
 
 void D3DEngine::CreateWindowSizeDependentResources()
@@ -258,14 +263,18 @@ void D3DEngine::BuildScene()
 
 void D3DEngine::BuildRootSignature()
 {
-    CD3DX12_DESCRIPTOR_RANGE texTable;
-    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 64, 0);
+    CD3DX12_DESCRIPTOR_RANGE texTableEnvironment;
+    texTableEnvironment.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 
-    CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+    CD3DX12_DESCRIPTOR_RANGE texTableMesh;
+    texTableMesh.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 64, 1);
+
+    CD3DX12_ROOT_PARAMETER slotRootParameter[5];
     slotRootParameter[0].InitAsConstantBufferView(0);
     slotRootParameter[1].InitAsConstantBufferView(1);
     slotRootParameter[2].InitAsShaderResourceView(0, 1);
-    slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+    slotRootParameter[3].InitAsDescriptorTable(1, &texTableEnvironment, D3D12_SHADER_VISIBILITY_PIXEL);
+    slotRootParameter[4].InitAsDescriptorTable(1, &texTableMesh, D3D12_SHADER_VISIBILITY_PIXEL);
 
     const std::array<const CD3DX12_STATIC_SAMPLER_DESC, 1> staticSamplers{
         CD3DX12_STATIC_SAMPLER_DESC(
@@ -279,7 +288,7 @@ void D3DEngine::BuildRootSignature()
     };
 
     const CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
-        4,
+        5,
         slotRootParameter,
         static_cast<UINT>(staticSamplers.size()),
         staticSamplers.data(),
@@ -340,9 +349,14 @@ void D3DEngine::BuildPipelineStateObjects()
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
         };
 
-    auto triangleVSBlob = ReadData(L"TriangleVS.cso");
-    auto lambertPSBlob = ReadData(L"LambertPS.cso");
-    auto pbrPSBlob = ReadData(L"PBRPS.cso");
+    const D3D_SHADER_MACRO defines[]{ "USE_AUTO_COLOR", "1", nullptr, nullptr };
+
+    Logger::WriteLine("Compiling shaders...");
+    auto standardVS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "StandardVS", "vs_5_1", nullptr);
+    auto lambertPS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "UberPS", "ps_5_1", defines);
+    auto pbrPS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "UberPS", "ps_5_1", nullptr);
+    auto skyVS = DX::CompileShader(L"DirectX\\Shaders\\Sky.hlsl", "VS", "vs_5_1", nullptr);
+    auto skyPS = DX::CompileShader(L"DirectX\\Shaders\\Sky.hlsl", "PS", "ps_5_1", nullptr);
 
     m_pipelineStates.resize(2);
     m_currentPipelineState = Config().UseMaterials ? 1 : 0;
@@ -350,8 +364,8 @@ void D3DEngine::BuildPipelineStateObjects()
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { &inputLayout[0], static_cast<UINT>(inputLayout.size()) };
     psoDesc.pRootSignature = m_rootSignature.Get();
-    psoDesc.VS = { triangleVSBlob.data(), triangleVSBlob.size() };
-    psoDesc.PS = { lambertPSBlob.data(), lambertPSBlob.size() };
+    psoDesc.VS = { standardVS->GetBufferPointer(), standardVS->GetBufferSize() };
+    psoDesc.PS = { lambertPS->GetBufferPointer(), lambertPS->GetBufferSize() };
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -364,8 +378,14 @@ void D3DEngine::BuildPipelineStateObjects()
     psoDesc.SampleDesc.Count = 1;
     DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStates[0].ReleaseAndGetAddressOf())));
 
-    psoDesc.PS = { pbrPSBlob.data(), pbrPSBlob.size() };
+    psoDesc.PS = { pbrPS->GetBufferPointer(), pbrPS->GetBufferSize() };
     DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStates[1].ReleaseAndGetAddressOf())));
+
+    psoDesc.VS = { skyVS->GetBufferPointer(), skyVS->GetBufferSize() };
+    psoDesc.PS = { skyPS->GetBufferPointer(), skyPS->GetBufferSize() };
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStateSky.ReleaseAndGetAddressOf())));
 }
 
 void D3DEngine::BuildConstantBufferUploadBuffers()
@@ -394,21 +414,4 @@ void D3DEngine::OnDeviceRestored()
 {
     CreateDeviceDependentResources();
     CreateWindowSizeDependentResources();
-}
-
-std::vector<uint8_t> D3DEngine::ReadData(wchar_t const * name)
-{
-    std::ifstream inFile(name, std::ios::in | std::ios::binary | std::ios::ate);
-    if (!inFile)
-        throw std::exception("ReadData");
-
-    const std::streampos len = inFile.tellg();
-
-    std::vector<uint8_t> blob;
-    blob.resize(size_t(len));
-
-    inFile.seekg(0, std::ios::beg);
-    inFile.read(reinterpret_cast<char *>(blob.data()), len);
-
-    return blob;
 }

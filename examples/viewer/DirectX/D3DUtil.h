@@ -7,9 +7,13 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <d3dcompiler.h>
 #include <dxgi1_5.h>
 #include <exception>
 #include <fx/gltf.h>
+#include <wrl.h>
+
+#include "Logger.h"
 
 namespace Util
 {
@@ -88,9 +92,10 @@ namespace DX
     class com_exception : public std::exception
     {
     public:
-        explicit com_exception(HRESULT hr) noexcept : result(hr) {}
+        explicit com_exception(HRESULT hr) noexcept
+            : result(hr) {}
 
-        const char* what() const noexcept override
+        const char * what() const noexcept override
         {
             static char s_str[64] = {};
             sprintf_s(s_str, "Failure with HRESULT of %08X", result);
@@ -108,5 +113,29 @@ namespace DX
         {
             throw com_exception(hr);
         }
+    }
+
+    inline Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
+        std::wstring const & filename,
+        std::string const & entrypoint,
+        std::string const & target,
+        D3D_SHADER_MACRO const * defines)
+    {
+        UINT compileFlags = 0;
+#if defined(DEBUG) || defined(_DEBUG)
+        compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+        Microsoft::WRL::ComPtr<ID3DBlob> byteCode{};
+        Microsoft::WRL::ComPtr<ID3DBlob> errors{};
+        HRESULT hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE, entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
+
+        if (errors != nullptr)
+        {
+            Logger::WriteLine(static_cast<char *>(errors->GetBufferPointer()));
+        }
+
+        ThrowIfFailed(hr);
+        return byteCode;
     }
 } // namespace DX

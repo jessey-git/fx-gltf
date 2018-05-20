@@ -119,25 +119,25 @@ void D3DMesh::Create(
         meshPart.m_uploadBuffer->Unmap(0, nullptr);
 
         // Set material properties for this mesh piece...
-        meshPart.m_shaderData.meshAutoColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
+        meshPart.m_shaderData.MeshAutoColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
         if (mesh.Material().HasData())
         {
             auto material = mesh.Material().Data();
-            meshPart.m_shaderData.baseColorIndex = material.pbrMetallicRoughness.baseColorTexture.index;
-            meshPart.m_shaderData.baseColorFactor = DirectX::XMFLOAT4(material.pbrMetallicRoughness.baseColorFactor.data());
+            meshPart.m_shaderData.BaseColorIndex = material.pbrMetallicRoughness.baseColorTexture.index;
+            meshPart.m_shaderData.BaseColorFactor = DirectX::XMFLOAT4(material.pbrMetallicRoughness.baseColorFactor.data());
 
-            meshPart.m_shaderData.metalRoughIndex = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
-            meshPart.m_shaderData.metallicFactor = material.pbrMetallicRoughness.metallicFactor;
-            meshPart.m_shaderData.roughnessFactor = material.pbrMetallicRoughness.roughnessFactor;
+            meshPart.m_shaderData.MetalRoughIndex = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
+            meshPart.m_shaderData.MetallicFactor = material.pbrMetallicRoughness.metallicFactor;
+            meshPart.m_shaderData.RoughnessFactor = material.pbrMetallicRoughness.roughnessFactor;
 
-            meshPart.m_shaderData.normalIndex = material.normalTexture.index;
-            meshPart.m_shaderData.normalScale = material.normalTexture.scale;
+            meshPart.m_shaderData.NormalIndex = material.normalTexture.index;
+            meshPart.m_shaderData.NormalScale = material.normalTexture.scale;
 
-            meshPart.m_shaderData.aoIndex = material.occlusionTexture.index;
-            meshPart.m_shaderData.aoStrength = material.occlusionTexture.strength;
+            meshPart.m_shaderData.AOIndex = material.occlusionTexture.index;
+            meshPart.m_shaderData.AOStrength = material.occlusionTexture.strength;
 
-            meshPart.m_shaderData.emissiveIndex = material.emissiveTexture.index;
-            meshPart.m_shaderData.emissiveFactor = DirectX::XMFLOAT3(material.emissiveFactor.data());
+            meshPart.m_shaderData.EmissiveIndex = material.emissiveTexture.index;
+            meshPart.m_shaderData.EmissiveFactor = DirectX::XMFLOAT3(material.emissiveFactor.data());
         }
     }
 }
@@ -154,15 +154,15 @@ void D3DMesh::SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::X
 void D3DMesh::Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex)
 {
     MeshConstantBuffer meshParameters{};
-    meshParameters.worldViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix) * viewProj);
-    meshParameters.world = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix));
+    meshParameters.WorldViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix) * viewProj);
+    meshParameters.World = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix));
 
     std::size_t meshCBIndex = 0;
     for (auto & meshPart : m_meshParts)
     {
         const std::size_t cbIndex = currentCBIndex + meshCBIndex;
 
-        meshParameters.materialIndex = static_cast<int>(cbIndex);
+        meshParameters.MaterialIndex = static_cast<int>(cbIndex);
         currentFrame.MeshCB->CopyData(cbIndex, meshParameters);
         currentFrame.MeshDataBuffer->CopyData(cbIndex, meshPart.m_shaderData);
 

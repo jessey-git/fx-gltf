@@ -7,6 +7,7 @@
 #include <fx/gltf.h>
 #include <vector>
 
+#include "D3DConstants.h"
 #include "D3DDeviceResources.h"
 #include "D3DFrameResources.h"
 #include "D3DMesh.h"
@@ -47,6 +48,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
 
+    Microsoft::WRL::ComPtr<ID3D12PipelineState>                 m_pipelineStateSky{};
     std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>>    m_pipelineStates{};
     std::size_t                                                 m_currentPipelineState{};
 
@@ -55,8 +57,9 @@ private:
     DirectX::XMFLOAT4X4                             m_viewProjectionMatrix{};
 
     DirectX::XMVECTORF32                            m_eye{};
-    DirectX::XMFLOAT4                               m_lightDirs[2]{};
-    DirectX::XMFLOAT4                               m_lightColors[2]{};
+    DirectX::XMFLOAT4                               m_autoLightDir{};
+    DirectX::XMFLOAT4                               m_autoLightFactor{};
+    Light                                           m_lights[2]{};
 
     std::vector<D3DTexture>                         m_textures{};
     std::vector<D3DMesh>                            m_meshes{};
@@ -79,6 +82,4 @@ private:
     void BuildDescriptorHeaps();
     void BuildPipelineStateObjects();
     void BuildConstantBufferUploadBuffers();
-
-    std::vector<uint8_t> ReadData(const wchar_t * name);
 };

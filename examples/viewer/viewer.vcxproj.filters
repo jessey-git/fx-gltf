@@ -100,13 +100,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="DirectX\Shaders\SimpleLighting.hlsli" />
     <None Include=".clang-format" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="DirectX\Shaders\TriangleVS.hlsl" />
-    <FxCompile Include="DirectX\Shaders\LambertPS.hlsl" />
-    <FxCompile Include="DirectX\Shaders\PBRPS.hlsl" />
+    <CustomBuild Include="DirectX\Shaders\Common.hlsli" />
+    <CustomBuild Include="DirectX\Shaders\Default.hlsl" />
+    <CustomBuild Include="DirectX\Shaders\Sky.hlsl" />
   </ItemGroup>
 </Project>

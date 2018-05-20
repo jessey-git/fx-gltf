@@ -7,39 +7,52 @@
 
 #include <DirectXMath.h>
 
+// The odd ordering of fields is to keep alignment correct
+struct Light
+{
+    DirectX::XMFLOAT3 Strength{ 0.5f, 0.5f, 0.5f };
+    float FalloffStart{ 1.0f };                         // point/spot light only
+    DirectX::XMFLOAT3 Direction{ 0.0f, -1.0f, 0.0f };   // directional/spot light only
+    float FalloffEnd{ 10.0f };                          // point/spot light only
+    DirectX::XMFLOAT3 Position{ 0.0f, 0.0f, 0.0f };     // point/spot light only
+    float SpotPower{ 64.0f };                           // spot light only
+};
+
 struct SceneConstantBuffer
 {
-    DirectX::XMVECTOR eye;
+    DirectX::XMMATRIX ViewProj;
+    DirectX::XMVECTOR Eye;
 
-    DirectX::XMVECTOR lightDir[2];
-    DirectX::XMVECTOR lightColor[2];
+    DirectX::XMVECTOR AutoLightDir;
+    DirectX::XMVECTOR AutoLightFactor;
+    Light Lights[2];
 };
 
 struct MeshConstantBuffer
 {
-    DirectX::XMMATRIX worldViewProj;
-    DirectX::XMMATRIX world;
+    DirectX::XMMATRIX WorldViewProj;
+    DirectX::XMMATRIX World;
 
-    int materialIndex;
+    int MaterialIndex;
 };
 
 struct MeshShaderData
 {
-    DirectX::XMFLOAT4 meshAutoColor{};
+    DirectX::XMFLOAT4 MeshAutoColor{};
 
-    int baseColorIndex{};
-    DirectX::XMFLOAT4 baseColorFactor{};
+    int BaseColorIndex{};
+    DirectX::XMFLOAT4 BaseColorFactor{};
 
-    int normalIndex{};
-    float normalScale{};
+    int NormalIndex{};
+    float NormalScale{};
 
-    int metalRoughIndex{};
-    float roughnessFactor{};
-    float metallicFactor{};
+    int MetalRoughIndex{};
+    float RoughnessFactor{};
+    float MetallicFactor{};
 
-    int aoIndex{};
-    float aoStrength{};
+    int AOIndex{};
+    float AOStrength{};
 
-    int emissiveIndex{};
-    DirectX::XMFLOAT3 emissiveFactor{};
+    int EmissiveIndex{};
+    DirectX::XMFLOAT3 EmissiveFactor{};
 };
