@@ -138,6 +138,36 @@ void D3DMesh::Create(
 
             meshPart.m_shaderData.EmissiveIndex = material.emissiveTexture.index;
             meshPart.m_shaderData.EmissiveFactor = DirectX::XMFLOAT3(material.emissiveFactor.data());
+
+            ShaderOptions options = ShaderOptions::None;
+            if (meshPart.m_shaderData.BaseColorIndex >= 0)
+                options |= ShaderOptions::HAS_BASECOLORMAP;
+            if (meshPart.m_shaderData.NormalIndex >= 0)
+                options |= ShaderOptions::HAS_NORMALMAP;
+            if (meshPart.m_shaderData.MetalRoughIndex >= 0)
+                options |= ShaderOptions::HAS_METALROUGHNESSMAP;
+            if (meshPart.m_shaderData.AOIndex >= 0)
+            {
+                options |= ShaderOptions::HAS_OCCLUSIONMAP;
+
+                if (meshPart.m_shaderData.AOIndex == meshPart.m_shaderData.MetalRoughIndex)
+                {
+                    options |= ShaderOptions::HAS_OCCLUSIONMAP_COMBINED;
+                }
+            }
+            if (meshPart.m_shaderData.EmissiveIndex >= 0)
+                options |= ShaderOptions::HAS_EMISSIVEMAP;
+
+            if (options == ShaderOptions::None)
+            {
+                options = ShaderOptions::USE_FACTORS_ONLY;
+            }
+
+            meshPart.m_shaderOptions = options;
+        }
+        else
+        {
+            meshPart.m_shaderOptions = ShaderOptions::USE_AUTO_COLOR;
         }
     }
 }
@@ -151,30 +181,39 @@ void D3DMesh::SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::X
     DirectX::XMStoreFloat4x4(&m_worldMatrix, baseTransform * translation * rotation * scale);
 }
 
-void D3DMesh::Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex)
+void D3DMesh::Render(D3DRenderContext & renderContext)
 {
     MeshConstantBuffer meshParameters{};
-    meshParameters.WorldViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix) * viewProj);
+    meshParameters.WorldViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix) * renderContext.viewProj);
     meshParameters.World = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix));
 
     std::size_t meshCBIndex = 0;
     for (auto & meshPart : m_meshParts)
     {
-        const std::size_t cbIndex = currentCBIndex + meshCBIndex;
+        // Ensure we can correctly draw this part of the mesh. An optimization would be to reduce the number of calls to SetPipelineState further by sorting the meshes...
+        const ShaderOptions options = renderContext.overrideShaderOptions == ShaderOptions::None ? meshPart.m_shaderOptions : renderContext.overrideShaderOptions;
+        if (options != renderContext.currentShaderOptions)
+        {
+            renderContext.commandList->SetPipelineState(renderContext.pipelineStateMap[options].Get());
+            renderContext.currentShaderOptions = options;
+        }
 
+        const std::size_t cbIndex = renderContext.currentCBIndex + meshCBIndex;
         meshParameters.MaterialIndex = static_cast<int>(cbIndex);
-        currentFrame.MeshCB->CopyData(cbIndex, meshParameters);
-        currentFrame.MeshDataBuffer->CopyData(cbIndex, meshPart.m_shaderData);
+        renderContext.currentFrame.MeshCB->CopyData(cbIndex, meshParameters);
+        renderContext.currentFrame.MeshDataBuffer->CopyData(cbIndex, meshPart.m_shaderData);
 
         D3D12_VERTEX_BUFFER_VIEW const * views[4] = { &meshPart.m_vertexBufferView, &meshPart.m_normalBufferView, &meshPart.m_tangentBufferView, &meshPart.m_texCoord0BufferView };
-        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        commandList->IASetVertexBuffers(0, 4, views[0]);
-        commandList->IASetIndexBuffer(&meshPart.m_indexBufferView);
-        commandList->SetGraphicsRootConstantBufferView(1, currentFrame.MeshCB->GetGPUVirtualAddress(cbIndex));
-        commandList->DrawIndexedInstanced(meshPart.m_indexCount, 1, 0, 0, 0);
+        renderContext.commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        renderContext.commandList->IASetVertexBuffers(0, 4, views[0]);
+        renderContext.commandList->IASetIndexBuffer(&meshPart.m_indexBufferView);
+        renderContext.commandList->SetGraphicsRootConstantBufferView(1, renderContext.currentFrame.MeshCB->GetGPUVirtualAddress(cbIndex));
+        renderContext.commandList->DrawIndexedInstanced(meshPart.m_indexCount, 1, 0, 0, 0);
 
         meshCBIndex++;
     }
+
+    renderContext.currentCBIndex += m_meshParts.size();
 }
 
 void D3DMesh::FinishUpload()

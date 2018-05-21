@@ -9,7 +9,9 @@
 #include <vector>
 
 #include "D3DDeviceResources.h"
+#include "D3DRenderContext.h"
 #include "D3DUtil.h"
+#include "ShaderOptions.h"
 
 class D3DMesh
 {
@@ -19,7 +21,7 @@ public:
 
     void SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor);
 
-    void Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex);
+    void Render(D3DRenderContext & renderContext);
 
     void FinishUpload();
 
@@ -33,6 +35,17 @@ public:
     std::size_t MeshPartCount() const noexcept
     {
         return m_meshParts.size();
+    }
+
+    std::vector<ShaderOptions> GetRequiredShaderOptions() const
+    {
+        std::vector<ShaderOptions> requiredShaderOptions{};
+        for (auto const & meshPart : m_meshParts)
+        {
+            requiredShaderOptions.push_back(meshPart.m_shaderOptions);
+        }
+
+        return requiredShaderOptions;
     }
 
 private:
@@ -50,6 +63,7 @@ private:
         uint32_t m_indexCount{};
 
         MeshShaderData m_shaderData{};
+        ShaderOptions m_shaderOptions{};
     };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};

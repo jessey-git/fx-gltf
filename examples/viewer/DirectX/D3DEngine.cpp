@@ -70,7 +70,7 @@ void D3DEngine::Render()
 
     SceneConstantBuffer sceneParameters{};
     sceneParameters.ViewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
-    sceneParameters.Eye = m_eye;
+    sceneParameters.Camera = m_eye;
     sceneParameters.AutoLightDir = DirectX::XMLoadFloat4(&m_autoLightDir);
     sceneParameters.AutoLightFactor = DirectX::XMLoadFloat4(&m_autoLightFactor);
     sceneParameters.Lights[0] = m_lights[0];
@@ -83,7 +83,6 @@ void D3DEngine::Render()
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
     commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
     commandList->SetGraphicsRootShaderResourceView(2, currentFrame.MeshDataBuffer->GetGPUVirtualAddress(0));
-    commandList->SetPipelineState(m_pipelineStates[m_currentPipelineState].Get());
 
     if (!m_textures.empty())
     {
@@ -94,15 +93,22 @@ void D3DEngine::Render()
         commandList->SetGraphicsRootDescriptorTable(4, tex);
     }
 
-    std::size_t currentCBIndex = 0;
-    DirectX::CXMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
+    D3DRenderContext renderContext
+    {
+        commandList,
+        currentFrame,
+        DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix),
+        0,
+        ShaderOptions::None,
+        Config().UseMaterials ? ShaderOptions::None : ShaderOptions::USE_AUTO_COLOR,
+        m_pipelineStateMap
+    };
+
     for (auto & meshInstance : m_meshInstances)
     {
         D3DMesh & mesh = m_meshes[meshInstance.MeshIndex];
         mesh.SetWorldMatrix(meshInstance.Transform, m_boundingBox.centerTranslation, m_curRotationAngleRad, m_autoScaleFactor);
-        mesh.Render(commandList, currentFrame, viewProj, currentCBIndex);
-
-        currentCBIndex += mesh.MeshPartCount();
+        mesh.Render(renderContext);
     }
 
     CompleteRender();
@@ -124,7 +130,7 @@ void D3DEngine::CreateDeviceDependentResources()
 
     BuildRootSignature();
     BuildPipelineStateObjects();
-    BuildConstantBufferUploadBuffers();
+    BuildUploadBuffers();
     BuildDescriptorHeaps();
 
     m_deviceResources->ExecuteCommandList();
@@ -349,23 +355,15 @@ void D3DEngine::BuildPipelineStateObjects()
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, inputSlot++, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
         };
 
-    const D3D_SHADER_MACRO defines[]{ "USE_AUTO_COLOR", "1", nullptr, nullptr };
-
     Logger::WriteLine("Compiling shaders...");
     auto standardVS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "StandardVS", "vs_5_1", nullptr);
-    auto lambertPS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "UberPS", "ps_5_1", defines);
-    auto pbrPS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "UberPS", "ps_5_1", nullptr);
     auto skyVS = DX::CompileShader(L"DirectX\\Shaders\\Sky.hlsl", "VS", "vs_5_1", nullptr);
     auto skyPS = DX::CompileShader(L"DirectX\\Shaders\\Sky.hlsl", "PS", "ps_5_1", nullptr);
-
-    m_pipelineStates.resize(2);
-    m_currentPipelineState = Config().UseMaterials ? 1 : 0;
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { &inputLayout[0], static_cast<UINT>(inputLayout.size()) };
     psoDesc.pRootSignature = m_rootSignature.Get();
     psoDesc.VS = { standardVS->GetBufferPointer(), standardVS->GetBufferSize() };
-    psoDesc.PS = { lambertPS->GetBufferPointer(), lambertPS->GetBufferSize() };
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -376,10 +374,21 @@ void D3DEngine::BuildPipelineStateObjects()
     psoDesc.NumRenderTargets = 1;
     psoDesc.RTVFormats[0] = m_deviceResources->GetBackBufferFormat();
     psoDesc.SampleDesc.Count = 1;
-    DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStates[0].ReleaseAndGetAddressOf())));
 
-    psoDesc.PS = { pbrPS->GetBufferPointer(), pbrPS->GetBufferSize() };
-    DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStates[1].ReleaseAndGetAddressOf())));
+    // Compile a shader for all the required options of the meshes (including our default one)...
+    CompileShaderPerumutation(ShaderOptions::USE_AUTO_COLOR, psoDesc);
+
+    for (auto const & mesh : m_meshes)
+    {
+        std::vector<ShaderOptions> requiredOptions = mesh.GetRequiredShaderOptions();
+        for (ShaderOptions options : requiredOptions)
+        {
+            if (m_pipelineStateMap[options] == nullptr)
+            {
+                CompileShaderPerumutation(options, psoDesc);
+            }
+        }
+    }
 
     psoDesc.VS = { skyVS->GetBufferPointer(), skyVS->GetBufferSize() };
     psoDesc.PS = { skyPS->GetBufferPointer(), skyPS->GetBufferSize() };
@@ -388,7 +397,32 @@ void D3DEngine::BuildPipelineStateObjects()
     DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStateSky.ReleaseAndGetAddressOf())));
 }
 
-void D3DEngine::BuildConstantBufferUploadBuffers()
+void D3DEngine::CompileShaderPerumutation(ShaderOptions options, D3D12_GRAPHICS_PIPELINE_STATE_DESC & psoDescTemplate)
+{
+    // Keep rooted until compile completes since D3D_SHADER_MACRO is just a view over this data...
+    std::vector<std::string> defines = GetShaderDefines(options);
+
+    {
+        std::vector<D3D_SHADER_MACRO> shaderDefines;
+        for (auto const & define : defines)
+        {
+            shaderDefines.emplace_back(D3D_SHADER_MACRO{ define.c_str(), "1" });
+        }
+
+        shaderDefines.emplace_back(D3D_SHADER_MACRO{ nullptr, nullptr });
+
+        auto permutedPS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "UberPS", "ps_5_1", shaderDefines.data());
+        psoDescTemplate.PS = { permutedPS->GetBufferPointer(), permutedPS->GetBufferSize() };
+
+        Microsoft::WRL::ComPtr<ID3D12PipelineState> pso;
+        ID3D12Device * device = m_deviceResources->GetD3DDevice();
+        DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDescTemplate, IID_PPV_ARGS(pso.ReleaseAndGetAddressOf())));
+
+        m_pipelineStateMap[options] = pso;
+    }
+}
+
+void D3DEngine::BuildUploadBuffers()
 {
     std::size_t cbCount = 0;
     for (auto & meshInstance : m_meshInstances)
@@ -397,7 +431,7 @@ void D3DEngine::BuildConstantBufferUploadBuffers()
         cbCount += mesh.MeshPartCount();
     }
 
-    m_deviceResources->CreateConstantBuffers(1, cbCount);
+    m_deviceResources->CreateUploadBuffers(1, cbCount);
 }
 
 void D3DEngine::OnDeviceLost()

@@ -52,59 +52,97 @@ float4 UberPS(PS_INPUT input)
 
     float4 finalColor;
 
-#ifdef USE_AUTO_COLOR
+#if USE_AUTO_COLOR
     finalColor = matData.MeshAutoColor;
     finalColor += saturate(dot((float3)AutoLightDir, input.NormalW) * AutoLightFactor);
 #else
-    float4 diffuseSample = Textures[matData.BaseColorIndex].Sample(SampAnisotropicWrap, input.TexC);
-    float4 normalMapSample = Textures[matData.NormalIndex].Sample(SampAnisotropicWrap, input.TexC);
+
+#if HAS_BASECOLORMAP
+    float4 baseColor = SRGBtoLINEAR(Textures[matData.BaseColorIndex].Sample(SampAnisotropicWrap, input.TexC)) * matData.BaseColorFactor;
+#else
+    float4 baseColor = matData.BaseColorFactor;
+#endif
+
+#if HAS_METALROUGHNESSMAP
     float4 metalRoughSample = Textures[matData.MetalRoughIndex].Sample(SampAnisotropicWrap, input.TexC);
-
-    float3 albedoColor = (diffuseSample * matData.BaseColorFactor).rgb;
-    float roughness = 1.0f - (metalRoughSample.g * matData.RoughnessFactor);
+    float perceptualRoughness = metalRoughSample.g * matData.RoughnessFactor;
     float metallic = metalRoughSample.b * matData.MetallicFactor;
+#else
+    float perceptualRoughness = matData.RoughnessFactor;
+    float metallic = matData.MetallicFactor;
+#endif
 
-    float3 baseColor = albedoColor.rgb;
-    albedoColor.rgb = baseColor * (1.0f - metallic);
-    float3 specular = lerp(0.04f, baseColor, metallic);
+    perceptualRoughness = clamp(perceptualRoughness, MinRoughness, 1.0);
+    metallic = clamp(metallic, 0.0, 1.0);
 
+    float alphaRoughness = perceptualRoughness * perceptualRoughness;
+
+    float3 f0 = 0.04;
+    float3 diffuseColor = baseColor.rgb * (1.0 - f0);
+    diffuseColor *= 1.0 - metallic;
+    float3 specularColor = lerp(f0, baseColor.rgb, metallic);
+
+    // Compute reflectance.
+    float reflectance = max(max(specularColor.r, specularColor.g), specularColor.b);
+
+    // For typical incident reflectance range (between 4% to 100%) set the grazing reflectance to 100% for typical fresnel effect.
+    // For very low reflectance range on highly diffuse objects (below 4%), incrementally reduce grazing reflecance to 0%.
+    float reflectance90 = clamp(reflectance * 25.0, 0.0, 1.0);
+    float3 specularEnvironmentR0 = specularColor.rgb;
+    float3 specularEnvironmentR90 = reflectance90;
+
+#if HAS_NORMALMAP
+    float4 normalMapSample = Textures[matData.NormalIndex].Sample(SampAnisotropicWrap, input.TexC);
     normalMapSample.g = 1.0f - normalMapSample.g;
-    float3 N = NormalSampleToWorldSpace(normalMapSample.rgb, input.NormalW, input.TangentW);
+    float3 N = NormalToWorld(normalMapSample.rgb, matData.NormalScale, input.NormalW, input.TangentW);
+#else
+    float3 N = input.NormalW;
+#endif
 
-    float3 V = normalize((float3)Eye - input.PosW);
+    float3 V = normalize(Camera.xyz - input.PosW); // Vector from surface point to camera
+    float3 L = normalize(AutoLightDir.xyz); // Vector from surface point to light
+    float3 H = normalize(L + V); // Half vector between both l and v
+    float3 reflection = -normalize(reflect(V, N));
 
-    float3 diffuseTerm = 0;
-    float3 specularTerm = 0;
+    float NdL = clamp(dot(N, L), 0.001, 1.0);
+    float NdV = abs(dot(N, V)) + 0.001;
+    float NdH = clamp(dot(N, H), 0.0, 1.0);
+    float LdH = clamp(dot(L, H), 0.0, 1.0);
+    float VdH = clamp(dot(V, H), 0.0, 1.0);
 
-    float NdV = clamp(dot(N, V), 0, 1);
-    float3 fresnelTerm = F_Schlick(NdV, specular);
+    // Calculate the shading terms for the microfacet specular shading model
+    float3 F = F_Schlick(specularEnvironmentR0, specularEnvironmentR90, VdH);
+    float G = G_Smith(NdL, NdV, alphaRoughness);
+    float D = D_GGX(NdH, alphaRoughness);
 
-    for (int i = 0; i < 1; i++)
-    {
-        float3 lightPosition = PointLights[i].Position;
-        float3 lc = 1;
-        float range = PointLights[i].FalloffEnd - PointLights[i].FalloffStart;
+    // Calculation of analytical lighting contribution
+    float3 diffuseContrib = (1.0 - F) * Diffuse_Lambert(diffuseColor);
+    float3 specContrib = F * G * D / (4.0 * NdL * NdV);
+    // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
+    float3 color = NdL * 3 * (diffuseContrib + specContrib);
 
-        float3 L = lightPosition - input.PosW;
+    // Calculate lighting contribution from image based lighting source (IBL)
+#if USE_IBL
+    color += getIBLContribution(pbrInputs, n, reflection);
+#endif
 
-        // Calculate point light attenuation
-        float dist = length(L);
-        float attenuation = LightAttenuation(dist, range);
-        L /= dist;
-        float3 H = normalize(L + V);
-        float NdL = clamp(dot(N, L), 0.0, 1.0);
-        float NdH = clamp(dot(N, H), 0.0, 1.0);
+    // Apply optional PBR terms for additional (optional) shading
+#if HAS_OCCLUSIONMAP
+#if HAS_OCCLUSIONMAP_COMBINED
+    float ao = metalRoughSample.r;
+#else
+    float ao = Textures[matData.AOIndex].Sample(SampAnisotropicWrap, input.TexC).r;
+#endif
 
-        float shadowContrib = 1.0;
+    color = lerp(color, color * ao, matData.AOStrength);
+#endif
 
-        float3 li = lc * NdL * attenuation * shadowContrib;
-        diffuseTerm += li;
-        specularTerm += li * fresnelTerm * D_Phong(roughness, NdH);
-    }
+#if HAS_EMISSIVEMAP
+    float3 emissive = SRGBtoLINEAR(Textures[matData.EmissiveIndex].Sample(SampAnisotropicWrap, input.TexC)).rgb * matData.EmissiveFactor;
+    color += emissive;
+#endif
 
-    finalColor.rgb = albedoColor * max(diffuseTerm, 0.0) + max(specularTerm, 0.0);
-    finalColor.a = 1.0f;
-
+    finalColor = float4(LINEARtoSRGB(color), baseColor.a);
 #endif
 
     return finalColor;

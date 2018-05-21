@@ -17,7 +17,7 @@ struct Light
 cbuffer SceneConstants : register(b0)
 {
     float4x4 ViewProj;
-    float4 Eye;
+    float4 Camera;
 
     float4 AutoLightDir;
     float4 AutoLightFactor;
@@ -62,11 +62,13 @@ Texture2D Textures[64] : register(t1);
 SamplerState SampAnisotropicWrap : register(s0);
 
 //--------------------------------------------------------------------------------------
+static const float M_PI = 3.141592653589793f;
+static const float MinRoughness = 0.04f;
 
-float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, float4 tangentW)
+float3 NormalToWorld(float3 normalMapSample, float normalScale, float3 unitNormalW, float4 tangentW)
 {
     // Uncompress each component from [0,1] to [-1,1].
-    float3 normalT = 2.0f * normalMapSample - 1.0f;
+    float3 normalT = (2.0f * normalMapSample - 1.0f) * float3(normalScale, normalScale, 1.0f);
     float3 tangent3 = tangentW.xyz;
 
     // Build orthonormal basis.
@@ -82,25 +84,47 @@ float3 NormalSampleToWorldSpace(float3 normalMapSample, float3 unitNormalW, floa
     return bumpedNormalW;
 }
 
-float3 F_Schlick(float NdV, float3 specular)
+float4 SRGBtoLINEAR(float4 srgbColor)
 {
-    return specular + (1.0 - specular) * pow(1.0 - NdV, 5.0);
+#if MANUAL_SRGB
+    return float4(pow(srgbColor.xyz, 2.2), srgbColor.w);
+#else
+    return srgbColor;
+#endif
 }
 
-float D_Phong(float g, float NdH)
+float3 LINEARtoSRGB(float3 linearColor)
 {
-    float a = pow(8192.0, g);
-    return (a + 2.0) / 8.0 * pow(NdH, a);
+#if MANUAL_SRGB
+    return pow(linearColor, 1.0 / 2.2);
+#else
+    return linearColor;
+#endif
+
 }
 
-float LightAttenuation(float dist, float range)
+float3 Diffuse_Lambert(float3 diffuseColor)
 {
-    float attenuation = 1.0;
-    attenuation = dist * dist / (range * range + 1.0);
-    float att_s = 5;
-    attenuation = 1.0 / (attenuation * att_s + 1.0);
-    att_s = 1.0 / (att_s + 1.0);
-    attenuation = attenuation - att_s;
-    attenuation /= 1.0 - att_s;
-    return clamp(attenuation, 0.0, 1.0);
+    return diffuseColor / M_PI;
+}
+
+float3 F_Schlick(float3 r0, float3 f90, float VdH)
+{
+    return r0 + (f90 - r0) * pow(clamp(1.0 - VdH, 0.0, 1.0), 5.0);
+}
+
+float G_Smith(float NdL, float NdV, float alphaRoughness)
+{
+    float r = alphaRoughness;
+
+    float attenuationL = 2.0 * NdL / (NdL + sqrt(r * r + (1.0 - r * r) * (NdL * NdL)));
+    float attenuationV = 2.0 * NdV / (NdV + sqrt(r * r + (1.0 - r * r) * (NdV * NdV)));
+    return attenuationL * attenuationV;
+}
+
+float D_GGX(float NdH, float alphaRoughness)
+{
+    float roughnessSq = alphaRoughness * alphaRoughness;
+    float f = (NdH * roughnessSq - NdH) * NdH + 1.0;
+    return roughnessSq / (M_PI * f * f);
 }

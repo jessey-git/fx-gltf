@@ -30,7 +30,7 @@ PS_INPUT VS(VS_INPUT input)
     float4 posW = mul(float4(input.PosL, 1.0f), World);
 
     // Always center sky about camera.
-    posW.xyz += Eye.xyz;
+    posW.xyz += Camera.xyz;
 
     // Set z = w so that z/w = 1 (i.e., skydome always on far plane).
     output.PosH = mul(posW, ViewProj).xyww;

@@ -64,15 +64,15 @@ where options are:
 ### DirectX 12 / glTF Integration Notes
 
 #### PipelineStateObject Input Layout
-glTF stores vertex/normal/tex-coord buffers separately from each other. For example, consider a simple 6 vertex mesh with vertex/normal/tex-coord formats of Vec3/Vec3/Vec2 respectively:
+Most glTF files today store vertex/normal/tex-coord buffers separately from each other. For example, consider a simple 6 vertex mesh with vertex/normal/tex-coord formats of Vec3/Vec3/Vec2 respectively:
 
 ```[vvvvvv][nnnnnn][tttttt] == 3 buffers: [72 bytes][72 bytes][48 bytes]```
 
-However, most DirectX tutorials assume a "combined" layout as follows:
+However, most DirectX tutorials assume an "interleaved" layout as follows:
 
 ```[vntvntvntvntvntvnt] == 1 buffer: [192 bytes]```
 
-This matters when creating the PipelineStateObject's InputLayout.  To properly use glTF data without extra data manipulation, make use of the ```D3D12_INPUT_ELEMENT_DESC.InputSlot``` field.  See ```D3DEngine::BuildPipelineStateObjects``` for reference.
+This matters when creating the PipelineStateObject's InputLayout.  To properly use glTF data in this format without extra data manipulation, make use of the ```D3D12_INPUT_ELEMENT_DESC.InputSlot``` field.  See ```D3DEngine::BuildPipelineStateObjects``` for reference.
 
 ## Known Issues and TODOs
  * DirectX 12

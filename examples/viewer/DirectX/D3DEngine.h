@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 #pragma once
 #include <fx/gltf.h>
+#include <unordered_map>
 #include <vector>
 
 #include "D3DConstants.h"
@@ -16,6 +17,7 @@
 #include "D3DUploadBuffer.h"
 #include "Engine.h"
 #include "EngineOptions.h"
+#include "ShaderOptions.h"
 
 class D3DEngine : public Engine, public DX::IDeviceNotify
 {
@@ -48,9 +50,8 @@ private:
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
 
-    Microsoft::WRL::ComPtr<ID3D12PipelineState>                 m_pipelineStateSky{};
-    std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>>    m_pipelineStates{};
-    std::size_t                                                 m_currentPipelineState{};
+    Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_pipelineStateSky{};
+    std::unordered_map<ShaderOptions, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipelineStateMap{};
 
     DirectX::XMFLOAT4X4                             m_viewMatrix{};
     DirectX::XMFLOAT4X4                             m_projectionMatrix{};
@@ -81,5 +82,7 @@ private:
     void BuildRootSignature();
     void BuildDescriptorHeaps();
     void BuildPipelineStateObjects();
-    void BuildConstantBufferUploadBuffers();
+    void BuildUploadBuffers();
+
+    void CompileShaderPerumutation(ShaderOptions options, D3D12_GRAPHICS_PIPELINE_STATE_DESC & psoDescTemplate);
 };

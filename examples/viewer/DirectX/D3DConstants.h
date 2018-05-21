@@ -21,7 +21,7 @@ struct Light
 struct SceneConstantBuffer
 {
     DirectX::XMMATRIX ViewProj;
-    DirectX::XMVECTOR Eye;
+    DirectX::XMVECTOR Camera;
 
     DirectX::XMVECTOR AutoLightDir;
     DirectX::XMVECTOR AutoLightFactor;

@@ -370,11 +370,11 @@ void D3DDeviceResources::CreateWindowSizeDependentResources()
     m_scissorRect.bottom = backBufferHeight;
 }
 
-void D3DDeviceResources::CreateConstantBuffers(std::size_t sceneCount, std::size_t meshCount)
+void D3DDeviceResources::CreateUploadBuffers(std::size_t sceneCount, std::size_t meshCount)
 {
     for (UINT i = 0; i < m_backBufferCount; ++i)
     {
-        m_frameResources[i].AllocateConstantBuffers(m_d3dDevice.Get(), sceneCount, meshCount);
+        m_frameResources[i].AllocateBuffers(m_d3dDevice.Get(), sceneCount, meshCount);
     }
 }
 

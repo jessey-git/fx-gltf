@@ -106,6 +106,7 @@
     <ClInclude Include="DirectX\D3DMesh.h" />
     <ClInclude Include="DirectX\D3DEngine.h" />
     <ClInclude Include="DirectX\D3DMeshInstance.h" />
+    <ClInclude Include="DirectX\D3DRenderContext.h" />
     <ClInclude Include="DirectX\D3DTexture.h" />
     <ClInclude Include="DirectX\D3DUploadBuffer.h" />
     <ClInclude Include="DirectX\D3DUtil.h" />
@@ -117,6 +118,7 @@
     <ClInclude Include="MaterialData.h" />
     <ClInclude Include="MeshData.h" />
     <ClInclude Include="platform.h" />
+    <ClInclude Include="ShaderOptions.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="StringFormatter.h" />
