@@ -19,9 +19,7 @@ cbuffer SceneConstants : register(b0)
     float4x4 ViewProj;
     float4 Camera;
 
-    float4 AutoLightDir;
-    float4 AutoLightFactor;
-
+    Light DirectionalLight;
     Light PointLights[2];
 };
 

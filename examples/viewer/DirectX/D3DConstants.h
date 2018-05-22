@@ -23,9 +23,8 @@ struct SceneConstantBuffer
     DirectX::XMMATRIX ViewProj;
     DirectX::XMVECTOR Camera;
 
-    DirectX::XMVECTOR AutoLightDir;
-    DirectX::XMVECTOR AutoLightFactor;
-    Light Lights[2];
+    Light DirectionalLight;
+    Light PointLights[2];
 };
 
 struct MeshConstantBuffer

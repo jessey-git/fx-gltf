@@ -167,7 +167,11 @@ void D3DMesh::Create(
         }
         else
         {
-            meshPart.m_shaderOptions = ShaderOptions::USE_AUTO_COLOR;
+            // Use a default material
+            meshPart.m_shaderOptions = ShaderOptions::USE_FACTORS_ONLY;
+            meshPart.m_shaderData.BaseColorFactor = DirectX::XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+            meshPart.m_shaderData.MetallicFactor = 0;
+            meshPart.m_shaderData.RoughnessFactor = 0.5f;
         }
     }
 }

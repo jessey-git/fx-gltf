@@ -29,7 +29,7 @@ public:
     D3DEngine & operator=(D3DEngine const &) = delete;
     D3DEngine & operator=(D3DEngine &&) = delete;
 
-    ~D3DEngine();
+    ~D3DEngine() override;
 
     void InitializeCore(HWND window) override;
 
@@ -58,9 +58,8 @@ private:
     DirectX::XMFLOAT4X4                             m_viewProjectionMatrix{};
 
     DirectX::XMVECTORF32                            m_eye{};
-    DirectX::XMFLOAT4                               m_autoLightDir{};
-    DirectX::XMFLOAT4                               m_autoLightFactor{};
-    Light                                           m_lights[2]{};
+    Light                                           m_directionalLight{};
+    Light                                           m_pointLights[2]{};
 
     std::vector<D3DTexture>                         m_textures{};
     std::vector<D3DMesh>                            m_meshes{};

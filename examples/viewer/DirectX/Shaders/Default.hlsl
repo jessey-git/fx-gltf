@@ -54,7 +54,7 @@ float4 UberPS(PS_INPUT input)
 
 #if USE_AUTO_COLOR
     finalColor = matData.MeshAutoColor;
-    finalColor += saturate(dot((float3)AutoLightDir, input.NormalW) * AutoLightFactor);
+    finalColor += saturate(dot(float4(DirectionalLight.Direction, 1.0f), input.NormalW) * float4(DirectionalLight.Strength, 1.0f));
 #else
 
 #if HAS_BASECOLORMAP
@@ -100,7 +100,7 @@ float4 UberPS(PS_INPUT input)
 #endif
 
     float3 V = normalize(Camera.xyz - input.PosW); // Vector from surface point to camera
-    float3 L = normalize(AutoLightDir.xyz); // Vector from surface point to light
+    float3 L = normalize(DirectionalLight.Direction); // Vector from surface point to light
     float3 H = normalize(L + V); // Half vector between both l and v
     float3 reflection = -normalize(reflect(V, N));
 

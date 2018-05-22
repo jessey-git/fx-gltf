@@ -18,6 +18,8 @@ public:
 
     void CreateSRV(ID3D12Device * device, CD3DX12_CPU_DESCRIPTOR_HANDLE const & descriptor);
 
+    void FinishUpload();
+
 private:
     struct D3DTextureData
     {

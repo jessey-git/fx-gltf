@@ -71,10 +71,9 @@ void D3DEngine::Render()
     SceneConstantBuffer sceneParameters{};
     sceneParameters.ViewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
     sceneParameters.Camera = m_eye;
-    sceneParameters.AutoLightDir = DirectX::XMLoadFloat4(&m_autoLightDir);
-    sceneParameters.AutoLightFactor = DirectX::XMLoadFloat4(&m_autoLightFactor);
-    sceneParameters.Lights[0] = m_lights[0];
-    sceneParameters.Lights[1] = m_lights[1];
+    sceneParameters.DirectionalLight = m_directionalLight;
+    sceneParameters.PointLights[0] = m_pointLights[0];
+    sceneParameters.PointLights[1] = m_pointLights[1];
     currentFrame.SceneCB->CopyData(0, sceneParameters);
 
     ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
@@ -136,6 +135,11 @@ void D3DEngine::CreateDeviceDependentResources()
     m_deviceResources->ExecuteCommandList();
     m_deviceResources->WaitForGpu();
 
+    for (auto & texture : m_textures)
+    {
+        texture.FinishUpload();
+    }
+
     for (auto & mesh : m_meshes)
     {
         mesh.FinishUpload();
@@ -148,16 +152,16 @@ void D3DEngine::CreateDeviceDependentResources()
     DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(m_eye, c_at, c_up));
 
     // Initialize the lighting parameters
-    m_autoLightDir = DirectX::XMFLOAT4(-0.57f, 0.57f, 0.57f, 1.0f);
-    m_autoLightFactor = DirectX::XMFLOAT4(1.0f, 0.83f, 0.57f, 1.0f);
-    m_lights[0].Position = DirectX::XMFLOAT3(-6.0f, 6.0f, 6.0f);
-    m_lights[0].Strength = DirectX::XMFLOAT3(0.8f, 0.8f, 0.8f);
-    m_lights[0].FalloffStart = 0.0f;
-    m_lights[0].FalloffEnd = 100.0f;
-    m_lights[1].Position = DirectX::XMFLOAT3(6.0f, 6.0f, 6.0f);
-    m_lights[1].Strength = DirectX::XMFLOAT3(0.8f, 0.8f, 0.8f);
-    m_lights[1].FalloffStart = 0.0f;
-    m_lights[1].FalloffEnd = 100.0f;
+    m_directionalLight.Direction = DirectX::XMFLOAT3(-0.57f, 0.57f, 0.57f);
+    m_directionalLight.Strength = DirectX::XMFLOAT3(1.0f, 0.83f, 0.57f);
+    m_pointLights[0].Position = DirectX::XMFLOAT3(-6.0f, 6.0f, 6.0f);
+    m_pointLights[0].Strength = DirectX::XMFLOAT3(0.8f, 0.8f, 0.8f);
+    m_pointLights[0].FalloffStart = 0.0f;
+    m_pointLights[0].FalloffEnd = 100.0f;
+    m_pointLights[1].Position = DirectX::XMFLOAT3(6.0f, 6.0f, 6.0f);
+    m_pointLights[1].Strength = DirectX::XMFLOAT3(0.8f, 0.8f, 0.8f);
+    m_pointLights[1].FalloffStart = 0.0f;
+    m_pointLights[1].FalloffEnd = 100.0f;
 }
 
 void D3DEngine::CreateWindowSizeDependentResources()

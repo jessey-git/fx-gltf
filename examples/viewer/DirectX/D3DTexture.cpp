@@ -91,3 +91,8 @@ void D3DTexture::CreateSRV(ID3D12Device * device, CD3DX12_CPU_DESCRIPTOR_HANDLE 
 
     device->CreateShaderResourceView(m_data.m_mainBuffer.Get(), &srvDesc, descriptor);
 }
+
+void D3DTexture::FinishUpload()
+{
+    m_data.m_uploadBuffer.Reset();
+}
