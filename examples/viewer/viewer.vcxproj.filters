@@ -114,8 +114,155 @@
   <ItemGroup>
     <None Include=".clang-format" />
     <None Include="README.md" />
-    <None Include="DirectX\Shaders\Sky.hlsl" />
-    <None Include="DirectX\Shaders\Default.hlsl" />
-    <None Include="DirectX\Shaders\Common.hlsli" />
+    <None Include="DirectX\Shaders\*.*" />
+    <None Include="DirectX\Shaders\*.*" />
+    <None Include="DirectX\Shaders\*.*" />
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

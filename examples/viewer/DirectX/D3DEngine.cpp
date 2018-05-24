@@ -79,23 +79,14 @@ void D3DEngine::Render()
     ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
 
     // Set the root signature and pipeline state for the command list
+    ID3D12DescriptorHeap * descriptorHeaps[] = { m_cbvHeap.Get() };
+    const CD3DX12_GPU_DESCRIPTOR_HANDLE srvDesc(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+    commandList->SetDescriptorHeaps(1, descriptorHeaps);
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
     commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
     commandList->SetGraphicsRootShaderResourceView(2, currentFrame.MeshDataBuffer->GetGPUVirtualAddress(0));
-
-    if (!m_textures.empty())
-    {
-        ID3D12DescriptorHeap * descriptorHeaps[] = { m_cbvHeap.Get() };
-        commandList->SetDescriptorHeaps(1, descriptorHeaps);
-
-        const CD3DX12_GPU_DESCRIPTOR_HANDLE tex(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
-        commandList->SetGraphicsRootDescriptorTable(3, tex);
-    }
-
-    ID3D12DescriptorHeap * descriptorHeaps[] = { m_envHeap.Get() };
-    commandList->SetDescriptorHeaps(1, descriptorHeaps);
-    const CD3DX12_GPU_DESCRIPTOR_HANDLE texEnv(m_envHeap->GetGPUDescriptorHandleForHeapStart());
-    commandList->SetGraphicsRootDescriptorTable(4, texEnv);
+    commandList->SetGraphicsRootDescriptorTable(3, srvDesc);
 
     D3DRenderContext renderContext
     {
@@ -287,18 +278,14 @@ void D3DEngine::BuildScene()
 
 void D3DEngine::BuildRootSignature()
 {
-    CD3DX12_DESCRIPTOR_RANGE texTableMesh;
-    texTableMesh.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 64, 0);
+    CD3DX12_DESCRIPTOR_RANGE srvTable;
+    srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 128, 0);
 
-    CD3DX12_DESCRIPTOR_RANGE texTableEnvironment;
-    texTableEnvironment.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 64);
-
-    CD3DX12_ROOT_PARAMETER slotRootParameter[5]{};
+    CD3DX12_ROOT_PARAMETER slotRootParameter[4]{};
     slotRootParameter[0].InitAsConstantBufferView(0);
     slotRootParameter[1].InitAsConstantBufferView(1);
     slotRootParameter[2].InitAsShaderResourceView(0, 1);
-    slotRootParameter[3].InitAsDescriptorTable(1, &texTableMesh, D3D12_SHADER_VISIBILITY_PIXEL);
-    slotRootParameter[4].InitAsDescriptorTable(1, &texTableEnvironment, D3D12_SHADER_VISIBILITY_PIXEL);
+    slotRootParameter[3].InitAsDescriptorTable(1, &srvTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
     const std::array<const CD3DX12_STATIC_SAMPLER_DESC, 2> staticSamplers{
         CD3DX12_STATIC_SAMPLER_DESC(
@@ -319,7 +306,7 @@ void D3DEngine::BuildRootSignature()
     };
 
     const CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
-        5,
+        4,
         slotRootParameter,
         static_cast<UINT>(staticSamplers.size()),
         staticSamplers.data(),
@@ -345,42 +332,27 @@ void D3DEngine::BuildRootSignature()
 
 void D3DEngine::BuildDescriptorHeaps()
 {
-    if (!m_textures.empty())
+    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+    cbvHeapDesc.NumDescriptors = 128;
+    cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    cbvHeapDesc.NodeMask = 0;
+
+    ID3D12Device * device = m_deviceResources->GetD3DDevice();
+    DX::ThrowIfFailed(device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+
+    const uint32_t size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    // IBL textures get first few slots in the table...
+    m_environment.CreateSRV(device, hDescriptor);
+
+    // Textures get whatever is left...
+    for (auto & texture : m_textures)
     {
-        D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-        cbvHeapDesc.NumDescriptors = static_cast<UINT>(m_textures.size());
-        cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        cbvHeapDesc.NodeMask = 0;
-
-        ID3D12Device * device = m_deviceResources->GetD3DDevice();
-        DX::ThrowIfFailed(device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
-
-        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
-
-        const uint32_t size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        for (auto & texture : m_textures)
-        {
-            texture.CreateSRV(device, hDescriptor);
-            hDescriptor.Offset(1, size);
-        }
+        texture.CreateSRV(device, hDescriptor);
+        hDescriptor.Offset(1, size);
     }
-
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC envHeapDesc;
-        envHeapDesc.NumDescriptors = 3;
-        envHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        envHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        envHeapDesc.NodeMask = 0;
-
-        ID3D12Device * device = m_deviceResources->GetD3DDevice();
-        DX::ThrowIfFailed(device->CreateDescriptorHeap(&envHeapDesc, IID_PPV_ARGS(&m_envHeap)));
-
-        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_envHeap->GetCPUDescriptorHandleForHeapStart());
-
-        m_environment.CreateSRV(device, hDescriptor);
-    }
-
 }
 
 void D3DEngine::BuildPipelineStateObjects()

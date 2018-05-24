@@ -50,7 +50,6 @@ private:
     std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_envHeap{};
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_pipelineStateSky{};
     std::unordered_map<ShaderOptions, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipelineStateMap{};

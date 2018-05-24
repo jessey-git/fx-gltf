@@ -52,6 +52,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -133,21 +136,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
-    <None Include="DirectX\Shaders\Common.hlsli" />
-    <None Include="DirectX\Shaders\Default.hlsl" />
-    <None Include="DirectX\Shaders\Sky.hlsl" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <AssetFiles Include="$(ProjectDir)Assets\**\*.*" />
-    <ShaderFiles Include="$(ProjectDir)DirectX\Shaders\*.*" />
+    <None Include="DirectX\Shaders\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>DirectX\Shaders</TargetPath>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>Assets\Environment</TargetPath>
+    </None>
   </ItemGroup>
-  <Target Name="AssetCopy" AfterTargets="Build" Inputs="@(AssetFiles)" Outputs="@(AssetFiles->$(TargetDir)Assets\%(RecursiveDir)%(Filename)%(Extension))">
-    <Copy SourceFiles="@(AssetFiles)" DestinationFiles="@(AssetFiles->'$(TargetDir)Assets\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-  </Target>
-  <Target Name="ShaderCopy" AfterTargets="Build" Inputs="@(ShaderFiles)" Outputs="@(ShaderFiles->$(TargetDir)DirectX\Shaders\%(Filename)%(Extension))">
-    <Copy SourceFiles="@(ShaderFiles)" DestinationFolder="$(TargetDir)DirectX\Shaders\" SkipUnchangedFiles="true" />
-  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

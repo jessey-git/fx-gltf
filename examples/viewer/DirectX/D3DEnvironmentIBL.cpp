@@ -261,6 +261,7 @@ void D3DEnvironmentIBL::CreateSRV(ID3D12Device * device, CD3DX12_CPU_DESCRIPTOR_
     device->CreateShaderResourceView(m_data.SpecularBuffer.Get(), &specularDesc, descriptor);
     descriptor.Offset(1, size);
     device->CreateShaderResourceView(m_data.LUTBuffer.Get(), &lutDesc, descriptor);
+    descriptor.Offset(1, size);
 }
 
 void D3DEnvironmentIBL::FinishUpload()
