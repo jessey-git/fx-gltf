@@ -14,12 +14,13 @@ enum class ShaderOptions : uint64_t
     USE_AUTO_COLOR = 0x1u,
     USE_FACTORS_ONLY = 0x2u,
     USE_MANUAL_SRGB = 0x4u,
-    HAS_BASECOLORMAP = 0x8u,
-    HAS_NORMALMAP = 0x10u,
-    HAS_METALROUGHNESSMAP = 0x20u,
-    HAS_OCCLUSIONMAP = 0x40u,
-    HAS_OCCLUSIONMAP_COMBINED = 0x80u,
-    HAS_EMISSIVEMAP = 0x100u
+    USE_IBL = 0x8u,
+    HAS_BASECOLORMAP = 0x10u,
+    HAS_NORMALMAP = 0x20u,
+    HAS_METALROUGHNESSMAP = 0x40u,
+    HAS_OCCLUSIONMAP = 0x80u,
+    HAS_OCCLUSIONMAP_COMBINED = 0x100u,
+    HAS_EMISSIVEMAP = 0x200u
 };
 
 inline ShaderOptions operator|(ShaderOptions a, ShaderOptions b)
@@ -70,9 +71,17 @@ inline std::vector<std::string> GetShaderDefines(ShaderOptions options)
     {
         defines.emplace_back("USE_AUTO_COLOR");
     }
+    if (IsSet(options, ShaderOptions::USE_FACTORS_ONLY))
+    {
+        defines.emplace_back("USE_FACTORS_ONLY");
+    }
     if (IsSet(options, ShaderOptions::USE_MANUAL_SRGB))
     {
         defines.emplace_back("USE_MANUAL_SRGB");
+    }
+    if (IsSet(options, ShaderOptions::USE_IBL))
+    {
+        defines.emplace_back("USE_IBL");
     }
     if (IsSet(options, ShaderOptions::HAS_BASECOLORMAP))
     {

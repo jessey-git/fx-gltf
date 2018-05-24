@@ -54,7 +54,7 @@ float4 UberPS(PS_INPUT input)
 
 #if USE_AUTO_COLOR
     finalColor = matData.MeshAutoColor;
-    finalColor += saturate(dot(float4(DirectionalLight.Direction, 1.0f), input.NormalW) * float4(DirectionalLight.Strength, 1.0f));
+    finalColor += float4(saturate(dot(DirectionalLight.Direction, input.NormalW) * DirectionalLight.Strength), 1.0f);
 #else
 
 #if HAS_BASECOLORMAP
@@ -105,7 +105,7 @@ float4 UberPS(PS_INPUT input)
     float3 reflection = -normalize(reflect(V, N));
 
     float NdL = clamp(dot(N, L), 0.001, 1.0);
-    float NdV = abs(dot(N, V)) + 0.001;
+    float NdV = clamp(abs(dot(N, V)), 0.001, 1.0);
     float NdH = clamp(dot(N, H), 0.0, 1.0);
     float LdH = clamp(dot(L, H), 0.0, 1.0);
     float VdH = clamp(dot(V, H), 0.0, 1.0);
@@ -119,11 +119,11 @@ float4 UberPS(PS_INPUT input)
     float3 diffuseContrib = (1.0 - F) * Diffuse_Lambert(diffuseColor);
     float3 specContrib = F * G * D / (4.0 * NdL * NdV);
     // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-    float3 color = NdL * 3 * (diffuseContrib + specContrib);
+    float3 color = NdL * 1 * (diffuseContrib + specContrib);
 
     // Calculate lighting contribution from image based lighting source (IBL)
 #if USE_IBL
-    color += getIBLContribution(pbrInputs, n, reflection);
+    color += IBLContribution(diffuseColor, specularColor, perceptualRoughness, NdV, N, reflection);
 #endif
 
     // Apply optional PBR terms for additional (optional) shading

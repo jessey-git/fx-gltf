@@ -122,6 +122,7 @@ private:
             | clara::Opt(options.Height, "height")["--height"]("Initial window height")
             | clara::Opt(options.AutoRotate)["-r"]["--rotate"]("Auto rotate model")
             | clara::Opt(options.UseMaterials)["-m"]["--materials"]("Use model materials")
+            | clara::Opt(options.UseIBL)["-i"]["--ibl"]("Use IBL")
             | clara::Arg(options.ModelPath, "model")("Model to load").required();
 
         int argc;

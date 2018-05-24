@@ -12,6 +12,7 @@ struct EngineOptions
 
     bool AutoRotate{};
     bool UseMaterials{};
+    bool UseIBL{};
 
     std::string ModelPath{};
 };

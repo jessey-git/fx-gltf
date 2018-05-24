@@ -70,9 +70,6 @@
       <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>d3d12.dll</DelayLoadDLLs>
     </Link>
-    <FxCompile>
-      <ShaderModel>5.0</ShaderModel>
-    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -95,12 +92,10 @@
       <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>d3d12.dll</DelayLoadDLLs>
     </Link>
-    <FxCompile>
-      <ShaderModel>5.0</ShaderModel>
-    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DirectX\D3DConstants.h" />
+    <ClInclude Include="DirectX\D3DEnvironmentIBL.h" />
     <ClInclude Include="DirectX\D3DFrameResources.h" />
     <ClInclude Include="DirectX\D3DGraph.h" />
     <ClInclude Include="DirectX\D3DMesh.h" />
@@ -124,6 +119,7 @@
     <ClInclude Include="StringFormatter.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DirectX\D3DEnvironmentIBL.cpp" />
     <ClCompile Include="DirectX\D3DFrameResources.cpp" />
     <ClCompile Include="DirectX\D3DMesh.cpp" />
     <ClCompile Include="DirectX\D3DEngine.cpp" />
@@ -137,39 +133,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
-    <CustomBuild Include="DirectX\Shaders\Common.hlsli">
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy /y %(FullPath) $(TargetDir)%(Identity)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetDir)%(Identity)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy /y %(FullPath) $(TargetDir)%(Identity)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(TargetDir)%(Identity)</Outputs>
-    </CustomBuild>
+    <None Include="DirectX\Shaders\Common.hlsli" />
+    <None Include="DirectX\Shaders\Default.hlsl" />
+    <None Include="DirectX\Shaders\Sky.hlsl" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="DirectX\Shaders\Default.hlsl">
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy /y %(FullPath) $(TargetDir)%(Identity)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetDir)%(Identity)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy /y %(FullPath) $(TargetDir)%(Identity)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(TargetDir)%(Identity)</Outputs>
-    </CustomBuild>
+    <AssetFiles Include="$(ProjectDir)Assets\**\*.*" />
+    <ShaderFiles Include="$(ProjectDir)DirectX\Shaders\*.*" />
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="DirectX\Shaders\Sky.hlsl">
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
-      <FileType>Document</FileType>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy /y %(FullPath) $(TargetDir)%(Identity)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetDir)%(Identity)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy /y %(FullPath) $(TargetDir)%(Identity)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(TargetDir)%(Identity)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
+  <Target Name="AssetCopy" AfterTargets="Build" Inputs="@(AssetFiles)" Outputs="@(AssetFiles-&gt;$(TargetDir)Assets\%(RecursiveDir)%(Filename)%(Extension))">
+    <Copy SourceFiles="@(AssetFiles)" DestinationFiles="@(AssetFiles->'$(TargetDir)Assets\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="ShaderCopy" AfterTargets="Build" Inputs="@(ShaderFiles)" Outputs="@(ShaderFiles-&gt;$(TargetDir)DirectX\Shaders\%(Filename)%(Extension))">
+    <Copy SourceFiles="@(ShaderFiles)" DestinationFolder="$(TargetDir)DirectX\Shaders\" SkipUnchangedFiles="true" />
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

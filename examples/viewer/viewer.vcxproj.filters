@@ -81,6 +81,9 @@
     <ClInclude Include="ShaderOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DirectX\D3DEnvironmentIBL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -104,14 +107,15 @@
     <ClCompile Include="DirectX\D3DTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DirectX\D3DEnvironmentIBL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
     <None Include="README.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="DirectX\Shaders\Common.hlsli" />
-    <CustomBuild Include="DirectX\Shaders\Default.hlsl" />
-    <CustomBuild Include="DirectX\Shaders\Sky.hlsl" />
+    <None Include="DirectX\Shaders\Sky.hlsl" />
+    <None Include="DirectX\Shaders\Default.hlsl" />
+    <None Include="DirectX\Shaders\Common.hlsli" />
   </ItemGroup>
 </Project>

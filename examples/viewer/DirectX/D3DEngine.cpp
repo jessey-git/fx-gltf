@@ -89,8 +89,13 @@ void D3DEngine::Render()
         commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
         const CD3DX12_GPU_DESCRIPTOR_HANDLE tex(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
-        commandList->SetGraphicsRootDescriptorTable(4, tex);
+        commandList->SetGraphicsRootDescriptorTable(3, tex);
     }
+
+    ID3D12DescriptorHeap * descriptorHeaps[] = { m_envHeap.Get() };
+    commandList->SetDescriptorHeaps(1, descriptorHeaps);
+    const CD3DX12_GPU_DESCRIPTOR_HANDLE texEnv(m_envHeap->GetGPUDescriptorHandleForHeapStart());
+    commandList->SetGraphicsRootDescriptorTable(4, texEnv);
 
     D3DRenderContext renderContext
     {
@@ -125,6 +130,7 @@ void D3DEngine::CreateDeviceDependentResources()
 {
     m_deviceResources->PrepareCommandList();
 
+    BuildEnvironmentMaps();
     BuildScene();
 
     BuildRootSignature();
@@ -134,6 +140,8 @@ void D3DEngine::CreateDeviceDependentResources()
 
     m_deviceResources->ExecuteCommandList();
     m_deviceResources->WaitForGpu();
+
+    m_environment.FinishUpload();
 
     for (auto & texture : m_textures)
     {
@@ -206,23 +214,29 @@ void D3DEngine::CompleteRender()
     m_deviceResources->Present();
 }
 
+void D3DEngine::BuildEnvironmentMaps()
+{
+    Logger::WriteLine("Building environment maps...");
+    m_environment.Create(m_deviceResources.get());
+}
+
 void D3DEngine::BuildScene()
 {
     Logger::WriteLine("Building scene...");
 
     if (Config().UseMaterials)
     {
-        Logger::WriteLine("Building textures...");
+        Logger::WriteLine("  Building textures...");
         m_textures.resize(m_doc.textures.size());
         for (uint32_t i = 0; i < m_doc.textures.size(); i++)
         {
             std::string image = fx::gltf::detail::GetDocumentRootPath(Config().ModelPath) + "/" + m_doc.images[m_doc.textures[i].source].uri;
-            Logger::WriteLine("  {0}", image);
+            Logger::WriteLine("    {0}", image);
             m_textures[i].Create(image, m_deviceResources.get());
         }
     }
 
-    Logger::WriteLine("Building meshes...");
+    Logger::WriteLine("  Building meshes...");
     m_meshes.resize(m_doc.meshes.size());
     for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
     {
@@ -234,7 +248,7 @@ void D3DEngine::BuildScene()
 
     if (!m_doc.scenes.empty())
     {
-        Logger::WriteLine("Building scene graph...");
+        Logger::WriteLine("  Building scene graph...");
         std::vector<Graph::Node> graphNodes(m_doc.nodes.size());
         const DirectX::XMMATRIX rootTransform = DirectX::XMMatrixMultiply(DirectX::XMMatrixIdentity(), DirectX::XMMatrixScaling(-1, 1, 1));
         for (const uint32_t sceneNode : m_doc.scenes[0].nodes)
@@ -242,7 +256,7 @@ void D3DEngine::BuildScene()
             Graph::Visit(m_doc, sceneNode, rootTransform, graphNodes);
         }
 
-        Logger::WriteLine("Traversing scene...");
+        Logger::WriteLine("  Traversing scene...");
         for (auto & graphNode : graphNodes)
         {
             if (graphNode.meshIndex >= 0)
@@ -253,7 +267,7 @@ void D3DEngine::BuildScene()
     }
     else
     {
-        Logger::WriteLine("No scene graph data. Displaying individual meshes...");
+        Logger::WriteLine("  No scene graph data. Displaying individual meshes...");
         for (uint32_t i = 0; i < m_doc.meshes.size(); i++)
         {
             m_meshInstances.push_back({ i, DirectX::XMMatrixIdentity() });
@@ -265,28 +279,28 @@ void D3DEngine::BuildScene()
     DirectX::XMStoreFloat3(&size, sizeVec);
     m_autoScaleFactor = 4.0f / std::max({ size.x, size.y, size.z });
 
-    Logger::WriteLine("Found {0} mesh instance(s)", m_meshInstances.size());
-    Logger::WriteLine("Scene bbox       : [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.min.x, m_boundingBox.min.y, m_boundingBox.min.z, m_boundingBox.max.x, m_boundingBox.max.y, m_boundingBox.max.z);
-    Logger::WriteLine("Scene translation: [{0},{1},{2}]", m_boundingBox.centerTranslation.x, m_boundingBox.centerTranslation.y, m_boundingBox.centerTranslation.z);
-    Logger::WriteLine("Auto-scale factor: {0:F4}", m_autoScaleFactor);
+    Logger::WriteLine("    Found {0} mesh instance(s)", m_meshInstances.size());
+    Logger::WriteLine("    Scene bbox       : [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.min.x, m_boundingBox.min.y, m_boundingBox.min.z, m_boundingBox.max.x, m_boundingBox.max.y, m_boundingBox.max.z);
+    Logger::WriteLine("    Scene translation: [{0},{1},{2}]", m_boundingBox.centerTranslation.x, m_boundingBox.centerTranslation.y, m_boundingBox.centerTranslation.z);
+    Logger::WriteLine("    Auto-scale factor: {0:F4}", m_autoScaleFactor);
 }
 
 void D3DEngine::BuildRootSignature()
 {
-    CD3DX12_DESCRIPTOR_RANGE texTableEnvironment;
-    texTableEnvironment.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-
     CD3DX12_DESCRIPTOR_RANGE texTableMesh;
-    texTableMesh.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 64, 1);
+    texTableMesh.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 64, 0);
 
-    CD3DX12_ROOT_PARAMETER slotRootParameter[5];
+    CD3DX12_DESCRIPTOR_RANGE texTableEnvironment;
+    texTableEnvironment.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 64);
+
+    CD3DX12_ROOT_PARAMETER slotRootParameter[5]{};
     slotRootParameter[0].InitAsConstantBufferView(0);
     slotRootParameter[1].InitAsConstantBufferView(1);
     slotRootParameter[2].InitAsShaderResourceView(0, 1);
-    slotRootParameter[3].InitAsDescriptorTable(1, &texTableEnvironment, D3D12_SHADER_VISIBILITY_PIXEL);
-    slotRootParameter[4].InitAsDescriptorTable(1, &texTableMesh, D3D12_SHADER_VISIBILITY_PIXEL);
+    slotRootParameter[3].InitAsDescriptorTable(1, &texTableMesh, D3D12_SHADER_VISIBILITY_PIXEL);
+    slotRootParameter[4].InitAsDescriptorTable(1, &texTableEnvironment, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    const std::array<const CD3DX12_STATIC_SAMPLER_DESC, 1> staticSamplers{
+    const std::array<const CD3DX12_STATIC_SAMPLER_DESC, 2> staticSamplers{
         CD3DX12_STATIC_SAMPLER_DESC(
             0, // shaderRegister
             D3D12_FILTER_ANISOTROPIC, // filter
@@ -294,7 +308,14 @@ void D3DEngine::BuildRootSignature()
             D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressV
             D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressW
             0.0f, // mipLODBias
-            8) // maxAnisotropy
+            8), // maxAnisotropy
+
+        CD3DX12_STATIC_SAMPLER_DESC(
+            1, // shaderRegister
+            D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // filter
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // addressU
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // addressV
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP) // addressW
     };
 
     const CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
@@ -344,6 +365,22 @@ void D3DEngine::BuildDescriptorHeaps()
             hDescriptor.Offset(1, size);
         }
     }
+
+    {
+        D3D12_DESCRIPTOR_HEAP_DESC envHeapDesc;
+        envHeapDesc.NumDescriptors = 3;
+        envHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        envHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        envHeapDesc.NodeMask = 0;
+
+        ID3D12Device * device = m_deviceResources->GetD3DDevice();
+        DX::ThrowIfFailed(device->CreateDescriptorHeap(&envHeapDesc, IID_PPV_ARGS(&m_envHeap)));
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_envHeap->GetCPUDescriptorHandleForHeapStart());
+
+        m_environment.CreateSRV(device, hDescriptor);
+    }
+
 }
 
 void D3DEngine::BuildPipelineStateObjects()
@@ -361,8 +398,6 @@ void D3DEngine::BuildPipelineStateObjects()
 
     Logger::WriteLine("Compiling shaders...");
     auto standardVS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "StandardVS", "vs_5_1", nullptr);
-    auto skyVS = DX::CompileShader(L"DirectX\\Shaders\\Sky.hlsl", "VS", "vs_5_1", nullptr);
-    auto skyPS = DX::CompileShader(L"DirectX\\Shaders\\Sky.hlsl", "PS", "ps_5_1", nullptr);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { &inputLayout[0], static_cast<UINT>(inputLayout.size()) };
@@ -393,18 +428,12 @@ void D3DEngine::BuildPipelineStateObjects()
             }
         }
     }
-
-    psoDesc.VS = { skyVS->GetBufferPointer(), skyVS->GetBufferSize() };
-    psoDesc.PS = { skyPS->GetBufferPointer(), skyPS->GetBufferSize() };
-    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-    psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-    DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pipelineStateSky.ReleaseAndGetAddressOf())));
 }
 
 void D3DEngine::CompileShaderPerumutation(ShaderOptions options, D3D12_GRAPHICS_PIPELINE_STATE_DESC & psoDescTemplate)
 {
     // Keep rooted until compile completes since D3D_SHADER_MACRO is just a view over this data...
-    std::vector<std::string> defines = GetShaderDefines(options);
+    std::vector<std::string> defines = GetShaderDefines(options | (Config().UseIBL ? ShaderOptions::USE_IBL : ShaderOptions::None));
 
     {
         std::vector<D3D_SHADER_MACRO> shaderDefines;

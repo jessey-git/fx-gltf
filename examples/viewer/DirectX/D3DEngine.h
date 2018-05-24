@@ -10,6 +10,7 @@
 
 #include "D3DConstants.h"
 #include "D3DDeviceResources.h"
+#include "D3DEnvironmentIBL.h"
 #include "D3DFrameResources.h"
 #include "D3DMesh.h"
 #include "D3DMeshInstance.h"
@@ -49,6 +50,7 @@ private:
     std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_envHeap{};
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_pipelineStateSky{};
     std::unordered_map<ShaderOptions, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipelineStateMap{};
@@ -61,6 +63,7 @@ private:
     Light                                           m_directionalLight{};
     Light                                           m_pointLights[2]{};
 
+    D3DEnvironmentIBL                               m_environment{};
     std::vector<D3DTexture>                         m_textures{};
     std::vector<D3DMesh>                            m_meshes{};
     std::vector<D3DMeshInstance>                    m_meshInstances{};
@@ -76,6 +79,7 @@ private:
     void PrepareRender();
     void CompleteRender();
 
+    void BuildEnvironmentMaps();
     void BuildScene();
 
     void BuildRootSignature();

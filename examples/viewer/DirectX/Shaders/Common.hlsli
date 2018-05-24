@@ -54,10 +54,14 @@ struct MaterialData
 
 StructuredBuffer<MaterialData> MaterialDataBuffer : register(t0, space1);
 
-Texture2D Environment  : register(t0);
-Texture2D Textures[64] : register(t1);
+Texture2D Textures[64] : register(t0);
+
+TextureCube DiffuseEnvMap : register(t64);
+TextureCube SpecularEnvMap : register(t65);
+Texture2D BRDF_LUT : register(t66);
 
 SamplerState SampAnisotropicWrap : register(s0);
+SamplerState SampLinearClamp : register(s1);
 
 //--------------------------------------------------------------------------------------
 static const float M_PI = 3.141592653589793f;
@@ -125,4 +129,19 @@ float D_GGX(float NdH, float alphaRoughness)
     float roughnessSq = alphaRoughness * alphaRoughness;
     float f = (NdH * roughnessSq - NdH) * NdH + 1.0;
     return roughnessSq / (M_PI * f * f);
+}
+
+float3 IBLContribution(float3 diffuseColor, float3 specularColor, float perceptualRoughness, float NdV, float3 N, float3 reflection)
+{
+    float mipCount = 1.0f;// 9.0;
+    float lod = (perceptualRoughness * mipCount);
+    float3 brdf = SRGBtoLINEAR(BRDF_LUT.Sample(SampAnisotropicWrap2, float2(NdV, 1.0 - perceptualRoughness))).rgb;
+    float3 diffuseLight = SRGBtoLINEAR(DiffuseEnvMap.Sample(SampAnisotropicWrap, N)).rgb;
+
+    float3 specularLight = SRGBtoLINEAR(SpecularEnvMap.Sample(SampAnisotropicWrap, N, lod)).rgb;
+
+    float3 diffuse = diffuseLight * diffuseColor;
+    float3 specular = specularLight * (specularColor * brdf.x + brdf.y);
+
+    return diffuse + specular;
 }

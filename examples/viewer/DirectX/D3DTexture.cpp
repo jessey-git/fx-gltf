@@ -4,11 +4,10 @@
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
 #include "stdafx.h"
-#include <fx/gltf.h>
 #include <libpng16/png.h>
-#include <vector>
 
 #include "D3DTexture.h"
+#include "D3DUtil.h"
 
 void D3DTexture::Create(std::string const & texture, DX::D3DDeviceResources const * deviceResources)
 {
@@ -72,7 +71,7 @@ void D3DTexture::Create(std::string const & texture, DX::D3DDeviceResources cons
         texResource.pData = bufferStart;
         texResource.RowPitch = image.width * 4;
         texResource.SlicePitch = texResource.RowPitch * image.height;
-        UpdateSubresources(commandList, m_data.m_mainBuffer.Get(), m_data.m_uploadBuffer.Get(), 0, 0, 1, &texResource);
+        UpdateSubresources<1>(commandList, m_data.m_mainBuffer.Get(), m_data.m_uploadBuffer.Get(), 0, 0, 1, &texResource);
 
         const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_data.m_mainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         commandList->ResourceBarrier(1, &barrier);

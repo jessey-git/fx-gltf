@@ -5,8 +5,8 @@
 // ------------------------------------------------------------
 #pragma once
 
-#include <DirectXMath.h>
 #include <d3d12.h>
+#include <DirectXMath.h>
 #include <unordered_map>
 #include <wrl.h>
 #include "D3DFrameResources.h"

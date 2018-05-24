@@ -5,11 +5,7 @@
 // ------------------------------------------------------------
 #pragma once
 
-#include <fx/gltf.h>
-#include <vector>
-
 #include "D3DDeviceResources.h"
-#include "D3DUtil.h"
 
 class D3DTexture
 {
