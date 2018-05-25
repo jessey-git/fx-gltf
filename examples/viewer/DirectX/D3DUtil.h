@@ -19,9 +19,9 @@ namespace Util
 {
     struct BBox
     {
-        DirectX::XMFLOAT3 min{};
-        DirectX::XMFLOAT3 max{};
-        DirectX::XMFLOAT3 centerTranslation{};
+        DirectX::XMFLOAT3 Min{};
+        DirectX::XMFLOAT3 Max{};
+        DirectX::XMFLOAT3 CenterTranslation{};
     };
 
     static DXGI_FORMAT GetFormat(fx::gltf::Accessor const * accessor)
@@ -44,25 +44,31 @@ namespace Util
         }
     }
 
+    static std::size_t ResourceSize(std::size_t size) noexcept
+    {
+        const std::size_t MinResourceSize = 64 * 1024;
+        return size < MinResourceSize ? MinResourceSize : size;
+    }
+
     static void AdjustBBox(BBox & currentBBox, BBox const & other) noexcept
     {
-        currentBBox.min.x = std::min(currentBBox.min.x, other.min.x);
-        currentBBox.min.y = std::min(currentBBox.min.y, other.min.y);
-        currentBBox.min.z = std::min(currentBBox.min.z, other.min.z);
+        currentBBox.Min.x = std::min(currentBBox.Min.x, other.Min.x);
+        currentBBox.Min.y = std::min(currentBBox.Min.y, other.Min.y);
+        currentBBox.Min.z = std::min(currentBBox.Min.z, other.Min.z);
 
-        currentBBox.max.x = std::max(currentBBox.max.x, other.max.x);
-        currentBBox.max.y = std::max(currentBBox.max.y, other.max.y);
-        currentBBox.max.z = std::max(currentBBox.max.z, other.max.z);
+        currentBBox.Max.x = std::max(currentBBox.Max.x, other.Max.x);
+        currentBBox.Max.y = std::max(currentBBox.Max.y, other.Max.y);
+        currentBBox.Max.z = std::max(currentBBox.Max.z, other.Max.z);
     }
 
     static void CenterBBox(BBox & currentBBox)
     {
         using namespace DirectX;
-        const DirectX::XMVECTOR min = DirectX::XMLoadFloat3(&currentBBox.min);
-        const DirectX::XMVECTOR max = DirectX::XMLoadFloat3(&currentBBox.max);
+        const DirectX::XMVECTOR min = DirectX::XMLoadFloat3(&currentBBox.Min);
+        const DirectX::XMVECTOR max = DirectX::XMLoadFloat3(&currentBBox.Max);
         const DirectX::XMVECTOR mid = DirectX::XMVectorNegate(0.5f * (min + max));
 
-        DirectX::XMStoreFloat3(&currentBBox.centerTranslation, mid);
+        DirectX::XMStoreFloat3(&currentBBox.CenterTranslation, mid);
     }
 
     static DirectX::XMFLOAT4 HSVtoRBG(float hue, float saturation, float value) noexcept
@@ -128,7 +134,8 @@ namespace DX
 
         Microsoft::WRL::ComPtr<ID3DBlob> byteCode{};
         Microsoft::WRL::ComPtr<ID3DBlob> errors{};
-        HRESULT hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE, entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
+        const HRESULT hr =
+            D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE, entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
 
         if (errors != nullptr)
         {

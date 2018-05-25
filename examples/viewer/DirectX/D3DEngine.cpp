@@ -69,7 +69,7 @@ void D3DEngine::Render()
     D3DFrameResource const & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
     SceneConstantBuffer sceneParameters{};
-    sceneParameters.ViewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
+    sceneParameters.ViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix));
     sceneParameters.Camera = m_eye;
     sceneParameters.DirectionalLight = m_directionalLight;
     sceneParameters.PointLights[0] = m_pointLights[0];
@@ -102,7 +102,7 @@ void D3DEngine::Render()
     for (auto & meshInstance : m_meshInstances)
     {
         D3DMesh & mesh = m_meshes[meshInstance.MeshIndex];
-        mesh.SetWorldMatrix(meshInstance.Transform, m_boundingBox.centerTranslation, m_curRotationAngleRad, m_autoScaleFactor);
+        mesh.SetWorldMatrix(meshInstance.Transform, m_boundingBox.CenterTranslation, m_curRotationAngleRad, m_autoScaleFactor);
         mesh.Render(renderContext);
     }
 
@@ -145,7 +145,7 @@ void D3DEngine::CreateDeviceDependentResources()
     }
 
     // Initialize the view matrix
-    m_eye = { 0.0f, 0.0f, 6.0f, 0.0f };
+    m_eye = { 0.0f, 0.0f, 5.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_at = { 0.0f, 0.0f, 0.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_up = { 0.0f, 1.0f, 0.0f, 0.0 };
     DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(m_eye, c_at, c_up));
@@ -250,9 +250,9 @@ void D3DEngine::BuildScene()
         Logger::WriteLine("  Traversing scene...");
         for (auto & graphNode : graphNodes)
         {
-            if (graphNode.meshIndex >= 0)
+            if (graphNode.MeshIndex >= 0)
             {
-                m_meshInstances.push_back({ static_cast<uint32_t>(graphNode.meshIndex), graphNode.currentTransform });
+                m_meshInstances.push_back({ static_cast<uint32_t>(graphNode.MeshIndex), graphNode.CurrentTransform });
             }
         }
     }
@@ -265,14 +265,14 @@ void D3DEngine::BuildScene()
         }
     }
 
-    DirectX::FXMVECTOR sizeVec = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.max), DirectX::XMLoadFloat3(&m_boundingBox.min));
+    DirectX::FXMVECTOR sizeVec = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.Max), DirectX::XMLoadFloat3(&m_boundingBox.Min));
     DirectX::XMFLOAT3 size{};
     DirectX::XMStoreFloat3(&size, sizeVec);
     m_autoScaleFactor = 4.0f / std::max({ size.x, size.y, size.z });
 
     Logger::WriteLine("    Found {0} mesh instance(s)", m_meshInstances.size());
-    Logger::WriteLine("    Scene bbox       : [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.min.x, m_boundingBox.min.y, m_boundingBox.min.z, m_boundingBox.max.x, m_boundingBox.max.y, m_boundingBox.max.z);
-    Logger::WriteLine("    Scene translation: [{0},{1},{2}]", m_boundingBox.centerTranslation.x, m_boundingBox.centerTranslation.y, m_boundingBox.centerTranslation.z);
+    Logger::WriteLine("    Scene bbox       : [{0},{1},{2}] [{3},{4},{5}]", m_boundingBox.Min.x, m_boundingBox.Min.y, m_boundingBox.Min.z, m_boundingBox.Max.x, m_boundingBox.Max.y, m_boundingBox.Max.z);
+    Logger::WriteLine("    Scene translation: [{0},{1},{2}]", m_boundingBox.CenterTranslation.x, m_boundingBox.CenterTranslation.y, m_boundingBox.CenterTranslation.z);
     Logger::WriteLine("    Auto-scale factor: {0:F4}", m_autoScaleFactor);
 }
 
@@ -319,7 +319,7 @@ void D3DEngine::BuildRootSignature()
     {
         if (error)
         {
-            throw std::runtime_error(reinterpret_cast<const char *>(error->GetBufferPointer()));
+            throw std::runtime_error(static_cast<const char *>(error->GetBufferPointer()));
         }
 
         throw DX::com_exception(hr);
@@ -392,7 +392,7 @@ void D3DEngine::BuildPipelineStateObjects()
     for (auto const & mesh : m_meshes)
     {
         std::vector<ShaderOptions> requiredOptions = mesh.GetRequiredShaderOptions();
-        for (ShaderOptions options : requiredOptions)
+        for (const ShaderOptions options : requiredOptions)
         {
             if (m_pipelineStateMap[options] == nullptr)
             {

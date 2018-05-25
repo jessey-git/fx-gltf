@@ -14,11 +14,11 @@
 
 struct D3DRenderContext
 {
-    ID3D12GraphicsCommandList * commandList;
-    D3DFrameResource const & currentFrame;
-    DirectX::CXMMATRIX viewProj;
-    std::size_t currentCBIndex;
-    ShaderOptions currentShaderOptions;
-    ShaderOptions overrideShaderOptions;
-    std::unordered_map<ShaderOptions, Microsoft::WRL::ComPtr<ID3D12PipelineState>> & pipelineStateMap;
+    ID3D12GraphicsCommandList * CommandList;
+    D3DFrameResource const & CurrentFrame;
+    DirectX::CXMMATRIX ViewProj;
+    std::size_t CurrentCBIndex;
+    ShaderOptions CurrentShaderOptions;
+    ShaderOptions OverrideShaderOptions;
+    std::unordered_map<ShaderOptions, Microsoft::WRL::ComPtr<ID3D12PipelineState>> & PipelineStateMap;
 };

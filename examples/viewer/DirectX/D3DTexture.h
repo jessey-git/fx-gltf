@@ -19,8 +19,8 @@ public:
 private:
     struct D3DTextureData
     {
-        Microsoft::WRL::ComPtr<ID3D12Resource> m_mainBuffer{};
-        Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> DefaultBuffer{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> UploadBuffer{};
     };
 
     D3DTextureData m_data{};

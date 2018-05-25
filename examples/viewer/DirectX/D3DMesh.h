@@ -42,7 +42,7 @@ public:
         std::vector<ShaderOptions> requiredShaderOptions{};
         for (auto const & meshPart : m_meshParts)
         {
-            requiredShaderOptions.push_back(meshPart.m_shaderOptions);
+            requiredShaderOptions.push_back(meshPart.Options);
         }
 
         return requiredShaderOptions;
@@ -51,19 +51,19 @@ public:
 private:
     struct D3DMeshPart
     {
-        Microsoft::WRL::ComPtr<ID3D12Resource> m_mainBuffer{};
-        Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> DefaultBuffer{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> UploadBuffer{};
 
-        D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};
-        D3D12_VERTEX_BUFFER_VIEW m_normalBufferView{};
-        D3D12_VERTEX_BUFFER_VIEW m_tangentBufferView{};
-        D3D12_VERTEX_BUFFER_VIEW m_texCoord0BufferView{};
-        D3D12_INDEX_BUFFER_VIEW m_indexBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW VertexBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW NormalBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW TangentBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW TexCoord0BufferView{};
+        D3D12_INDEX_BUFFER_VIEW IndexBufferView{};
 
-        uint32_t m_indexCount{};
+        uint32_t IndexCount{};
 
-        MeshShaderData m_shaderData{};
-        ShaderOptions m_shaderOptions{};
+        MeshShaderData ShaderData{};
+        ShaderOptions Options{};
     };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};

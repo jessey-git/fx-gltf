@@ -84,6 +84,9 @@
     <ClInclude Include="DirectX\D3DEnvironmentIBL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DirectX\D3DTextureSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -110,6 +113,9 @@
     <ClCompile Include="DirectX\D3DEnvironmentIBL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DirectX\D3DTextureSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
@@ -120,6 +126,152 @@
     <None Include="Assets\Environment\*.*">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="DirectX\Shaders\*.*" />
+    <None Include="DirectX\Shaders\*.*" />
     <None Include="Assets\Environment\*.*">
       <Filter>Resource Files</Filter>
     </None>

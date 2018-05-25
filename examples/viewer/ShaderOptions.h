@@ -23,42 +23,42 @@ enum class ShaderOptions : uint64_t
     HAS_EMISSIVEMAP = 0x200u
 };
 
-inline ShaderOptions operator|(ShaderOptions a, ShaderOptions b)
+inline ShaderOptions operator|(ShaderOptions a, ShaderOptions b) noexcept
 {
-    return ShaderOptions(((uint64_t)a) | ((uint64_t)b));
+    return static_cast<ShaderOptions>(static_cast<uint64_t>(a) | static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions & operator|=(ShaderOptions & a, ShaderOptions b)
+inline ShaderOptions & operator|=(ShaderOptions & a, ShaderOptions b) noexcept
 {
-    return (ShaderOptions &)(((uint64_t &)a) |= ((uint64_t)b));
+    return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) |= static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions operator&(ShaderOptions a, ShaderOptions b)
+inline ShaderOptions operator&(ShaderOptions a, ShaderOptions b) noexcept
 {
-    return ShaderOptions(((uint64_t)a) & ((uint64_t)b));
+    return static_cast<ShaderOptions>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions & operator&=(ShaderOptions & a, ShaderOptions b)
+inline ShaderOptions & operator&=(ShaderOptions & a, ShaderOptions b) noexcept
 {
-    return (ShaderOptions &)(((uint64_t &)a) &= ((uint64_t)b));
+    return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) &= static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions operator~(ShaderOptions a)
+inline ShaderOptions operator~(ShaderOptions a) noexcept
 {
-    return ShaderOptions(~((uint64_t)a));
+    return static_cast<ShaderOptions>(~static_cast<uint64_t>(a));
 }
 
-inline ShaderOptions operator^(ShaderOptions a, ShaderOptions b)
+inline ShaderOptions operator^(ShaderOptions a, ShaderOptions b) noexcept
 {
-    return ShaderOptions(((uint64_t)a) ^ ((uint64_t)b));
+    return static_cast<ShaderOptions>(static_cast<uint64_t>(a) ^ static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions & operator^=(ShaderOptions & a, ShaderOptions b)
+inline ShaderOptions & operator^=(ShaderOptions & a, ShaderOptions b) noexcept
 {
-    return (ShaderOptions &)(((uint64_t &)a) ^= ((uint64_t)b));
+    return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) ^= static_cast<uint64_t>(b));
 }
 
-inline bool IsSet(ShaderOptions options, ShaderOptions flag)
+inline bool IsSet(ShaderOptions options, ShaderOptions flag) noexcept
 {
     return (options & flag) == flag;
 }

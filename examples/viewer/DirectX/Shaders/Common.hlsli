@@ -133,12 +133,12 @@ float D_GGX(float NdH, float alphaRoughness)
 
 float3 IBLContribution(float3 diffuseColor, float3 specularColor, float perceptualRoughness, float NdV, float3 N, float3 reflection)
 {
-    float mipCount = 1.0f;// 9.0;
+    float mipCount = 7.0f;
     float lod = (perceptualRoughness * mipCount);
     float3 brdf = SRGBtoLINEAR(BRDF_LUT.Sample(SampLinearClamp, float2(NdV, 1.0 - perceptualRoughness))).rgb;
     float3 diffuseLight = SRGBtoLINEAR(DiffuseEnvMap.Sample(SampAnisotropicWrap, N)).rgb;
 
-    float3 specularLight = SRGBtoLINEAR(SpecularEnvMap.Sample(SampAnisotropicWrap, N, lod)).rgb;
+    float3 specularLight = SRGBtoLINEAR(SpecularEnvMap.SampleLevel(SampAnisotropicWrap, N, lod)).rgb;
 
     float3 diffuse = diffuseLight * diffuseColor;
     float3 specular = specularLight * (specularColor * brdf.x + brdf.y);
