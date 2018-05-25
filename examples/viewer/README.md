@@ -6,11 +6,16 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 * Lightly abstracted DirectX 12 rendering
     * Enough abstraction to get out of the way, but not too much so-as to interfere with learning
 * Auto mesh coloring for easy debugging/experimentation
+* PBR materials with image-based lighting (IBL)
 
 ![screenshot](screenshots/screenshot00.png)
 ![screenshot](screenshots/screenshot01.png)
 ![screenshot](screenshots/screenshot02.png)
 ![screenshot](screenshots/screenshot03.png)
+![screenshot](screenshots/screenshot04.png)
+![screenshot](screenshots/screenshot05.png)
+![screenshot](screenshots/screenshot06.png)
+![screenshot](screenshots/screenshot07.png)
 
 ## Usage
 ```
@@ -22,6 +27,11 @@ where options are:
   --width <width>      Initial window width
   --height <height>    Initial window height
   -r, --rotate         Auto rotate model
+  -m, --materials      Use model materials
+  -i, --ibl            Use IBL
+  -x <x>               Camera x position
+  -y <y>               Camera y position
+  -z <z>               Camera z position
 ```
 
 ## Design
@@ -45,45 +55,55 @@ where options are:
 * Coordinates the update/render sequencing flow
 
 ### Psuedo call-graph
- * Win32Application::Run
- * D3DEngine / Engine
-     * Initialization
-         * Load glTF document
-         * Build glTF mesh pieces
-         * Build glTF scene-graph
-         * Build device-dependent DirectX 12 resources
-         * Build window-size-dependent DirectX 12 resources
-     * Update/Render loop
-         * Set Root Signature + PSO
-         * Set scene constant buffers
-         * Draw each mesh instance
-             * Set mesh constant buffers
-             * Set mesh vertex/normal/index buffers
-             * Perform actual draw call
+* Win32Application::Run
+* D3DEngine / Engine
+    * Initialization
+        * Load glTF document
+        * Load glTF textures
+        * Build glTF mesh pieces
+        * Build glTF scene-graph
+        * Compile necessary shaders to support the loaded materials
+        * Establish all DirectX resources (Heaps, PSO's, constant buffers, etc.)
+    * Update/Render loop
+        * Set Root Signature, PSO's, constant buffers, structured buffers, etc. 
+        * Draw each mesh instance
+            * Set mesh constant buffers
+            * Set mesh vertex/normal/index buffers
+            * Perform actual draw call
 
 ### DirectX 12 / glTF Integration Notes
 
 #### PipelineStateObject Input Layout
-glTF stores vertex/normal/tex-coord buffers separately from each other. For example, consider a simple 6 vertex mesh with vertex/normal/tex-coord formats of Vec3/Vec3/Vec2 respectively:
+Most glTF files today store vertex/normal/tex-coord buffers separately from each other (non interleaved). For example, consider a simple 6 vertex mesh with vertex/normal/tex-coord formats of Vec3/Vec3/Vec2 respectively:
 
 ```[vvvvvv][nnnnnn][tttttt] == 3 buffers: [72 bytes][72 bytes][48 bytes]```
 
-However, most DirectX tutorials assume a "combined" layout as follows:
+Compare this against an interleaved layout which looks as follows:
 
 ```[vntvntvntvntvntvnt] == 1 buffer: [192 bytes]```
 
-This matters when creating the PipelineStateObject's InputLayout.  To properly use glTF data without extra data manipulation, make use of the ```D3D12_INPUT_ELEMENT_DESC.InputSlot``` field.  See ```D3DEngine::BuildPipelineStateObjects``` for reference.
+This matters when creating the PipelineStateObject's InputLayout.  To properly use glTF data in this format without extra data manipulation, make use of the ```D3D12_INPUT_ELEMENT_DESC.InputSlot``` field.  See ```D3DEngine::BuildPipelineStateObjects``` for reference.
 
 ## Known Issues and TODOs
- * DirectX 12
-     * Usage of the "default" upload heap is not used in all circumstances
-     * Materials are not loaded/processed (need image loader and mip-map generation etc.)
-     * Input from keyboard/mouse (i.e. simple arcball rotation control etc.)
-     * Scene centering does not seem to be working for all tested models. Some scenes still seem shifted away from 0,0,0
+* General
+    * Input from keyboard/mouse (i.e. simple arcball rotation control etc.)
+    * Interleaved buffers from glTF are not supported currently
+    * Scene centering does not seem to be working for all tested models. Some scenes still seem shifted away from 0,0,0
+    * Only .png textures are supported
 
- * Vulkan
-     * Needs implementing (patches welcome)
- 
+* DirectX 12
+    * Minor: Mip-maps are not generated for the textures
+    * Advanced: A memory-manager with pooling / page management should be implemented
+    * Advanced: A new set of abstractions for properly batching ResourceBarriers is needed (likely requires refactoring away DeviceResources + FrameResources into finer grained objects)
+
+* Vulkan
+    * Needs implementing (patches welcome)
+
+## Dependencies
+* [libpng](https://github.com/glennrp/libpng) (must be referenceable using `#include <libpng16/png.h>`)
+
+    Install using vcpkg: ```vcpkg install libpng --triplet x64-windows```
+
 ## Supported Compilers
 * Microsoft Visual C++ 2017 15.6+ (and possibly earlier)
 

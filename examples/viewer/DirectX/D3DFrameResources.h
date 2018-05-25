@@ -19,7 +19,7 @@ struct D3DFrameResource
     D3DFrameResource & operator=(D3DFrameResource &&) = delete;
     ~D3DFrameResource() = default;
 
-    void AllocateConstantBuffers(ID3D12Device * device, std::size_t sceneCount, std::size_t meshCount);
+    void AllocateBuffers(ID3D12Device * device, std::size_t sceneCount, std::size_t meshCount);
 
     void Reset();
 
@@ -30,5 +30,6 @@ struct D3DFrameResource
 
     std::unique_ptr<D3DUploadBuffer<SceneConstantBuffer>>   SceneCB{};
     std::unique_ptr<D3DUploadBuffer<MeshConstantBuffer>>    MeshCB{};
+    std::unique_ptr<D3DUploadBuffer<MeshShaderData>>        MeshDataBuffer{};
     // clang-format on
 };

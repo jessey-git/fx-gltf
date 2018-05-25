@@ -9,39 +9,61 @@
 #include <vector>
 
 #include "D3DDeviceResources.h"
+#include "D3DRenderContext.h"
 #include "D3DUtil.h"
+#include "ShaderOptions.h"
 
 class D3DMesh
 {
 public:
     void Create(
-        fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources * deviceResources);
+        fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources const * deviceResources);
 
     void SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor);
 
-    void Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex);
+    void Render(D3DRenderContext & renderContext);
 
     void FinishUpload();
 
     void Reset();
 
-    Util::BBox MeshBBox() noexcept { return m_boundingBox; }
+    Util::BBox const & MeshBBox() const noexcept
+    {
+        return m_boundingBox;
+    }
 
-    std::size_t MeshPartCount() noexcept { return m_meshParts.size(); }
+    std::size_t MeshPartCount() const noexcept
+    {
+        return m_meshParts.size();
+    }
+
+    std::vector<ShaderOptions> GetRequiredShaderOptions() const
+    {
+        std::vector<ShaderOptions> requiredShaderOptions{};
+        for (auto const & meshPart : m_meshParts)
+        {
+            requiredShaderOptions.push_back(meshPart.Options);
+        }
+
+        return requiredShaderOptions;
+    }
 
 private:
     struct D3DMeshPart
     {
-        Microsoft::WRL::ComPtr<ID3D12Resource> m_mainBuffer{};
-        Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> DefaultBuffer{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> UploadBuffer{};
 
-        D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};
-        D3D12_VERTEX_BUFFER_VIEW m_normalBufferView{};
-        D3D12_INDEX_BUFFER_VIEW m_indexBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW VertexBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW NormalBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW TangentBufferView{};
+        D3D12_VERTEX_BUFFER_VIEW TexCoord0BufferView{};
+        D3D12_INDEX_BUFFER_VIEW IndexBufferView{};
 
-        uint32_t m_indexCount{};
+        uint32_t IndexCount{};
 
-        DirectX::XMFLOAT3 m_meshPartColor{};
+        MeshShaderData ShaderData{};
+        ShaderOptions Options{};
     };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};

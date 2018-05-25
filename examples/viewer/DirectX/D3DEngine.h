@@ -5,15 +5,20 @@
 // ------------------------------------------------------------
 #pragma once
 #include <fx/gltf.h>
+#include <unordered_map>
 #include <vector>
 
+#include "D3DConstants.h"
 #include "D3DDeviceResources.h"
+#include "D3DEnvironmentIBL.h"
 #include "D3DFrameResources.h"
 #include "D3DMesh.h"
 #include "D3DMeshInstance.h"
+#include "D3DTexture.h"
 #include "D3DUploadBuffer.h"
 #include "Engine.h"
 #include "EngineOptions.h"
+#include "ShaderOptions.h"
 
 class D3DEngine : public Engine, public DX::IDeviceNotify
 {
@@ -25,11 +30,11 @@ public:
     D3DEngine & operator=(D3DEngine const &) = delete;
     D3DEngine & operator=(D3DEngine &&) = delete;
 
-    ~D3DEngine();
+    ~D3DEngine() override;
 
     void InitializeCore(HWND window) override;
 
-    void Update(float elapsedTime) override;
+    void Update(float elapsedTime) noexcept override;
     void Render() override;
 
     void WindowSizeChangedCore(int width, int height) override;
@@ -46,14 +51,19 @@ private:
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
 
-    Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_lambertPipelineState{};
+    Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_pipelineStateSky{};
+    std::unordered_map<ShaderOptions, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipelineStateMap{};
 
     DirectX::XMFLOAT4X4                             m_viewMatrix{};
     DirectX::XMFLOAT4X4                             m_projectionMatrix{};
     DirectX::XMFLOAT4X4                             m_viewProjectionMatrix{};
-    DirectX::XMFLOAT4                               m_lightDirs[2]{};
-    DirectX::XMFLOAT4                               m_lightColors[2]{};
 
+    DirectX::XMVECTORF32                            m_eye{};
+    Light                                           m_directionalLight{};
+    Light                                           m_pointLights[2]{};
+
+    D3DEnvironmentIBL                               m_environment{};
+    std::vector<D3DTexture>                         m_textures{};
     std::vector<D3DMesh>                            m_meshes{};
     std::vector<D3DMeshInstance>                    m_meshInstances{};
 
@@ -68,12 +78,13 @@ private:
     void PrepareRender();
     void CompleteRender();
 
+    void BuildEnvironmentMaps();
     void BuildScene();
 
     void BuildRootSignature();
     void BuildDescriptorHeaps();
     void BuildPipelineStateObjects();
-    void BuildConstantBufferUploadBuffers();
+    void BuildUploadBuffers();
 
-    std::vector<uint8_t> ReadData(const wchar_t * name);
+    void CompileShaderPerumutation(ShaderOptions options, D3D12_GRAPHICS_PIPELINE_STATE_DESC & psoDescTemplate);
 };

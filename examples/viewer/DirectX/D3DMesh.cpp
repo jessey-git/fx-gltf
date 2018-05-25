@@ -13,7 +13,7 @@
 uint32_t D3DMesh::CurrentMeshPartId = 1;
 
 void D3DMesh::Create(
-    fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources * deviceResources)
+    fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources const * deviceResources)
 {
     ID3D12Device * device = deviceResources->GetD3DDevice();
     ID3D12GraphicsCommandList * commandList = deviceResources->GetCommandList();
@@ -25,20 +25,24 @@ void D3DMesh::Create(
     for (std::size_t i = 0; i < doc.meshes[meshIndex].primitives.size(); i++)
     {
         MeshData mesh(doc, meshIndex, i);
-        if (!mesh.HasVertexData() || !mesh.HasNormalData() || !mesh.HasIndexData())
+        MeshData::BufferInfo const & vBuffer = mesh.VertexBuffer();
+        MeshData::BufferInfo const & nBuffer = mesh.NormalBuffer();
+        MeshData::BufferInfo const & tBuffer = mesh.TangentBuffer();
+        MeshData::BufferInfo const & cBuffer = mesh.TexCoord0Buffer();
+        MeshData::BufferInfo const & iBuffer = mesh.IndexBuffer();
+        if (!vBuffer.HasData() || !nBuffer.HasData() || !iBuffer.HasData())
         {
             throw std::runtime_error("Only meshes with vertex, normal, and index buffers are supported");
         }
 
-        D3DMeshPart & meshPart = m_meshParts[i];
-        const MeshData::BufferInfo vBuffer = mesh.VertexBuffer();
-        const MeshData::BufferInfo nBuffer = mesh.NormalBuffer();
-        const MeshData::BufferInfo iBuffer = mesh.IndexBuffer();
         const std::size_t totalBufferSize =
             static_cast<std::size_t>(vBuffer.totalSize) +
             static_cast<std::size_t>(nBuffer.totalSize) +
+            static_cast<std::size_t>(tBuffer.totalSize) +
+            static_cast<std::size_t>(cBuffer.totalSize) +
             static_cast<std::size_t>(iBuffer.totalSize);
 
+        D3DMeshPart & meshPart = m_meshParts[i];
         const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
         DX::ThrowIfFailed(device->CreateCommittedResource(
             &defaultHeapProperties,
@@ -46,7 +50,7 @@ void D3DMesh::Create(
             &resourceDescV,
             D3D12_RESOURCE_STATE_COPY_DEST,
             nullptr,
-            IID_PPV_ARGS(meshPart.m_mainBuffer.ReleaseAndGetAddressOf())));
+            IID_PPV_ARGS(meshPart.DefaultBuffer.ReleaseAndGetAddressOf())));
 
         DX::ThrowIfFailed(device->CreateCommittedResource(
             &uploadHeapProperties,
@@ -54,89 +58,173 @@ void D3DMesh::Create(
             &resourceDescV,
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
-            IID_PPV_ARGS(meshPart.m_uploadBuffer.ReleaseAndGetAddressOf())));
+            IID_PPV_ARGS(meshPart.UploadBuffer.ReleaseAndGetAddressOf())));
 
         uint8_t * bufferStart{};
         uint32_t offset{};
         const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
-        DX::ThrowIfFailed(meshPart.m_uploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
+        DX::ThrowIfFailed(meshPart.UploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
 
         // Copy vertex buffer to upload...
         std::memcpy(bufferStart, vBuffer.data, vBuffer.totalSize);
-        meshPart.m_vertexBufferView.BufferLocation = meshPart.m_mainBuffer->GetGPUVirtualAddress();
-        meshPart.m_vertexBufferView.StrideInBytes = vBuffer.dataStride;
-        meshPart.m_vertexBufferView.SizeInBytes = vBuffer.totalSize;
+        meshPart.VertexBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress();
+        meshPart.VertexBufferView.StrideInBytes = vBuffer.dataStride;
+        meshPart.VertexBufferView.SizeInBytes = vBuffer.totalSize;
         offset += vBuffer.totalSize;
 
         // Copy normal buffer to upload...
         std::memcpy(bufferStart + offset, nBuffer.data, nBuffer.totalSize);
-        meshPart.m_normalBufferView.BufferLocation = meshPart.m_mainBuffer->GetGPUVirtualAddress() + offset;
-        meshPart.m_normalBufferView.StrideInBytes = nBuffer.dataStride;
-        meshPart.m_normalBufferView.SizeInBytes = nBuffer.totalSize;
+        meshPart.NormalBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
+        meshPart.NormalBufferView.StrideInBytes = nBuffer.dataStride;
+        meshPart.NormalBufferView.SizeInBytes = nBuffer.totalSize;
         offset += nBuffer.totalSize;
+
+        if (tBuffer.HasData())
+        {
+            // Copy tex-coord buffer to upload...
+            std::memcpy(bufferStart + offset, tBuffer.data, tBuffer.totalSize);
+            meshPart.TangentBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
+            meshPart.TangentBufferView.StrideInBytes = tBuffer.dataStride;
+            meshPart.TangentBufferView.SizeInBytes = tBuffer.totalSize;
+            offset += tBuffer.totalSize;
+        }
+
+        if (cBuffer.HasData())
+        {
+            // Copy tex-coord buffer to upload...
+            std::memcpy(bufferStart + offset, cBuffer.data, cBuffer.totalSize);
+            meshPart.TexCoord0BufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
+            meshPart.TexCoord0BufferView.StrideInBytes = cBuffer.dataStride;
+            meshPart.TexCoord0BufferView.SizeInBytes = cBuffer.totalSize;
+            offset += cBuffer.totalSize;
+        }
 
         // Copy index buffer to upload...
         std::memcpy(bufferStart + offset, iBuffer.data, iBuffer.totalSize);
-        meshPart.m_indexBufferView.BufferLocation = meshPart.m_mainBuffer->GetGPUVirtualAddress() + offset;
-        meshPart.m_indexBufferView.Format = Util::GetFormat(iBuffer.accessor);
-        meshPart.m_indexBufferView.SizeInBytes = iBuffer.totalSize;
-        meshPart.m_indexCount = iBuffer.accessor->count;
+        meshPart.IndexBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
+        meshPart.IndexBufferView.Format = Util::GetFormat(iBuffer.accessor);
+        meshPart.IndexBufferView.SizeInBytes = iBuffer.totalSize;
+        meshPart.IndexCount = iBuffer.accessor->count;
 
         // Copy from upload to default...
-        commandList->CopyBufferRegion(
-            meshPart.m_mainBuffer.Get(), 0, meshPart.m_uploadBuffer.Get(), 0, totalBufferSize);
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(meshPart.m_mainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        commandList->CopyBufferRegion(meshPart.DefaultBuffer.Get(), 0, meshPart.UploadBuffer.Get(), 0, totalBufferSize);
+        const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(meshPart.DefaultBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_INDEX_BUFFER);
         commandList->ResourceBarrier(1, &barrier);
 
         Util::BBox boundingBox{};
-        boundingBox.min = DirectX::XMFLOAT3(vBuffer.accessor->min.data());
-        boundingBox.max = DirectX::XMFLOAT3(vBuffer.accessor->max.data());
+        boundingBox.Min = DirectX::XMFLOAT3(vBuffer.accessor->min.data());
+        boundingBox.Max = DirectX::XMFLOAT3(vBuffer.accessor->max.data());
         Util::AdjustBBox(m_boundingBox, boundingBox);
 
-        meshPart.m_uploadBuffer->Unmap(0, nullptr);
-        meshPart.m_meshPartColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
+        meshPart.UploadBuffer->Unmap(0, nullptr);
+
+        // Set material properties for this mesh piece...
+        meshPart.ShaderData.MeshAutoColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
+        if (mesh.Material().HasData())
+        {
+            auto material = mesh.Material().Data();
+            meshPart.ShaderData.BaseColorIndex = material.pbrMetallicRoughness.baseColorTexture.index;
+            meshPart.ShaderData.BaseColorFactor = DirectX::XMFLOAT4(material.pbrMetallicRoughness.baseColorFactor.data());
+
+            meshPart.ShaderData.MetalRoughIndex = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
+            meshPart.ShaderData.MetallicFactor = material.pbrMetallicRoughness.metallicFactor;
+            meshPart.ShaderData.RoughnessFactor = material.pbrMetallicRoughness.roughnessFactor;
+
+            meshPart.ShaderData.NormalIndex = material.normalTexture.index;
+            meshPart.ShaderData.NormalScale = material.normalTexture.scale;
+
+            meshPart.ShaderData.AOIndex = material.occlusionTexture.index;
+            meshPart.ShaderData.AOStrength = material.occlusionTexture.strength;
+
+            meshPart.ShaderData.EmissiveIndex = material.emissiveTexture.index;
+            meshPart.ShaderData.EmissiveFactor = DirectX::XMFLOAT3(material.emissiveFactor.data());
+
+            ShaderOptions options = ShaderOptions::None;
+            if (meshPart.ShaderData.BaseColorIndex >= 0)
+                options |= ShaderOptions::HAS_BASECOLORMAP;
+            if (meshPart.ShaderData.NormalIndex >= 0)
+                options |= ShaderOptions::HAS_NORMALMAP;
+            if (meshPart.ShaderData.MetalRoughIndex >= 0)
+                options |= ShaderOptions::HAS_METALROUGHNESSMAP;
+            if (meshPart.ShaderData.AOIndex >= 0)
+            {
+                options |= ShaderOptions::HAS_OCCLUSIONMAP;
+
+                if (meshPart.ShaderData.AOIndex == meshPart.ShaderData.MetalRoughIndex)
+                {
+                    options |= ShaderOptions::HAS_OCCLUSIONMAP_COMBINED;
+                }
+            }
+            if (meshPart.ShaderData.EmissiveIndex >= 0)
+                options |= ShaderOptions::HAS_EMISSIVEMAP;
+
+            if (options == ShaderOptions::None)
+            {
+                options = ShaderOptions::USE_FACTORS_ONLY;
+            }
+
+            meshPart.Options = options;
+        }
+        else
+        {
+            // Use a default material
+            meshPart.Options = ShaderOptions::USE_FACTORS_ONLY;
+            meshPart.ShaderData.BaseColorFactor = DirectX::XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+            meshPart.ShaderData.MetallicFactor = 0;
+            meshPart.ShaderData.RoughnessFactor = 0.5f;
+        }
     }
 }
 
 void D3DMesh::SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor)
 {
     using namespace DirectX;
-    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
-    DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(rotationY);
-    DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
+    const DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
+    const DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(rotationY);
+    const DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
     DirectX::XMStoreFloat4x4(&m_worldMatrix, baseTransform * translation * rotation * scale);
 }
 
-void D3DMesh::Render(ID3D12GraphicsCommandList * commandList, D3DFrameResource const & currentFrame, DirectX::CXMMATRIX viewProj, std::size_t currentCBIndex)
+void D3DMesh::Render(D3DRenderContext & renderContext)
 {
     MeshConstantBuffer meshParameters{};
-    meshParameters.worldViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix) * viewProj);
-    meshParameters.world = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix));
+    meshParameters.WorldViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix) * renderContext.ViewProj);
+    meshParameters.World = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_worldMatrix));
 
     std::size_t meshCBIndex = 0;
     for (auto & meshPart : m_meshParts)
     {
-        const std::size_t cbIndex = currentCBIndex + meshCBIndex;
+        // Ensure we can correctly draw this part of the mesh. An optimization would be to reduce the number of calls to SetPipelineState further by sorting the meshes...
+        const ShaderOptions options = renderContext.OverrideShaderOptions == ShaderOptions::None ? meshPart.Options : renderContext.OverrideShaderOptions;
+        if (options != renderContext.CurrentShaderOptions)
+        {
+            renderContext.CommandList->SetPipelineState(renderContext.PipelineStateMap[options].Get());
+            renderContext.CurrentShaderOptions = options;
+        }
 
-        meshParameters.meshColor = meshPart.m_meshPartColor;
-        currentFrame.MeshCB->CopyData(cbIndex, meshParameters);
+        const std::size_t cbIndex = renderContext.CurrentCBIndex + meshCBIndex;
+        meshParameters.MaterialIndex = static_cast<int>(cbIndex);
+        renderContext.CurrentFrame.MeshCB->CopyData(cbIndex, meshParameters);
+        renderContext.CurrentFrame.MeshDataBuffer->CopyData(cbIndex, meshPart.ShaderData);
 
-        D3D12_VERTEX_BUFFER_VIEW const * views[2] = { &meshPart.m_vertexBufferView, &meshPart.m_normalBufferView };
-        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        commandList->IASetVertexBuffers(0, 2, views[0]);
-        commandList->IASetIndexBuffer(&meshPart.m_indexBufferView);
-        commandList->SetGraphicsRootConstantBufferView(1, currentFrame.MeshCB->GetGPUVirtualAddress(cbIndex));
-        commandList->DrawIndexedInstanced(meshPart.m_indexCount, 1, 0, 0, 0);
+        D3D12_VERTEX_BUFFER_VIEW const * views[4] = { &meshPart.VertexBufferView, &meshPart.NormalBufferView, &meshPart.TangentBufferView, &meshPart.TexCoord0BufferView };
+        renderContext.CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        renderContext.CommandList->IASetVertexBuffers(0, 4, views[0]);
+        renderContext.CommandList->IASetIndexBuffer(&meshPart.IndexBufferView);
+        renderContext.CommandList->SetGraphicsRootConstantBufferView(1, renderContext.CurrentFrame.MeshCB->GetGPUVirtualAddress(cbIndex));
+        renderContext.CommandList->DrawIndexedInstanced(meshPart.IndexCount, 1, 0, 0, 0);
 
         meshCBIndex++;
     }
+
+    renderContext.CurrentCBIndex += m_meshParts.size();
 }
 
 void D3DMesh::FinishUpload()
 {
     for (auto & meshPart : m_meshParts)
     {
-        meshPart.m_uploadBuffer.Reset();
+        meshPart.UploadBuffer.Reset();
     }
 }
 
@@ -144,6 +232,6 @@ void D3DMesh::Reset()
 {
     for (auto & meshPart : m_meshParts)
     {
-        meshPart.m_mainBuffer.Reset();
+        meshPart.DefaultBuffer.Reset();
     }
 }

@@ -52,6 +52,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -67,12 +70,9 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>d3d12.dll</DelayLoadDLLs>
     </Link>
-    <FxCompile>
-      <ShaderModel>5.0</ShaderModel>
-    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -92,20 +92,21 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>d3d12.dll</DelayLoadDLLs>
     </Link>
-    <FxCompile>
-      <ShaderModel>5.0</ShaderModel>
-    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DirectX\D3DConstants.h" />
+    <ClInclude Include="DirectX\D3DEnvironmentIBL.h" />
     <ClInclude Include="DirectX\D3DFrameResources.h" />
     <ClInclude Include="DirectX\D3DGraph.h" />
     <ClInclude Include="DirectX\D3DMesh.h" />
     <ClInclude Include="DirectX\D3DEngine.h" />
     <ClInclude Include="DirectX\D3DMeshInstance.h" />
+    <ClInclude Include="DirectX\D3DRenderContext.h" />
+    <ClInclude Include="DirectX\D3DTexture.h" />
+    <ClInclude Include="DirectX\D3DTextureSet.h" />
     <ClInclude Include="DirectX\D3DUploadBuffer.h" />
     <ClInclude Include="DirectX\D3DUtil.h" />
     <ClInclude Include="DirectX\d3dx12.h" />
@@ -113,17 +114,22 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="EngineOptions.h" />
+    <ClInclude Include="MaterialData.h" />
     <ClInclude Include="MeshData.h" />
     <ClInclude Include="platform.h" />
+    <ClInclude Include="ShaderOptions.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="StringFormatter.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DirectX\D3DEnvironmentIBL.cpp" />
     <ClCompile Include="DirectX\D3DFrameResources.cpp" />
     <ClCompile Include="DirectX\D3DMesh.cpp" />
     <ClCompile Include="DirectX\D3DEngine.cpp" />
     <ClCompile Include="DirectX\D3DDeviceResources.cpp" />
+    <ClCompile Include="DirectX\D3DTexture.cpp" />
+    <ClCompile Include="DirectX\D3DTextureSet.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -132,22 +138,17 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
-    <None Include="DirectX\Shaders\SimpleLighting.hlsli" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="DirectX\Shaders\LambertPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">LambertPS</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">LambertPS</EntryPointName>
-    </FxCompile>
-    <FxCompile Include="DirectX\Shaders\TriangleVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TriangleVS</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TriangleVS</EntryPointName>
-    </FxCompile>
+    <None Include="DirectX\Shaders\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>DirectX\Shaders</TargetPath>
+    </None>
+    <None Include="Assets\Environment\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>Assets\Environment</TargetPath>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

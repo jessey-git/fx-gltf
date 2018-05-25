@@ -11,6 +11,12 @@ struct EngineOptions
     int Height{ 540 };
 
     bool AutoRotate{};
+    bool UseMaterials{};
+    bool UseIBL{};
+
+    float CameraX{ 0 };
+    float CameraY{ 0 };
+    float CameraZ{ 5.0f };
 
     std::string ModelPath{};
 };

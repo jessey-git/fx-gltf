@@ -15,10 +15,11 @@ D3DFrameResource::D3DFrameResource(ID3D12Device * device)
         IID_PPV_ARGS(CommandAllocator.GetAddressOf())));
 }
 
-void D3DFrameResource::AllocateConstantBuffers(ID3D12Device * device, std::size_t sceneCount, std::size_t meshCount)
+void D3DFrameResource::AllocateBuffers(ID3D12Device * device, std::size_t sceneCount, std::size_t meshCount)
 {
     SceneCB = std::make_unique<D3DUploadBuffer<SceneConstantBuffer>>(device, sceneCount, true);
     MeshCB = std::make_unique<D3DUploadBuffer<MeshConstantBuffer>>(device, meshCount, true);
+    MeshDataBuffer = std::make_unique<D3DUploadBuffer<MeshShaderData>>(device, meshCount, false);
 }
 
 void D3DFrameResource::Reset()
@@ -27,4 +28,5 @@ void D3DFrameResource::Reset()
     RenderTarget.Reset();
     SceneCB->Reset();
     MeshCB->Reset();
+    MeshDataBuffer->Reset();
 }

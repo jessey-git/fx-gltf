@@ -118,14 +118,15 @@ private:
         bool showHelp{};
         auto cli
             = clara::Help(showHelp)
-            | clara::Opt(options.Width, "width")
-            ["--width"]("Initial window width")
-            | clara::Opt(options.Height, "height")
-            ["--height"]("Initial window height")
-            | clara::Opt(options.AutoRotate)
-            ["-r"]["--rotate"]("Auto rotate model")
-            | clara::Arg(options.ModelPath, "model")
-            ("Model to load").required(); // Clara does not enforce required arguments right now :-/
+            | clara::Opt(options.Width, "width")["--width"]("Initial window width")
+            | clara::Opt(options.Height, "height")["--height"]("Initial window height")
+            | clara::Opt(options.AutoRotate)["-r"]["--rotate"]("Auto rotate model")
+            | clara::Opt(options.UseMaterials)["-m"]["--materials"]("Use model materials")
+            | clara::Opt(options.UseIBL)["-i"]["--ibl"]("Use IBL")
+            | clara::Opt(options.CameraX, "x")["-x"]("Camera x position")
+            | clara::Opt(options.CameraY, "y")["-y"]("Camera y position")
+            | clara::Opt(options.CameraZ, "z")["-z"]("Camera z position")
+            | clara::Arg(options.ModelPath, "model")("Model to load").required();
 
         int argc;
         std::vector<std::string> args{};
@@ -159,7 +160,7 @@ private:
         {
             throw std::runtime_error(results.errorMessage().c_str());
         }
-        else if (options.ModelPath.empty())
+        else if (options.ModelPath.empty()) // Clara does not enforce required arguments right now :-/
         {
             throw std::runtime_error("A model path must be provided");
         }
