@@ -145,7 +145,7 @@ void D3DEngine::CreateDeviceDependentResources()
     }
 
     // Initialize the view matrix
-    m_eye = { 0.0f, 0.0f, 5.0f, 0.0f };
+    m_eye = { Config().CameraX, Config().CameraY, Config().CameraZ, 0.0f };
     static const DirectX::XMVECTORF32 c_at = { 0.0f, 0.0f, 0.0f, 0.0f };
     static const DirectX::XMVECTORF32 c_up = { 0.0f, 1.0f, 0.0f, 0.0 };
     DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(m_eye, c_at, c_up));

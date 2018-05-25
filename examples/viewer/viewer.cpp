@@ -123,6 +123,9 @@ private:
             | clara::Opt(options.AutoRotate)["-r"]["--rotate"]("Auto rotate model")
             | clara::Opt(options.UseMaterials)["-m"]["--materials"]("Use model materials")
             | clara::Opt(options.UseIBL)["-i"]["--ibl"]("Use IBL")
+            | clara::Opt(options.CameraX, "x")["-x"]("Camera x position")
+            | clara::Opt(options.CameraY, "y")["-y"]("Camera y position")
+            | clara::Opt(options.CameraZ, "z")["-z"]("Camera z position")
             | clara::Arg(options.ModelPath, "model")("Model to load").required();
 
         int argc;

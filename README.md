@@ -21,6 +21,9 @@ A C++14/C++17 header-only library for simple, efficient, and robust serializatio
     * [Safety and Robustness](#safety-and-robustness)
     * [Performance](#performance)
 
+* Useful examples
+    * DirectX 12 enabled [viewer](examples/viewer)
+
 ## Usage and Integration
 
 ### Installation
