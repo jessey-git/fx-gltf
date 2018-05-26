@@ -12,9 +12,9 @@ namespace Graph
 {
     struct Node
     {
+        DirectX::XMMATRIX CurrentTransform{};
         int32_t CameraIndex = -1;
         int32_t MeshIndex = -1;
-        DirectX::XMMATRIX CurrentTransform{};
     };
 
     void Visit(fx::gltf::Document const & doc, uint32_t nodeIndex, DirectX::XMMATRIX const & parentTransform, std::vector<Node> & graphNodes)

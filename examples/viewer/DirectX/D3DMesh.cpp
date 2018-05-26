@@ -114,7 +114,7 @@ void D3DMesh::Create(
         Util::BBox boundingBox{};
         boundingBox.Min = DirectX::XMFLOAT3(vBuffer.accessor->min.data());
         boundingBox.Max = DirectX::XMFLOAT3(vBuffer.accessor->max.data());
-        Util::AdjustBBox(m_boundingBox, boundingBox);
+        Util::UnionBBox(m_boundingBox, boundingBox);
 
         meshPart.UploadBuffer->Unmap(0, nullptr);
 
@@ -163,12 +163,12 @@ void D3DMesh::Create(
                 options = ShaderOptions::USE_FACTORS_ONLY;
             }
 
-            meshPart.Options = options;
+            meshPart.ShaderConfig = options;
         }
         else
         {
             // Use a default material
-            meshPart.Options = ShaderOptions::USE_FACTORS_ONLY;
+            meshPart.ShaderConfig = ShaderOptions::USE_FACTORS_ONLY;
             meshPart.ShaderData.BaseColorFactor = DirectX::XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
             meshPart.ShaderData.MetallicFactor = 0;
             meshPart.ShaderData.RoughnessFactor = 0.5f;
@@ -195,7 +195,7 @@ void D3DMesh::Render(D3DRenderContext & renderContext)
     for (auto & meshPart : m_meshParts)
     {
         // Ensure we can correctly draw this part of the mesh. An optimization would be to reduce the number of calls to SetPipelineState further by sorting the meshes...
-        const ShaderOptions options = renderContext.OverrideShaderOptions == ShaderOptions::None ? meshPart.Options : renderContext.OverrideShaderOptions;
+        const ShaderOptions options = renderContext.OverrideShaderOptions == ShaderOptions::None ? meshPart.ShaderConfig : renderContext.OverrideShaderOptions;
         if (options != renderContext.CurrentShaderOptions)
         {
             renderContext.CommandList->SetPipelineState(renderContext.PipelineStateMap[options].Get());
@@ -208,7 +208,6 @@ void D3DMesh::Render(D3DRenderContext & renderContext)
         renderContext.CurrentFrame.MeshDataBuffer->CopyData(cbIndex, meshPart.ShaderData);
 
         D3D12_VERTEX_BUFFER_VIEW const * views[4] = { &meshPart.VertexBufferView, &meshPart.NormalBufferView, &meshPart.TangentBufferView, &meshPart.TexCoord0BufferView };
-        renderContext.CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         renderContext.CommandList->IASetVertexBuffers(0, 4, views[0]);
         renderContext.CommandList->IASetIndexBuffer(&meshPart.IndexBufferView);
         renderContext.CommandList->SetGraphicsRootConstantBufferView(1, renderContext.CurrentFrame.MeshCB->GetGPUVirtualAddress(cbIndex));

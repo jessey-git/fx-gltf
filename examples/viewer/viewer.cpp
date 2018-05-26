@@ -99,7 +99,7 @@ private:
         case WM_SIZE:
             if (engine)
             {
-                engine->WindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
+                engine->ChangeWindowSize(LOWORD(lParam), HIWORD(lParam));
             }
 
             return 0;
@@ -121,8 +121,9 @@ private:
             | clara::Opt(options.Width, "width")["--width"]("Initial window width")
             | clara::Opt(options.Height, "height")["--height"]("Initial window height")
             | clara::Opt(options.AutoRotate)["-r"]["--rotate"]("Auto rotate model")
-            | clara::Opt(options.UseMaterials)["-m"]["--materials"]("Use model materials")
-            | clara::Opt(options.UseIBL)["-i"]["--ibl"]("Use IBL")
+            | clara::Opt(options.EnableMaterials)["-m"]["--materials"]("Enable model materials")
+            | clara::Opt(options.EnableIBL)["-i"]["--ibl"]("Enable IBL")
+            | clara::Opt(options.EnableGround)["-g"]["--ground"]("Enable ground plane")
             | clara::Opt(options.CameraX, "x")["-x"]("Camera x position")
             | clara::Opt(options.CameraY, "y")["-y"]("Camera y position")
             | clara::Opt(options.CameraZ, "z")["-z"]("Camera z position")

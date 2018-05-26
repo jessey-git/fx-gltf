@@ -37,7 +37,7 @@ public:
     void Update(float elapsedTime) noexcept override;
     void Render() override;
 
-    void WindowSizeChangedCore(int width, int height) override;
+    void ChangeWindowSizeCore(int width, int height) override;
 
     // IDeviceNotify
     void OnDeviceLost() override;
@@ -45,7 +45,8 @@ public:
 
 private:
     // clang-format off
-    fx::gltf::Document                              m_doc{};
+    fx::gltf::Document                              m_gltfScene{};
+    fx::gltf::Document                              m_gltfGround{};
 
     std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
@@ -66,10 +67,12 @@ private:
     std::vector<D3DTexture>                         m_textures{};
     std::vector<D3DMesh>                            m_meshes{};
     std::vector<D3DMeshInstance>                    m_meshInstances{};
+    D3DMesh                                         m_groundMesh{};
 
     float                                           m_curRotationAngleRad{};
     float                                           m_autoScaleFactor{};
     Util::BBox                                      m_boundingBox{};
+    Util::BBox                                      m_transformedBox{};
     // clang-format on
 
     void CreateDeviceDependentResources();
@@ -86,5 +89,5 @@ private:
     void BuildPipelineStateObjects();
     void BuildUploadBuffers();
 
-    void CompileShaderPerumutation(ShaderOptions options, D3D12_GRAPHICS_PIPELINE_STATE_DESC & psoDescTemplate);
+    void CompileShaderPerumutation(std::string const & entryPoint, ShaderOptions options, D3D12_GRAPHICS_PIPELINE_STATE_DESC & psoDescTemplate);
 };

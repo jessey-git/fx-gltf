@@ -14,7 +14,7 @@ class Engine
 {
 public:
     Engine(EngineOptions const & config)
-        : m_config(config)
+        : Config(config)
     {
     }
 
@@ -24,6 +24,8 @@ public:
     Engine & operator=(Engine &&) = delete;
 
     virtual ~Engine() = default;
+
+    const EngineOptions Config;
 
     void Initialize(HWND hwnd)
     {
@@ -37,21 +39,17 @@ public:
         Render();
     }
 
-    void WindowSizeChanged(int width, int height)
+    void ChangeWindowSize(int width, int height)
     {
-        WindowSizeChangedCore(width, height);
+        ChangeWindowSizeCore(width, height);
     }
 
 protected:
-    EngineOptions const & Config() noexcept { return m_config; }
-
     virtual void InitializeCore(HWND hwnd) = 0;
     virtual void Update(float elapsedTime) noexcept = 0;
     virtual void Render() = 0;
-    virtual void WindowSizeChangedCore(int width, int height) = 0;
+    virtual void ChangeWindowSizeCore(int width, int height) = 0;
 
 private:
-    EngineOptions m_config{};
-
     StepTimer m_timer{};
 };

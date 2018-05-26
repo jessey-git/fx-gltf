@@ -42,6 +42,7 @@ PS_INPUT StandardVS(VS_INPUT input)
 }
 
 //--------------------------------------------------------------------------------------
+
 float4 UberPS(PS_INPUT input)
     : SV_Target
 {
@@ -145,5 +146,51 @@ float4 UberPS(PS_INPUT input)
     finalColor = float4(LINEARtoSRGB(color), baseColor.a);
 #endif
 
+    return finalColor;
+}
+
+float4 GroundPS(PS_INPUT input)
+    : SV_Target
+{
+    const float3 gridColorMajor = 0.0f;
+    const float3 gridColorMinor = 0.3f;
+    const float gridSizeMajor = 4;
+    const float gridSizeMinor = 1;
+    const float epsilon = 0.08f;
+
+    float4 finalColor = 0.96f;
+
+    float wx = input.PosW.x;
+    float wz = input.PosW.z;
+    float x0 = abs(frac(wx / gridSizeMajor - 0.5) - 0.5) / fwidth(wx) * gridSizeMajor / 2.0;
+    float z0 = abs(frac(wz / gridSizeMajor - 0.5) - 0.5) / fwidth(wz) * gridSizeMajor / 2.0;
+
+    float x1 = abs(frac(wx / gridSizeMinor - 0.5) - 0.5) / fwidth(wx) * gridSizeMinor;
+    float z1 = abs(frac(wz / gridSizeMinor - 0.5) - 0.5) / fwidth(wz) * gridSizeMinor;
+
+    float v0 = 1.0 - clamp(min(x0, z0), 0.0, 1.0);
+    float v1 = 1.0 - clamp(min(x1, z1), 0.0, 1.0);
+
+    if (v0 > epsilon)
+    {
+        finalColor.rgb = lerp(finalColor.rgb, gridColorMajor, v0);
+    }
+    else
+    {
+        finalColor.rgb = lerp(finalColor.rgb, gridColorMinor, v1);
+    }
+
+    float awx = abs(wx);
+    float awz = abs(wz);
+    if (awx < epsilon)
+    {
+        finalColor.rgb = lerp(float3(0, 1, 0), finalColor.rgb, awx / epsilon);
+    }
+    else if (awz < epsilon)
+    {
+        finalColor.rgb = lerp(float3(1, 0, 0), finalColor.rgb, awz / epsilon);
+    }
+
+    finalColor.a *= 1.0 - clamp((length(input.PosW.xz) - 15) / 20.0, 0.1, 1.0);
     return finalColor;
 }

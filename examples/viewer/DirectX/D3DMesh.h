@@ -42,7 +42,7 @@ public:
         std::vector<ShaderOptions> requiredShaderOptions{};
         for (auto const & meshPart : m_meshParts)
         {
-            requiredShaderOptions.push_back(meshPart.Options);
+            requiredShaderOptions.push_back(meshPart.ShaderConfig);
         }
 
         return requiredShaderOptions;
@@ -63,7 +63,7 @@ private:
         uint32_t IndexCount{};
 
         MeshShaderData ShaderData{};
-        ShaderOptions Options{};
+        ShaderOptions ShaderConfig{};
     };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};

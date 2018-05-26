@@ -9,7 +9,7 @@
 
 struct D3DMeshInstance
 {
-    uint32_t MeshIndex;
-
     DirectX::XMMATRIX Transform;
+
+    uint32_t MeshIndex;
 };
