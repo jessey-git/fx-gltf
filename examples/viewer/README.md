@@ -19,19 +19,23 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 
 ## Usage
 ```
-usage:
-  viewer.exe <model> options
+viewer.exe
+Usage: [OPTIONS] file
 
-where options are:
-  -?, -h, --help       display usage information
-  --width <width>      Initial window width
-  --height <height>    Initial window height
-  -r, --rotate         Auto rotate model
-  -m, --materials      Use model materials
-  -i, --ibl            Use IBL
-  -x <x>               Camera x position
-  -y <y>               Camera y position
-  -z <z>               Camera z position
+Positionals:
+  file TEXT (REQUIRED)   Model to load
+
+Options:
+  -h,--help              Print this help message and exit
+  --width INT            Initial window width
+  --height INT           Initial window height
+  -r,--rotate            Auto rotate model
+  -m,--materials         Enable model materials
+  -i,--ibl               Enable IBL
+  -g,--ground            Enable ground plane
+  -x FLOAT               Camera x position
+  -y FLOAT               Camera y position
+  -z FLOAT               Camera z position
 ```
 
 ## Design
@@ -140,4 +144,4 @@ This software would not be possible without the help of the following resources.
 * [d3dx12.h](https://github.com/Microsoft/DirectX-Graphics-Samples/tree/master/Libraries/D3DX12) containing helper structures and functions for D3D12
 * [DirectX-Graphics-Samples](https://github.com/Microsoft/DirectX-Graphics-Samples) for usage examples and API inspiration
 * [Xbox-ATG-Samples](https://github.com/Microsoft/Xbox-ATG-Samples) for usage examples and API inspiration
-* [Clara](https://github.com/catchorg/Clara) for command-line parsing
+* [CLI11](https://github.com/CLIUtils/CLI11) for command-line parsing

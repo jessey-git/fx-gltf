@@ -5,10 +5,11 @@
 // ------------------------------------------------------------
 #include "stdafx.h"
 #include <string>
+#include <string_view>
 #include <vector>
 #include <iostream>
 
-#include "clara/clara.hpp"
+#include "CLI11/CLI11.hpp"
 #include "DirectX/D3DEngine.h"
 #include "Engine.h"
 #include "EngineOptions.h"
@@ -116,32 +117,33 @@ private:
     static bool TryParseCommandLine(EngineOptions & options)
     {
         bool showHelp{};
-        auto cli
-            = clara::Help(showHelp)
-            | clara::Opt(options.Width, "width")["--width"]("Initial window width")
-            | clara::Opt(options.Height, "height")["--height"]("Initial window height")
-            | clara::Opt(options.AutoRotate)["-r"]["--rotate"]("Auto rotate model")
-            | clara::Opt(options.EnableMaterials)["-m"]["--materials"]("Enable model materials")
-            | clara::Opt(options.EnableIBL)["-i"]["--ibl"]("Enable IBL")
-            | clara::Opt(options.EnableGround)["-g"]["--ground"]("Enable ground plane")
-            | clara::Opt(options.CameraX, "x")["-x"]("Camera x position")
-            | clara::Opt(options.CameraY, "y")["-y"]("Camera y position")
-            | clara::Opt(options.CameraZ, "z")["-z"]("Camera z position")
-            | clara::Arg(options.ModelPath, "model")("Model to load").required();
+
+        CLI::App app{ "viewer.exe" };
+        app.add_option("--width", options.Width, "Initial window width");
+        app.add_option("--height", options.Height, "Initial window height");
+        app.add_flag("-r,--rotate", options.AutoRotate, "Auto rotate model");
+        app.add_flag("-m,--materials", options.EnableMaterials, "Enable model materials");
+        app.add_flag("-i,--ibl", options.EnableIBL, "Enable IBL");
+        app.add_flag("-g,--ground", options.EnableGround, "Enable ground plane");
+        app.add_option("-x", options.CameraX, "Camera x position");
+        app.add_option("-y", options.CameraY, "Camera y position");
+        app.add_option("-z", options.CameraZ, "Camera z position");
+        app.add_option("file", options.ModelPath, "Model to load")->required(true);
 
         int argc;
         std::vector<std::string> args{};
         LPWSTR * argv = CommandLineToArgvW(GetCommandLine(), &argc);
         if (argv != nullptr && argc > 0)
         {
-            args.resize(argc - 1);
-            for (int i = 1; i < argc; i++)
+            for (int i = argc - 1; i > 0; i--)
             {
-                std::wstring arg(argv[i]);
-                for (auto c : arg)
+                std::string arg;
+                for (auto c : std::wstring_view(argv[i]))
                 {
-                    args[i - 1].push_back(static_cast<char>(c));
+                    arg.push_back(static_cast<char>(c));
                 }
+
+                args.emplace_back(std::move(arg));
             }
             LocalFree(argv);
         }
@@ -150,20 +152,30 @@ private:
             showHelp = true;
         }
 
-        auto results = cli.parse("viewer.exe", clara::detail::TokenStream(args.begin(), args.end()));
-        if (showHelp)
+        std::string errorMessage{};
+        try
         {
-            std::cout << cli << std::endl << std::endl;
-            return false;
+            app.parse(args);
+        }
+        catch (CLI::CallForHelp)
+        {
+            showHelp = true;
+        }
+        catch (CLI::ParseError & e)
+        {
+            errorMessage = e.what();
+            showHelp = true;
         }
 
-        if (!results)
+        if (showHelp)
         {
-            throw std::runtime_error(results.errorMessage().c_str());
-        }
-        else if (options.ModelPath.empty()) // Clara does not enforce required arguments right now :-/
-        {
-            throw std::runtime_error("A model path must be provided");
+            std::cout << app.help(25) << std::endl << std::endl;
+            if (!errorMessage.empty())
+            {
+                std::cout << errorMessage << std::endl;
+            }
+
+            return false;
         }
 
         return true;
