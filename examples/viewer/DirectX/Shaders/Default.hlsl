@@ -109,16 +109,16 @@ float4 UberPS(PS_INPUT input)
     float NdV = clamp(abs(dot(N, V)), 0.001, 1.0);
     float NdH = clamp(dot(N, H), 0.0, 1.0);
     float LdH = clamp(dot(L, H), 0.0, 1.0);
-    float VdH = clamp(dot(V, H), 0.0, 1.0);
 
     // Calculate the shading terms for the microfacet specular shading model
-    float3 F = F_Schlick(specularEnvironmentR0, specularEnvironmentR90, VdH);
+    float3 F = F_Schlick(specularEnvironmentR0, specularEnvironmentR90, LdH);
     float G = G_Smith(NdL, NdV, alphaRoughness);
     float D = D_GGX(NdH, alphaRoughness);
 
     // Calculation of analytical lighting contribution
     float3 diffuseContrib = (1.0 - F) * Diffuse_Lambert(diffuseColor);
-    float3 specContrib = F * G * D / (4.0 * NdL * NdV);
+    float3 specContrib = (F * (G * D));
+
     // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
     float3 color = NdL * 1 * (diffuseContrib + specContrib);
 
@@ -156,7 +156,7 @@ float4 GroundPS(PS_INPUT input)
     const float3 gridColorMinor = 0.3f;
     const float gridSizeMajor = 4;
     const float gridSizeMinor = 1;
-    const float epsilon = 0.08f;
+    const float epsilon = 0.06f;
 
     float4 finalColor = 0.96f;
 
