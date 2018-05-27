@@ -20,19 +20,19 @@ struct Light
 
 struct SceneConstantBuffer
 {
-    DirectX::XMMATRIX ViewProj;
-    DirectX::XMVECTOR Camera;
+    DirectX::XMMATRIX ViewProj{};
+    DirectX::XMVECTOR Camera{};
 
-    Light DirectionalLight;
-    Light PointLights[2];
+    Light DirectionalLight{};
+    Light PointLights[2]{};
 };
 
 struct MeshConstantBuffer
 {
-    DirectX::XMMATRIX WorldViewProj;
-    DirectX::XMMATRIX World;
+    DirectX::XMMATRIX WorldViewProj{};
+    DirectX::XMMATRIX World{};
 
-    int MaterialIndex;
+    int MaterialIndex{};
 };
 
 struct MeshShaderData

@@ -110,25 +110,25 @@ float3 Diffuse_Lambert(float3 diffuseColor)
     return diffuseColor / M_PI;
 }
 
-float3 F_Schlick(float3 r0, float3 f90, float VdH)
+float3 F_Schlick(float3 r0, float3 f90, float LdH)
 {
-    return r0 + (f90 - r0) * pow(clamp(1.0 - VdH, 0.0, 1.0), 5.0);
+    return r0 + (f90 - r0) * pow(clamp(1.0 - LdH, 0.0, 1.0), 5.0);
 }
 
 float G_Smith(float NdL, float NdV, float alphaRoughness)
 {
-    float r = alphaRoughness;
+    float a2 = alphaRoughness * alphaRoughness;
 
-    float attenuationL = 2.0 * NdL / (NdL + sqrt(r * r + (1.0 - r * r) * (NdL * NdL)));
-    float attenuationV = 2.0 * NdV / (NdV + sqrt(r * r + (1.0 - r * r) * (NdV * NdV)));
-    return attenuationL * attenuationV;
+    float gl = NdL + sqrt(a2 + (1.0 - a2) * (NdL * NdL));
+    float gv = NdV + sqrt(a2 + (1.0 - a2) * (NdV * NdV));
+    return 1.0f / (gl * gv); // The division by (4.0 * NdL * NdV) is unneeded with this form
 }
 
 float D_GGX(float NdH, float alphaRoughness)
 {
-    float roughnessSq = alphaRoughness * alphaRoughness;
-    float f = (NdH * roughnessSq - NdH) * NdH + 1.0;
-    return roughnessSq / (M_PI * f * f);
+    float a2 = alphaRoughness * alphaRoughness;
+    float f = (NdH * a2 - NdH) * NdH + 1.0;
+    return a2 / (M_PI * f * f);
 }
 
 float3 IBLContribution(float3 diffuseColor, float3 specularColor, float perceptualRoughness, float NdV, float3 N, float3 reflection)
@@ -138,7 +138,7 @@ float3 IBLContribution(float3 diffuseColor, float3 specularColor, float perceptu
     float3 brdf = SRGBtoLINEAR(BRDF_LUT.Sample(SampLinearClamp, float2(NdV, 1.0 - perceptualRoughness))).rgb;
     float3 diffuseLight = SRGBtoLINEAR(DiffuseEnvMap.Sample(SampAnisotropicWrap, N)).rgb;
 
-    float3 specularLight = SRGBtoLINEAR(SpecularEnvMap.SampleLevel(SampAnisotropicWrap, N, lod)).rgb;
+    float3 specularLight = SRGBtoLINEAR(SpecularEnvMap.SampleLevel(SampAnisotropicWrap, reflection, lod)).rgb;
 
     float3 diffuse = diffuseLight * diffuseColor;
     float3 specular = specularLight * (specularColor * brdf.x + brdf.y);

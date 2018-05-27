@@ -50,17 +50,6 @@ namespace Util
         return size < MinResourceSize ? MinResourceSize : size;
     }
 
-    static void AdjustBBox(BBox & currentBBox, BBox const & other) noexcept
-    {
-        currentBBox.Min.x = std::min(currentBBox.Min.x, other.Min.x);
-        currentBBox.Min.y = std::min(currentBBox.Min.y, other.Min.y);
-        currentBBox.Min.z = std::min(currentBBox.Min.z, other.Min.z);
-
-        currentBBox.Max.x = std::max(currentBBox.Max.x, other.Max.x);
-        currentBBox.Max.y = std::max(currentBBox.Max.y, other.Max.y);
-        currentBBox.Max.z = std::max(currentBBox.Max.z, other.Max.z);
-    }
-
     static void CenterBBox(BBox & currentBBox)
     {
         using namespace DirectX;
@@ -69,6 +58,42 @@ namespace Util
         const DirectX::XMVECTOR mid = DirectX::XMVectorNegate(0.5f * (min + max));
 
         DirectX::XMStoreFloat3(&currentBBox.CenterTranslation, mid);
+    }
+
+    static void UnionBBox(BBox & currentBBox, BBox const & other) noexcept
+    {
+        currentBBox.Min.x = std::min(currentBBox.Min.x, other.Min.x);
+        currentBBox.Min.y = std::min(currentBBox.Min.y, other.Min.y);
+        currentBBox.Min.z = std::min(currentBBox.Min.z, other.Min.z);
+
+        currentBBox.Max.x = std::max(currentBBox.Max.x, other.Max.x);
+        currentBBox.Max.y = std::max(currentBBox.Max.y, other.Max.y);
+        currentBBox.Max.z = std::max(currentBBox.Max.z, other.Max.z);
+
+        Util::CenterBBox(currentBBox);
+    }
+
+    static BBox TransformBBox(BBox const & currentBBox, DirectX::XMMATRIX const & transform)
+    {
+        using namespace DirectX;
+        const DirectX::XMVECTOR newMin = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&currentBBox.Min), transform);
+        const DirectX::XMVECTOR newMax = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&currentBBox.Max), transform);
+
+        BBox newBBox{};
+        DirectX::XMStoreFloat3(&newBBox.Min, newMin);
+        DirectX::XMStoreFloat3(&newBBox.Max, newMax);
+        Util::CenterBBox(newBBox);
+
+        return newBBox;
+    }
+
+    static BBox TransformBBox(BBox const & currentBBox, DirectX::XMFLOAT3 const & centerTranslation, float scalingFactor)
+    {
+        using namespace DirectX;
+        const DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
+        const DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
+
+        return Util::TransformBBox(currentBBox, translation * scale);
     }
 
     static DirectX::XMFLOAT4 HSVtoRBG(float hue, float saturation, float value) noexcept
@@ -127,9 +152,11 @@ namespace DX
         std::string const & target,
         D3D_SHADER_MACRO const * defines)
     {
-        UINT compileFlags = 0;
+        UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined(DEBUG) || defined(_DEBUG)
-        compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+        compileFlags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+        compileFlags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
 
         Microsoft::WRL::ComPtr<ID3DBlob> byteCode{};

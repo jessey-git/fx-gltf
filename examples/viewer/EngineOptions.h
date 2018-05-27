@@ -5,18 +5,21 @@
 // ------------------------------------------------------------
 #pragma once
 
+#include <string>
+
 struct EngineOptions
 {
     int Width{ 960 };
     int Height{ 540 };
 
     bool AutoRotate{};
-    bool UseMaterials{};
-    bool UseIBL{};
+    bool EnableMaterials{};
+    bool EnableIBL{};
+    bool EnableGround{};
 
     float CameraX{ 0 };
     float CameraY{ 0 };
-    float CameraZ{ 5.0f };
+    float CameraZ{ 8.0f };
 
     std::string ModelPath{};
 };

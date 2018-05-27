@@ -20,7 +20,9 @@ enum class ShaderOptions : uint64_t
     HAS_METALROUGHNESSMAP = 0x40u,
     HAS_OCCLUSIONMAP = 0x80u,
     HAS_OCCLUSIONMAP_COMBINED = 0x100u,
-    HAS_EMISSIVEMAP = 0x200u
+    HAS_EMISSIVEMAP = 0x200u,
+
+    IS_GROUND = 0x1000u
 };
 
 inline ShaderOptions operator|(ShaderOptions a, ShaderOptions b) noexcept
@@ -111,6 +113,10 @@ inline std::vector<std::string> GetShaderDefines(ShaderOptions options)
     if (IsSet(options, ShaderOptions::HAS_EMISSIVEMAP))
     {
         defines.emplace_back("HAS_EMISSIVEMAP");
+    }
+    if (IsSet(options, ShaderOptions::IS_GROUND))
+    {
+        defines.emplace_back("IS_GROUND");
     }
 
     return defines;
