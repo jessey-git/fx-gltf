@@ -4,10 +4,10 @@
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
 #include "stdafx.h"
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <iostream>
 
 #include "CLI11/CLI11.hpp"
 #include "DirectX/D3DEngine.h"

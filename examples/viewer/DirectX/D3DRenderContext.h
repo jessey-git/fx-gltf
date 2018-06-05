@@ -5,8 +5,8 @@
 // ------------------------------------------------------------
 #pragma once
 
-#include <d3d12.h>
 #include <DirectXMath.h>
+#include <d3d12.h>
 #include <unordered_map>
 #include <wrl.h>
 #include "D3DFrameResources.h"
@@ -16,7 +16,7 @@ struct D3DRenderContext
 {
     ID3D12GraphicsCommandList * CommandList;
     D3DFrameResource const & CurrentFrame;
-    DirectX::CXMMATRIX ViewProj;
+    DirectX::XMMATRIX const & ViewProj;
     std::size_t CurrentCBIndex;
     ShaderOptions CurrentShaderOptions;
     ShaderOptions OverrideShaderOptions;

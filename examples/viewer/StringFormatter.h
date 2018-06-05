@@ -413,4 +413,4 @@ namespace fx::common
 
     using StringFormatter = BasicStringFormatter<char>;
     using WStringFormatter = BasicStringFormatter<wchar_t>;
-} // namespace FXCommon
+} // namespace fx::common

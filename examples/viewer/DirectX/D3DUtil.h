@@ -44,7 +44,7 @@ namespace Util
         }
     }
 
-    static std::size_t ResourceSize(std::size_t size) noexcept
+    static uint64_t ResourceSize(uint32_t size) noexcept
     {
         const std::size_t MinResourceSize = 64 * 1024;
         return size < MinResourceSize ? MinResourceSize : size;
@@ -62,13 +62,12 @@ namespace Util
 
     static void UnionBBox(BBox & currentBBox, BBox const & other) noexcept
     {
-        currentBBox.Min.x = std::min(currentBBox.Min.x, other.Min.x);
-        currentBBox.Min.y = std::min(currentBBox.Min.y, other.Min.y);
-        currentBBox.Min.z = std::min(currentBBox.Min.z, other.Min.z);
-
-        currentBBox.Max.x = std::max(currentBBox.Max.x, other.Max.x);
-        currentBBox.Max.y = std::max(currentBBox.Max.y, other.Max.y);
-        currentBBox.Max.z = std::max(currentBBox.Max.z, other.Max.z);
+        const DirectX::XMVECTOR cMin = DirectX::XMLoadFloat3(&currentBBox.Min);
+        const DirectX::XMVECTOR cMax = DirectX::XMLoadFloat3(&currentBBox.Max);
+        const DirectX::XMVECTOR oMin = DirectX::XMLoadFloat3(&other.Min);
+        const DirectX::XMVECTOR oMax = DirectX::XMLoadFloat3(&other.Max);
+        DirectX::XMStoreFloat3(&currentBBox.Min, DirectX::XMVectorMin(cMin, oMin));
+        DirectX::XMStoreFloat3(&currentBBox.Max, DirectX::XMVectorMax(cMax, oMax));
 
         Util::CenterBBox(currentBBox);
     }

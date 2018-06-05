@@ -19,7 +19,8 @@ struct PS_INPUT
     float4 PosH     : SV_POSITION;
     float3 PosW     : POSITION;
     float3 NormalW  : NORMAL;
-    float4 TangentW : TANGENT;
+    float3 TangentW : TANGENT;
+    float3 BinormalW: BINORMAL;
     float2 TexC     : TEXCOORD;
 };
 
@@ -35,7 +36,8 @@ PS_INPUT StandardVS(VS_INPUT input)
 
     // Assumes nonuniform scaling; otherwise, need to use inverse-transpose of world matrix.
     output.NormalW = mul(input.Normal, (float3x3)World);
-    output.TangentW = mul(input.Tangent, World);
+    output.TangentW = mul(input.Tangent.xyz, (float3x3)World);
+    output.BinormalW = cross(output.NormalW, output.TangentW) * input.Tangent.w;
     output.TexC = input.TexC;
 
     return output;
@@ -49,7 +51,6 @@ float4 UberPS(PS_INPUT input)
     MaterialData matData = MaterialDataBuffer[MaterialIndex];
 
     input.NormalW = normalize(input.NormalW);
-    //input.TangentW = normalize(input.TangentW);
 
     float4 finalColor;
 
@@ -78,12 +79,10 @@ float4 UberPS(PS_INPUT input)
 
     float alphaRoughness = perceptualRoughness * perceptualRoughness;
 
-    float3 f0 = 0.04;
-    float3 diffuseColor = baseColor.rgb * (1.0 - f0);
-    diffuseColor *= 1.0 - metallic;
+    float3 f0 = MinRoughness;
+    float3 diffuseColor = baseColor.rgb * (1.0 - f0) * (1.0 - metallic);
     float3 specularColor = lerp(f0, baseColor.rgb, metallic);
 
-    // Compute reflectance.
     float reflectance = max(max(specularColor.r, specularColor.g), specularColor.b);
 
     // For typical incident reflectance range (between 4% to 100%) set the grazing reflectance to 100% for typical fresnel effect.
@@ -95,7 +94,10 @@ float4 UberPS(PS_INPUT input)
 #if HAS_NORMALMAP
     float4 normalMapSample = Textures[matData.NormalIndex].Sample(SampAnisotropicWrap, input.TexC);
     normalMapSample.g = 1.0f - normalMapSample.g;
-    float3 N = NormalToWorld(normalMapSample.rgb, matData.NormalScale, input.NormalW, input.TangentW);
+
+    float3 normal = (2.0f * normalMapSample.rgb - 1.0f) * float3(matData.NormalScale, matData.NormalScale, 1.0f);
+    float3x3 TBN = float3x3(normalize(input.TangentW), normalize(input.BinormalW), input.NormalW);
+    float3 N = normalize(mul(normal, TBN));
 #else
     float3 N = input.NormalW;
 #endif
@@ -117,10 +119,8 @@ float4 UberPS(PS_INPUT input)
 
     // Calculation of analytical lighting contribution
     float3 diffuseContrib = (1.0 - F) * Diffuse_Lambert(diffuseColor);
-    float3 specContrib = (F * (G * D));
-
-    // Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-    float3 color = NdL * 1 * (diffuseContrib + specContrib);
+    float3 specContrib = F * (G * D);
+    float3 color = NdL * (diffuseContrib + specContrib);
 
     // Calculate lighting contribution from image based lighting source (IBL)
 #if USE_IBL
@@ -156,7 +156,7 @@ float4 GroundPS(PS_INPUT input)
     const float3 gridColorMinor = 0.3f;
     const float gridSizeMajor = 4;
     const float gridSizeMinor = 1;
-    const float epsilon = 0.06f;
+    const float epsilon = 0.05f;
 
     float4 finalColor = 0.96f;
 

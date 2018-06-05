@@ -78,7 +78,7 @@ public:
         return m_tangentBuffer;
     }
 
-    BufferInfo const &  TexCoord0Buffer() const noexcept
+    BufferInfo const & TexCoord0Buffer() const noexcept
     {
         return m_texCoord0Buffer;
     }

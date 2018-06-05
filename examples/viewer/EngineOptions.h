@@ -23,4 +23,3 @@ struct EngineOptions
 
     std::string ModelPath{};
 };
-

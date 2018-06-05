@@ -5,6 +5,8 @@
 // ------------------------------------------------------------
 #pragma once
 
+#include <string>
+
 #include "DirectX/D3DEngine.h"
 #include "EngineOptions.h"
 #include "StepTimer.h"
@@ -29,12 +31,21 @@ public:
 
     void Initialize(HWND hwnd)
     {
+        const int MaxTextLength = 32;
+        wchar_t currentWindowText[MaxTextLength] = { 0 };
+        GetWindowText(hwnd, currentWindowText, MaxTextLength);
+
+        m_window = hwnd;
+        m_windowTitle.assign(currentWindowText);
+
         InitializeCore(hwnd);
     }
 
     void Tick()
     {
-        m_timer.Tick([&]() { Update(static_cast<float>(m_timer.GetElapsedSeconds())); });
+        UpdateStats();
+
+        m_timer.Tick([this]() { Update(static_cast<float>(m_timer.GetElapsedSeconds())); });
 
         Render();
     }
@@ -52,4 +63,23 @@ protected:
 
 private:
     StepTimer m_timer{};
+
+    HWND m_window{};
+    std::wstring m_windowTitle{};
+
+    void UpdateStats()
+    {
+        static double prevTime = 0.0f;
+
+        const double currentTime = m_timer.GetTotalSeconds();
+        if ((currentTime - prevTime) >= 1.0f)
+        {
+            std::wstring fps = std::to_wstring(m_timer.GetFramesPerSecond());
+            std::wstring windowText = m_windowTitle + L" : " + fps + L" fps";
+
+            SetWindowText(m_window, windowText.c_str());
+
+            prevTime = currentTime;
+        }
+    }
 };
