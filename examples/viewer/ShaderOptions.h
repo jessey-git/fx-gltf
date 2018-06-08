@@ -10,57 +10,59 @@
 
 enum class ShaderOptions : uint64_t
 {
-    None = 0x0u,
-    USE_AUTO_COLOR = 0x1u,
-    USE_FACTORS_ONLY = 0x2u,
-    USE_MANUAL_SRGB = 0x4u,
-    USE_IBL = 0x8u,
-    HAS_BASECOLORMAP = 0x10u,
-    HAS_NORMALMAP = 0x20u,
-    HAS_METALROUGHNESSMAP = 0x40u,
-    HAS_OCCLUSIONMAP = 0x80u,
-    HAS_OCCLUSIONMAP_COMBINED = 0x100u,
-    HAS_EMISSIVEMAP = 0x200u,
+    // clang-format off
+    None                        = 0,
+    USE_AUTO_COLOR              = (1u << 0u),
+    USE_FACTORS_ONLY            = (1u << 1u),
+    USE_MANUAL_SRGB             = (1u << 2u),
+    USE_IBL                     = (1u << 3u),
+    HAS_BASECOLORMAP            = (1u << 4u),
+    HAS_NORMALMAP               = (1u << 5u),
+    HAS_METALROUGHNESSMAP       = (1u << 6u),
+    HAS_OCCLUSIONMAP            = (1u << 7u),
+    HAS_OCCLUSIONMAP_COMBINED   = (1u << 8u),
+    HAS_EMISSIVEMAP             = (1u << 9u),
 
-    IS_GROUND = 0x1000u
+    IS_GROUND                   = (1u << 12u),
+    // clang-format on
 };
 
-inline ShaderOptions operator|(ShaderOptions a, ShaderOptions b) noexcept
+inline constexpr ShaderOptions operator|(ShaderOptions a, ShaderOptions b) noexcept
 {
     return static_cast<ShaderOptions>(static_cast<uint64_t>(a) | static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions & operator|=(ShaderOptions & a, ShaderOptions b) noexcept
+inline constexpr ShaderOptions & operator|=(ShaderOptions & a, ShaderOptions b) noexcept
 {
     return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) |= static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions operator&(ShaderOptions a, ShaderOptions b) noexcept
+inline constexpr ShaderOptions operator&(ShaderOptions a, ShaderOptions b) noexcept
 {
     return static_cast<ShaderOptions>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions & operator&=(ShaderOptions & a, ShaderOptions b) noexcept
+inline constexpr ShaderOptions & operator&=(ShaderOptions & a, ShaderOptions b) noexcept
 {
     return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) &= static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions operator~(ShaderOptions a) noexcept
+inline constexpr ShaderOptions operator~(ShaderOptions a) noexcept
 {
     return static_cast<ShaderOptions>(~static_cast<uint64_t>(a));
 }
 
-inline ShaderOptions operator^(ShaderOptions a, ShaderOptions b) noexcept
+inline constexpr ShaderOptions operator^(ShaderOptions a, ShaderOptions b) noexcept
 {
     return static_cast<ShaderOptions>(static_cast<uint64_t>(a) ^ static_cast<uint64_t>(b));
 }
 
-inline ShaderOptions & operator^=(ShaderOptions & a, ShaderOptions b) noexcept
+inline constexpr ShaderOptions & operator^=(ShaderOptions & a, ShaderOptions b) noexcept
 {
     return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) ^= static_cast<uint64_t>(b));
 }
 
-inline bool IsSet(ShaderOptions options, ShaderOptions flag) noexcept
+inline constexpr bool IsSet(ShaderOptions options, ShaderOptions flag) noexcept
 {
     return (options & flag) == flag;
 }

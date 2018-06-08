@@ -70,32 +70,32 @@ void D3DEngine::Render()
 
     D3DFrameResource const & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
+    const DirectX::XMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
+
     SceneConstantBuffer sceneParameters{};
-    sceneParameters.ViewProj = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix));
+    sceneParameters.ViewProj = DirectX::XMMatrixTranspose(viewProj);
     sceneParameters.Camera = m_eye;
     sceneParameters.DirectionalLight = m_directionalLight;
     sceneParameters.PointLights[0] = m_pointLights[0];
     sceneParameters.PointLights[1] = m_pointLights[1];
     currentFrame.SceneCB->CopyData(0, sceneParameters);
 
-    ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
-
     // Set the root signature and pipeline state for the command list
     ID3D12DescriptorHeap * descriptorHeaps[] = { m_cbvHeap.Get() };
-    const CD3DX12_GPU_DESCRIPTOR_HANDLE srvDesc(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
 
+    ID3D12GraphicsCommandList * commandList = m_deviceResources->GetCommandList();
     commandList->SetDescriptorHeaps(1, descriptorHeaps);
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
     commandList->SetGraphicsRootConstantBufferView(0, currentFrame.SceneCB->GetGPUVirtualAddress(0));
     commandList->SetGraphicsRootShaderResourceView(2, currentFrame.MeshDataBuffer->GetGPUVirtualAddress(0));
-    commandList->SetGraphicsRootDescriptorTable(3, srvDesc);
+    commandList->SetGraphicsRootDescriptorTable(3, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
 
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     D3DRenderContext renderContext{
         commandList,
         currentFrame,
-        DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix),
+        viewProj,
         0,
         ShaderOptions::None,
         Config.EnableMaterials ? ShaderOptions::None : ShaderOptions::USE_AUTO_COLOR,
@@ -177,8 +177,8 @@ void D3DEngine::CreateWindowSizeDependentResources()
 {
     // Initialize the projection matrix
     const auto size = m_deviceResources->GetOutputSize();
-    DirectX::CXMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, static_cast<float>(size.right) / size.bottom, 0.01f, 400.0f);
-    DirectX::CXMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewMatrix) * projection;
+    const DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, static_cast<float>(size.right) / size.bottom, 0.01f, 400.0f);
+    const DirectX::XMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewMatrix) * projection;
 
     DirectX::XMStoreFloat4x4(&m_projectionMatrix, projection);
     DirectX::XMStoreFloat4x4(&m_viewProjectionMatrix, viewProj);
@@ -276,7 +276,7 @@ void D3DEngine::BuildScene()
         }
     }
 
-    DirectX::FXMVECTOR sizeVec = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.Max), DirectX::XMLoadFloat3(&m_boundingBox.Min));
+    const DirectX::XMVECTOR sizeVec = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_boundingBox.Max), DirectX::XMLoadFloat3(&m_boundingBox.Min));
     DirectX::XMFLOAT3 size{};
     DirectX::XMStoreFloat3(&size, sizeVec);
     m_autoScaleFactor = 4.0f / std::max({ size.x, size.y, size.z });
@@ -370,8 +370,6 @@ void D3DEngine::BuildDescriptorHeaps()
 
 void D3DEngine::BuildPipelineStateObjects()
 {
-    ID3D12Device * device = m_deviceResources->GetD3DDevice();
-
     UINT inputSlot = 0;
     std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout =
         {

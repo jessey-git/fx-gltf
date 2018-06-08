@@ -93,7 +93,7 @@ void D3DTextureSet::LoadToMemory(
         }
 
         subresources[i].pData = bufferStart + offset;
-        subresources[i].RowPitch = image.width * 4;
+        subresources[i].RowPitch = static_cast<int64_t>(image.width) * 4;
         subresources[i].SlicePitch = subresources[i].RowPitch * image.height;
 
         offset += Util::ResourceSize(PNG_IMAGE_SIZE(image));

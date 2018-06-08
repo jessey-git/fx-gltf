@@ -28,7 +28,7 @@ namespace
             return fmt;
         }
     }
-};
+}; // namespace
 
 // Constructor for DeviceResources.
 D3DDeviceResources::D3DDeviceResources(UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, unsigned int flags)

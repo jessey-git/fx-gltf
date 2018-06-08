@@ -67,25 +67,6 @@ SamplerState SampLinearClamp : register(s1);
 static const float M_PI = 3.141592653589793f;
 static const float MinRoughness = 0.04f;
 
-float3 NormalToWorld(float3 normalMapSample, float normalScale, float3 unitNormalW, float4 tangentW)
-{
-    // Uncompress each component from [0,1] to [-1,1].
-    float3 normalT = (2.0f * normalMapSample - 1.0f) * float3(normalScale, normalScale, 1.0f);
-    float3 tangent3 = tangentW.xyz;
-
-    // Build orthonormal basis.
-    float3 N = unitNormalW;
-    float3 T = normalize(tangent3 - dot(tangent3, N) * N);
-    float3 B = cross(N, T) * tangentW.w;
-
-    float3x3 TBN = float3x3(T, B, N);
-
-    // Transform from tangent space to world space.
-    float3 bumpedNormalW = mul(normalT, TBN);
-
-    return bumpedNormalW;
-}
-
 float4 SRGBtoLINEAR(float4 srgbColor)
 {
 #if MANUAL_SRGB
