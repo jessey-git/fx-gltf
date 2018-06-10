@@ -28,12 +28,12 @@ public:
 private:
     struct Image
     {
-        Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> frame;
-        Microsoft::WRL::ComPtr<IWICFormatConverter> formatConverter;
+        Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> frame{};
+        Microsoft::WRL::ComPtr<IWICFormatConverter> formatConverter{};
 
-        uint32_t width;
-        uint32_t height;
-        uint32_t size;
+        uint32_t width{};
+        uint32_t height{};
+        uint32_t size{};
     };
 
     std::vector<Image> m_images{};

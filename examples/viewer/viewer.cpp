@@ -192,16 +192,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
         freopen_s(&attachedIn, "CONIN$", "r", stdin);
     }
 
-    CoInitializeEx(nullptr, 0);
-
     int result = -1;
-    try
+
+    HRESULT hr = CoInitializeEx(nullptr, 0);
+    if (SUCCEEDED(hr))
     {
-        result = Win32Application::Run(hInstance, nCmdShow);
+        try
+        {
+            result = Win32Application::Run(hInstance, nCmdShow);
+        }
+        catch (std::exception & e)
+        {
+            std::cout << e.what() << std::endl;
+        }
     }
-    catch (std::exception & e)
+    else
     {
-        std::cout << e.what() << std::endl;
+        std::cout << "CoCoInitializeEx failed : " << hr << std::endl;
     }
 
     if (result < 0)

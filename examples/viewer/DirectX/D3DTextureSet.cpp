@@ -14,16 +14,16 @@ void D3DTextureSet::Initialize(std::vector<std::string> const & textures)
 {
     m_images.resize(textures.size());
 
-    ComPtr<IWICImagingFactory> wicFactory;
-    DX::ThrowIfFailed(CoCreateInstance(CLSID_WICImagingFactory2, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wicFactory)));
+    ComPtr<IWICImagingFactory> factory;
+    DX::ThrowIfFailed(CoCreateInstance(CLSID_WICImagingFactory2, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)));
 
     for (std::size_t i = 0; i < textures.size(); i++)
     {
         Image & image = m_images[i];
-        std::wstring texture = std::wstring(textures[i].begin(), textures[i].end());
+        std::wstring texture(textures[i].begin(), textures[i].end());
 
         ComPtr<IWICBitmapDecoder> decoder;
-        DX::ThrowIfFailed(wicFactory->CreateDecoderFromFilename(texture.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
+        DX::ThrowIfFailed(factory->CreateDecoderFromFilename(texture.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
         DX::ThrowIfFailed(decoder->GetFrame(0, image.frame.GetAddressOf()));
 
         WICPixelFormatGUID pixelFormat;
@@ -32,13 +32,13 @@ void D3DTextureSet::Initialize(std::vector<std::string> const & textures)
 
         if (std::memcmp(&pixelFormat, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID)) != 0)
         {
-            DX::ThrowIfFailed(wicFactory->CreateFormatConverter(image.formatConverter.GetAddressOf()));
+            DX::ThrowIfFailed(factory->CreateFormatConverter(image.formatConverter.GetAddressOf()));
 
             BOOL canConvert = FALSE;
             DX::ThrowIfFailed(image.formatConverter->CanConvert(pixelFormat, GUID_WICPixelFormat32bppRGBA, &canConvert));
-            if (!canConvert)
+            if (canConvert == FALSE)
             {
-                throw std::exception("CanConvert");
+                throw std::runtime_error("Unable to convert texture to RGBA");
             }
 
             DX::ThrowIfFailed(image.formatConverter->Initialize(image.frame.Get(), GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeErrorDiffusion, nullptr, 0, WICBitmapPaletteTypeMedianCut));
