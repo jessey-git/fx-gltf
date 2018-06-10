@@ -128,7 +128,7 @@ private:
         app.add_option("-x", options.CameraX, "Camera x position");
         app.add_option("-y", options.CameraY, "Camera y position");
         app.add_option("-z", options.CameraZ, "Camera z position");
-        app.add_option("file", options.ModelPath, "Model to load")->required(true);
+        app.add_option("file", options.ModelPath, "Model to load (.gltf or .glb)")->required(true);
 
         int argc;
         std::vector<std::string> args{};
@@ -191,6 +191,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
         freopen_s(&attachedOut, "CONOUT$", "w", stdout);
         freopen_s(&attachedIn, "CONIN$", "r", stdin);
     }
+
+    CoInitializeEx(nullptr, 0);
 
     int result = -1;
     try

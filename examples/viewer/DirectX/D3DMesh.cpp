@@ -81,7 +81,7 @@ void D3DMesh::Create(
 
         if (tBuffer.HasData())
         {
-            // Copy tex-coord buffer to upload...
+            // Copy tangent buffer to upload...
             std::memcpy(bufferStart + offset, tBuffer.data, tBuffer.totalSize);
             meshPart.TangentBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
             meshPart.TangentBufferView.StrideInBytes = tBuffer.dataStride;

@@ -6,9 +6,9 @@
 #pragma once
 
 #include <d3d12.h>
-#include <libpng16/png.h>
 #include <string>
 #include <vector>
+#include <wincodec.h>
 #include <wrl.h>
 
 #include "D3DDeviceResources.h"
@@ -26,7 +26,17 @@ public:
         UINT16 mipChainLength);
 
 private:
-    std::vector<png_image> m_images{};
+    struct Image
+    {
+        Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> frame;
+        Microsoft::WRL::ComPtr<IWICFormatConverter> formatConverter;
+
+        uint32_t width;
+        uint32_t height;
+        uint32_t size;
+    };
+
+    std::vector<Image> m_images{};
 
     std::size_t m_totalSize{};
 };
