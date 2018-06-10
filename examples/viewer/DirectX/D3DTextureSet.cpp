@@ -8,25 +8,45 @@
 #include "D3DTextureSet.h"
 #include "D3DUtil.h"
 
+using Microsoft::WRL::ComPtr;
+
 void D3DTextureSet::Initialize(std::vector<std::string> const & textures)
 {
     m_images.resize(textures.size());
 
+    ComPtr<IWICImagingFactory> factory;
+    DX::ThrowIfFailed(CoCreateInstance(CLSID_WICImagingFactory2, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)));
+
     for (std::size_t i = 0; i < textures.size(); i++)
     {
-        png_image & image = m_images[i];
-        image.version = PNG_IMAGE_VERSION;
+        Image & image = m_images[i];
+        std::wstring texture(textures[i].begin(), textures[i].end());
 
-        if (png_image_begin_read_from_file(&image, textures[i].c_str()) != 0)
-        {
-            image.format = PNG_FORMAT_RGBA;
+        ComPtr<IWICBitmapDecoder> decoder;
+        DX::ThrowIfFailed(factory->CreateDecoderFromFilename(texture.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
+        DX::ThrowIfFailed(decoder->GetFrame(0, image.frame.GetAddressOf()));
 
-            m_totalSize += Util::ResourceSize(PNG_IMAGE_SIZE(image));
-        }
-        else
+        WICPixelFormatGUID pixelFormat;
+        DX::ThrowIfFailed(image.frame->GetSize(&image.width, &image.height));
+        DX::ThrowIfFailed(image.frame->GetPixelFormat(&pixelFormat));
+
+        if (std::memcmp(&pixelFormat, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID)) != 0)
         {
-            throw std::runtime_error(image.message);
+            DX::ThrowIfFailed(factory->CreateFormatConverter(image.formatConverter.GetAddressOf()));
+
+            BOOL canConvert = FALSE;
+            DX::ThrowIfFailed(image.formatConverter->CanConvert(pixelFormat, GUID_WICPixelFormat32bppRGBA, &canConvert));
+            if (canConvert == FALSE)
+            {
+                throw std::runtime_error("Unable to convert texture to RGBA");
+            }
+
+            DX::ThrowIfFailed(image.formatConverter->Initialize(image.frame.Get(), GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeErrorDiffusion, nullptr, 0, WICBitmapPaletteTypeMedianCut));
         }
+
+        image.size = image.width * image.height * 4;
+
+        m_totalSize += Util::ResourceSize(image.size);
     }
 }
 
@@ -83,20 +103,23 @@ void D3DTextureSet::LoadToMemory(
     std::vector<D3D12_SUBRESOURCE_DATA> subresources(totalSubresources);
     for (std::size_t i = 0; i < totalSubresources; i++)
     {
-        png_image & image = m_images[i];
+        Image & image = m_images[i];
 
-        // Load the PNG data right into the upload buffer...
-        const int result = png_image_finish_read(&image, nullptr, bufferStart + offset, 0, nullptr);
-        if (result != 1)
+        // Load the image data right into the upload buffer...
+        if (image.formatConverter)
         {
-            throw std::runtime_error(image.message);
+            DX::ThrowIfFailed(image.formatConverter->CopyPixels(0, image.width * 4, image.size, bufferStart + offset));
+        }
+        else
+        {
+            DX::ThrowIfFailed(image.frame->CopyPixels(0, image.width * 4, image.size, bufferStart + offset));
         }
 
         subresources[i].pData = bufferStart + offset;
         subresources[i].RowPitch = static_cast<int64_t>(image.width) * 4;
         subresources[i].SlicePitch = subresources[i].RowPitch * image.height;
 
-        offset += Util::ResourceSize(PNG_IMAGE_SIZE(image));
+        offset += Util::ResourceSize(image.size);
     }
 
     UpdateSubresources(commandList, defaultBuffer.Get(), uploadBuffer.Get(), 0, 0, totalSubresources, &subresources[0]);

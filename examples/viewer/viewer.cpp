@@ -128,7 +128,7 @@ private:
         app.add_option("-x", options.CameraX, "Camera x position");
         app.add_option("-y", options.CameraY, "Camera y position");
         app.add_option("-z", options.CameraZ, "Camera z position");
-        app.add_option("file", options.ModelPath, "Model to load")->required(true);
+        app.add_option("file", options.ModelPath, "Model to load (.gltf or .glb)")->required(true);
 
         int argc;
         std::vector<std::string> args{};
@@ -193,13 +193,22 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
     }
 
     int result = -1;
-    try
+
+    HRESULT hr = CoInitializeEx(nullptr, 0);
+    if (SUCCEEDED(hr))
     {
-        result = Win32Application::Run(hInstance, nCmdShow);
+        try
+        {
+            result = Win32Application::Run(hInstance, nCmdShow);
+        }
+        catch (std::exception & e)
+        {
+            std::cout << e.what() << std::endl;
+        }
     }
-    catch (std::exception & e)
+    else
     {
-        std::cout << e.what() << std::endl;
+        std::cout << "CoCoInitializeEx failed : " << hr << std::endl;
     }
 
     if (result < 0)
