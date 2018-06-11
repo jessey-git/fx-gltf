@@ -17,7 +17,7 @@ class D3DMesh
 {
 public:
     void Create(
-        fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources const * deviceResources);
+        fx::gltf::Document const & doc, std::size_t meshIndex, D3DDeviceResources const * deviceResources);
 
     void SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor);
 

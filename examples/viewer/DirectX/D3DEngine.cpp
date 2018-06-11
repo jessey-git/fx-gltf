@@ -40,7 +40,7 @@ void D3DEngine::InitializeCore(HWND window)
     m_gltfGround = fx::gltf::LoadFromText("Assets/ground_plane.gltf");
 
     const uint32_t BackBufferCount = 3;
-    m_deviceResources = std::make_unique<DX::D3DDeviceResources>(BackBufferCount, D3D_FEATURE_LEVEL_12_0, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+    m_deviceResources = std::make_unique<D3DDeviceResources>(BackBufferCount, D3D_FEATURE_LEVEL_12_0, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
     m_deviceResources->SetWindow(window, Config.Width, Config.Height);
     m_deviceResources->RegisterDeviceNotify(this);
 
@@ -335,11 +335,11 @@ void D3DEngine::BuildRootSignature()
             throw std::runtime_error(static_cast<const char *>(error->GetBufferPointer()));
         }
 
-        throw DX::com_exception(hr);
+        throw COMUtil::com_exception(hr);
     }
 
     ID3D12Device * device = m_deviceResources->GetD3DDevice();
-    DX::ThrowIfFailed(device->CreateRootSignature(
+    COMUtil::ThrowIfFailed(device->CreateRootSignature(
         0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(m_rootSignature.ReleaseAndGetAddressOf())));
 }
 
@@ -352,7 +352,7 @@ void D3DEngine::BuildDescriptorHeaps()
     cbvHeapDesc.NodeMask = 0;
 
     ID3D12Device * device = m_deviceResources->GetD3DDevice();
-    DX::ThrowIfFailed(device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+    COMUtil::ThrowIfFailed(device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
 
     const uint32_t size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
@@ -380,7 +380,7 @@ void D3DEngine::BuildPipelineStateObjects()
         };
 
     Logger::WriteLine("Compiling shaders...");
-    auto standardVS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "StandardVS", "vs_5_1", nullptr);
+    auto standardVS = Util::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "StandardVS", "vs_5_1", nullptr);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { &inputLayout[0], static_cast<UINT>(inputLayout.size()) };
@@ -431,12 +431,12 @@ void D3DEngine::CompileShaderPerumutation(std::string const & entryPoint, Shader
 
         shaderDefines.emplace_back(D3D_SHADER_MACRO{ nullptr, nullptr });
 
-        auto permutedPS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", entryPoint, "ps_5_1", shaderDefines.data());
+        auto permutedPS = Util::CompileShader(L"DirectX\\Shaders\\Default.hlsl", entryPoint, "ps_5_1", shaderDefines.data());
         psoDescTemplate.PS = { permutedPS->GetBufferPointer(), permutedPS->GetBufferSize() };
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> pso;
         ID3D12Device * device = m_deviceResources->GetD3DDevice();
-        DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDescTemplate, IID_PPV_ARGS(pso.ReleaseAndGetAddressOf())));
+        COMUtil::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDescTemplate, IID_PPV_ARGS(pso.ReleaseAndGetAddressOf())));
 
         m_pipelineStateMap[options] = pso;
     }

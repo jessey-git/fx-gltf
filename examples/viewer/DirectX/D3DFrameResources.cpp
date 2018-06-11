@@ -10,7 +10,7 @@
 
 D3DFrameResource::D3DFrameResource(ID3D12Device * device)
 {
-    DX::ThrowIfFailed(device->CreateCommandAllocator(
+    COMUtil::ThrowIfFailed(device->CreateCommandAllocator(
         D3D12_COMMAND_LIST_TYPE_DIRECT,
         IID_PPV_ARGS(CommandAllocator.GetAddressOf())));
 }

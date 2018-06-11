@@ -13,7 +13,7 @@
 uint32_t D3DMesh::CurrentMeshPartId = 1;
 
 void D3DMesh::Create(
-    fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources const * deviceResources)
+    fx::gltf::Document const & doc, std::size_t meshIndex, D3DDeviceResources const * deviceResources)
 {
     ID3D12Device * device = deviceResources->GetD3DDevice();
     ID3D12GraphicsCommandList * commandList = deviceResources->GetCommandList();
@@ -44,7 +44,7 @@ void D3DMesh::Create(
 
         D3DMeshPart & meshPart = m_meshParts[i];
         const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
-        DX::ThrowIfFailed(device->CreateCommittedResource(
+        COMUtil::ThrowIfFailed(device->CreateCommittedResource(
             &defaultHeapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDescV,
@@ -52,7 +52,7 @@ void D3DMesh::Create(
             nullptr,
             IID_PPV_ARGS(meshPart.DefaultBuffer.ReleaseAndGetAddressOf())));
 
-        DX::ThrowIfFailed(device->CreateCommittedResource(
+        COMUtil::ThrowIfFailed(device->CreateCommittedResource(
             &uploadHeapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDescV,
@@ -63,7 +63,7 @@ void D3DMesh::Create(
         uint8_t * bufferStart{};
         uint32_t offset{};
         const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
-        DX::ThrowIfFailed(meshPart.UploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
+        COMUtil::ThrowIfFailed(meshPart.UploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
 
         // Copy vertex buffer to upload...
         std::memcpy(bufferStart, vBuffer.data, vBuffer.totalSize);

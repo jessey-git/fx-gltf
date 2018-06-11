@@ -5,12 +5,11 @@
 // ------------------------------------------------------------
 #pragma once
 
-#include <algorithm>
-#include <cstdio>
-#include <d3dcompiler.h>
-#include <dxgi1_5.h>
-#include <exception>
+#include <DirectXMath.h>
+#include <DXGIFormat.h>
 #include <fx/gltf.h>
+#include <Platform/COMUtil.h>
+#include <string>
 #include <wrl.h>
 
 #include "Logger.h"
@@ -24,7 +23,7 @@ namespace Util
         DirectX::XMFLOAT3 CenterTranslation{};
     };
 
-    static DXGI_FORMAT GetFormat(fx::gltf::Accessor const * accessor)
+    inline DXGI_FORMAT GetFormat(fx::gltf::Accessor const * accessor)
     {
         if (accessor->type == fx::gltf::Accessor::Type::Vec3 && accessor->componentType == fx::gltf::Accessor::ComponentType::Float)
         {
@@ -44,13 +43,13 @@ namespace Util
         }
     }
 
-    static uint64_t ResourceSize(uint32_t size) noexcept
+    inline uint64_t ResourceSize(uint32_t size) noexcept
     {
         const std::size_t MinResourceSize = 64 * 1024;
         return size < MinResourceSize ? MinResourceSize : size;
     }
 
-    static void CenterBBox(BBox & currentBBox)
+    inline void CenterBBox(BBox & currentBBox)
     {
         using namespace DirectX;
         const DirectX::XMVECTOR min = DirectX::XMLoadFloat3(&currentBBox.Min);
@@ -60,7 +59,7 @@ namespace Util
         DirectX::XMStoreFloat3(&currentBBox.CenterTranslation, mid);
     }
 
-    static void UnionBBox(BBox & currentBBox, BBox const & other) noexcept
+    inline void UnionBBox(BBox & currentBBox, BBox const & other) noexcept
     {
         const DirectX::XMVECTOR cMin = DirectX::XMLoadFloat3(&currentBBox.Min);
         const DirectX::XMVECTOR cMax = DirectX::XMLoadFloat3(&currentBBox.Max);
@@ -72,9 +71,8 @@ namespace Util
         Util::CenterBBox(currentBBox);
     }
 
-    static BBox TransformBBox(BBox const & currentBBox, DirectX::XMMATRIX const & transform)
+    inline BBox TransformBBox(BBox const & currentBBox, DirectX::XMMATRIX const & transform)
     {
-        using namespace DirectX;
         const DirectX::XMVECTOR newMin = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&currentBBox.Min), transform);
         const DirectX::XMVECTOR newMax = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&currentBBox.Max), transform);
 
@@ -86,7 +84,7 @@ namespace Util
         return newBBox;
     }
 
-    static BBox TransformBBox(BBox const & currentBBox, DirectX::XMFLOAT3 const & centerTranslation, float scalingFactor)
+    inline BBox TransformBBox(BBox const & currentBBox, DirectX::XMFLOAT3 const & centerTranslation, float scalingFactor)
     {
         using namespace DirectX;
         const DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
@@ -95,7 +93,7 @@ namespace Util
         return Util::TransformBBox(currentBBox, translation * scale);
     }
 
-    static DirectX::XMFLOAT4 HSVtoRBG(float hue, float saturation, float value) noexcept
+    inline DirectX::XMFLOAT4 HSVtoRBG(float hue, float saturation, float value) noexcept
     {
         DirectX::XMFLOAT4 rgba{};
 
@@ -113,36 +111,6 @@ namespace Util
 
         rgba.w = 1.0f;
         return rgba;
-    }
-} // namespace Util
-
-namespace DX
-{
-    // Helper class for COM exceptions
-    class com_exception : public std::exception
-    {
-    public:
-        explicit com_exception(HRESULT hr) noexcept
-            : result(hr) {}
-
-        const char * what() const noexcept override
-        {
-            static char s_str[64] = {};
-            sprintf_s(s_str, "Failure with HRESULT of %08X", result);
-            return s_str;
-        }
-
-    private:
-        HRESULT result;
-    };
-
-    // Helper utility converts D3D API failures into exceptions.
-    inline void ThrowIfFailed(HRESULT hr)
-    {
-        if (FAILED(hr))
-        {
-            throw com_exception(hr);
-        }
     }
 
     inline Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
@@ -168,7 +136,7 @@ namespace DX
             Logger::WriteLine(static_cast<char *>(errors->GetBufferPointer()));
         }
 
-        ThrowIfFailed(hr);
+        COMUtil::ThrowIfFailed(hr);
         return byteCode;
     }
-} // namespace DX
+} // namespace Util

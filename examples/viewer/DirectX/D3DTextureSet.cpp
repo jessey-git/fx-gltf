@@ -15,7 +15,7 @@ void D3DTextureSet::Initialize(std::vector<std::string> const & textures)
     m_images.resize(textures.size());
 
     ComPtr<IWICImagingFactory> factory;
-    DX::ThrowIfFailed(CoCreateInstance(CLSID_WICImagingFactory2, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)));
+    COMUtil::ThrowIfFailed(CoCreateInstance(CLSID_WICImagingFactory2, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)));
 
     for (std::size_t i = 0; i < textures.size(); i++)
     {
@@ -23,25 +23,25 @@ void D3DTextureSet::Initialize(std::vector<std::string> const & textures)
         std::wstring texture(textures[i].begin(), textures[i].end());
 
         ComPtr<IWICBitmapDecoder> decoder;
-        DX::ThrowIfFailed(factory->CreateDecoderFromFilename(texture.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
-        DX::ThrowIfFailed(decoder->GetFrame(0, image.frame.GetAddressOf()));
+        COMUtil::ThrowIfFailed(factory->CreateDecoderFromFilename(texture.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
+        COMUtil::ThrowIfFailed(decoder->GetFrame(0, image.frame.GetAddressOf()));
 
         WICPixelFormatGUID pixelFormat;
-        DX::ThrowIfFailed(image.frame->GetSize(&image.width, &image.height));
-        DX::ThrowIfFailed(image.frame->GetPixelFormat(&pixelFormat));
+        COMUtil::ThrowIfFailed(image.frame->GetSize(&image.width, &image.height));
+        COMUtil::ThrowIfFailed(image.frame->GetPixelFormat(&pixelFormat));
 
         if (std::memcmp(&pixelFormat, &GUID_WICPixelFormat32bppRGBA, sizeof(GUID)) != 0)
         {
-            DX::ThrowIfFailed(factory->CreateFormatConverter(image.formatConverter.GetAddressOf()));
+            COMUtil::ThrowIfFailed(factory->CreateFormatConverter(image.formatConverter.GetAddressOf()));
 
             BOOL canConvert = FALSE;
-            DX::ThrowIfFailed(image.formatConverter->CanConvert(pixelFormat, GUID_WICPixelFormat32bppRGBA, &canConvert));
+            COMUtil::ThrowIfFailed(image.formatConverter->CanConvert(pixelFormat, GUID_WICPixelFormat32bppRGBA, &canConvert));
             if (canConvert == FALSE)
             {
                 throw std::runtime_error("Unable to convert texture to RGBA");
             }
 
-            DX::ThrowIfFailed(image.formatConverter->Initialize(image.frame.Get(), GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeErrorDiffusion, nullptr, 0, WICBitmapPaletteTypeMedianCut));
+            COMUtil::ThrowIfFailed(image.formatConverter->Initialize(image.frame.Get(), GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeErrorDiffusion, nullptr, 0, WICBitmapPaletteTypeMedianCut));
         }
 
         image.size = image.width * image.height * 4;
@@ -51,7 +51,7 @@ void D3DTextureSet::Initialize(std::vector<std::string> const & textures)
 }
 
 void D3DTextureSet::LoadToMemory(
-    DX::D3DDeviceResources const * deviceResources,
+    D3DDeviceResources const * deviceResources,
     Microsoft::WRL::ComPtr<ID3D12Resource> & defaultBuffer,
     Microsoft::WRL::ComPtr<ID3D12Resource> & uploadBuffer,
     UINT16 depthOrArraySize,
@@ -77,7 +77,7 @@ void D3DTextureSet::LoadToMemory(
     texDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(m_totalSize);
-    DX::ThrowIfFailed(device->CreateCommittedResource(
+    COMUtil::ThrowIfFailed(device->CreateCommittedResource(
         &defaultHeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &texDesc,
@@ -85,7 +85,7 @@ void D3DTextureSet::LoadToMemory(
         nullptr,
         IID_PPV_ARGS(defaultBuffer.ReleaseAndGetAddressOf())));
 
-    DX::ThrowIfFailed(device->CreateCommittedResource(
+    COMUtil::ThrowIfFailed(device->CreateCommittedResource(
         &uploadHeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &resourceDescV,
@@ -95,7 +95,7 @@ void D3DTextureSet::LoadToMemory(
 
     uint8_t * bufferStart{};
     const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
-    DX::ThrowIfFailed(uploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
+    COMUtil::ThrowIfFailed(uploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
 
     const UINT totalSubresources = depthOrArraySize * mipChainLength;
 
@@ -108,11 +108,11 @@ void D3DTextureSet::LoadToMemory(
         // Load the image data right into the upload buffer...
         if (image.formatConverter)
         {
-            DX::ThrowIfFailed(image.formatConverter->CopyPixels(0, image.width * 4, image.size, bufferStart + offset));
+            COMUtil::ThrowIfFailed(image.formatConverter->CopyPixels(0, image.width * 4, image.size, bufferStart + offset));
         }
         else
         {
-            DX::ThrowIfFailed(image.frame->CopyPixels(0, image.width * 4, image.size, bufferStart + offset));
+            COMUtil::ThrowIfFailed(image.frame->CopyPixels(0, image.width * 4, image.size, bufferStart + offset));
         }
 
         subresources[i].pData = bufferStart + offset;

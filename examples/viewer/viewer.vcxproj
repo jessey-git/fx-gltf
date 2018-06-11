@@ -119,7 +119,8 @@
     <ClInclude Include="EngineOptions.h" />
     <ClInclude Include="MaterialData.h" />
     <ClInclude Include="MeshData.h" />
-    <ClInclude Include="platform.h" />
+    <ClInclude Include="Platform\COMUtil.h" />
+    <ClInclude Include="Platform\platform.h" />
     <ClInclude Include="ShaderOptions.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StepTimer.h" />

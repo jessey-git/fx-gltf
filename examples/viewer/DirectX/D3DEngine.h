@@ -5,22 +5,20 @@
 // ------------------------------------------------------------
 #pragma once
 #include <fx/gltf.h>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
-#include "D3DConstants.h"
 #include "D3DDeviceResources.h"
 #include "D3DEnvironmentIBL.h"
-#include "D3DFrameResources.h"
 #include "D3DMesh.h"
 #include "D3DMeshInstance.h"
 #include "D3DTexture.h"
-#include "D3DUploadBuffer.h"
 #include "Engine.h"
 #include "EngineOptions.h"
 #include "ShaderOptions.h"
 
-class D3DEngine : public Engine, public DX::IDeviceNotify
+class D3DEngine : public Engine, public ID3DDeviceNotify
 {
 public:
     explicit D3DEngine(EngineOptions const & config);
@@ -48,7 +46,7 @@ private:
     fx::gltf::Document                              m_gltfScene{};
     fx::gltf::Document                              m_gltfGround{};
 
-    std::unique_ptr<DX::D3DDeviceResources>         m_deviceResources{};
+    std::unique_ptr<D3DDeviceResources>             m_deviceResources{};
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_rootSignature{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_cbvHeap{};
 

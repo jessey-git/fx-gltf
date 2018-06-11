@@ -9,8 +9,8 @@
 
 #include "DirectX/D3DEngine.h"
 #include "EngineOptions.h"
+#include "Platform/platform.h"
 #include "StepTimer.h"
-#include "platform.h"
 
 class Engine
 {

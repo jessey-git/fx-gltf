@@ -7,7 +7,7 @@
 
 #include <cstdint>
 
-#include "platform.h"
+#include "Platform/platform.h"
 
 // Helper class for animation and simulation timing.
 class StepTimer

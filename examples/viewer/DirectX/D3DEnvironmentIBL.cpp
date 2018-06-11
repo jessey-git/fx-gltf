@@ -11,7 +11,7 @@
 #include "D3DUtil.h"
 #include "StringFormatter.h"
 
-void D3DEnvironmentIBL::Create(DX::D3DDeviceResources const * deviceResources)
+void D3DEnvironmentIBL::Create(D3DDeviceResources const * deviceResources)
 {
     D3DTextureSet diffuseSet;
     D3DTextureSet specularSet;

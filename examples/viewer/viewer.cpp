@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "CLI11/CLI11.hpp"
+#include "Platform/COMUtil.h"
 #include "DirectX/D3DEngine.h"
 #include "Engine.h"
 #include "EngineOptions.h"
@@ -193,22 +194,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
     }
 
     int result = -1;
-
-    HRESULT hr = CoInitializeEx(nullptr, 0);
-    if (SUCCEEDED(hr))
+    try
     {
-        try
-        {
-            result = Win32Application::Run(hInstance, nCmdShow);
-        }
-        catch (std::exception & e)
-        {
-            std::cout << e.what() << std::endl;
-        }
+        COMUtil::Init();
+        result = Win32Application::Run(hInstance, nCmdShow);
     }
-    else
+    catch (std::exception & e)
     {
-        std::cout << "CoCoInitializeEx failed : " << hr << std::endl;
+        std::cout << e.what() << std::endl;
     }
 
     if (result < 0)
