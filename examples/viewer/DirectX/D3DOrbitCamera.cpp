@@ -75,9 +75,9 @@ void D3DOrbitCamera::SetProjection(float fovAngleY, float aspectRatio, float nea
 
 void D3DOrbitCamera::Calculate()
 {
-    constexpr DirectX::XMVECTORF32 Backward = { 0.0f, 0.0f, 1.0f, 0.0f };
-    constexpr DirectX::XMVECTORF32 At = { 0.0f, 0.0f, 0.0f, 0.0f };
-    constexpr DirectX::XMVECTORF32 Up = { 0.0f, 1.0f, 0.0f, 0.0 };
+    constexpr DirectX::XMVECTORF32 Backward = { { 0.0f, 0.0f, 1.0f, 0.0f } };
+    constexpr DirectX::XMVECTORF32 At = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+    constexpr DirectX::XMVECTORF32 Up = { { 0.0f, 1.0f, 0.0f, 0.0 } };
 
     // Update camera position...
     Position = DirectX::XMVector3Transform(Backward, DirectX::XMMatrixRotationRollPitchYaw(m_phi, m_theta, 0.0f));

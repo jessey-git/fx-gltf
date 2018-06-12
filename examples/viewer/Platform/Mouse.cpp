@@ -6,25 +6,26 @@
 #include "stdafx.h"
 #include "Mouse.h"
 
-using Microsoft::WRL::ComPtr;
-
 struct handle_closer
 {
     void operator()(HANDLE h)
     {
-        if (h)
+        if (h != nullptr)
+        {
             CloseHandle(h);
+        }
     }
 };
-typedef std::unique_ptr<void, handle_closer> ScopedHandle;
+
+using ScopedHandle = std::unique_ptr<void, handle_closer>;
 
 class Mouse::Impl
 {
 public:
-    Impl(Mouse * owner)
+    explicit Impl(Mouse * owner)
         : mState{}, mOwner(owner), mWindow(nullptr), mMode(MODE_ABSOLUTE), mLastX(0), mLastY(0), mRelativeX(INT32_MAX), mRelativeY(INT32_MAX), mInFocus(true)
     {
-        if (s_mouse)
+        if (s_mouse != nullptr)
         {
             throw std::exception("Mouse is a singleton");
         }
@@ -41,6 +42,11 @@ public:
         }
     }
 
+    Impl(Impl const &) = delete;
+    Impl(Impl &&) = delete;
+    Impl & operator=(Impl const &) = delete;
+    Impl & operator=(Impl &&) = delete;
+
     ~Impl()
     {
         s_mouse = nullptr;
@@ -48,12 +54,14 @@ public:
 
     void GetState(State & state) const
     {
-        memcpy(&state, &mState, sizeof(State));
+        std::memcpy(&state, &mState, sizeof(State));
         state.positionMode = mMode;
 
         DWORD result = WaitForSingleObjectEx(mScrollWheelValue.get(), 0, FALSE);
         if (result == WAIT_FAILED)
+        {
             throw std::exception("WaitForSingleObjectEx");
+        }
 
         if (result == WAIT_OBJECT_0)
         {
@@ -65,7 +73,9 @@ public:
             result = WaitForSingleObjectEx(mRelativeRead.get(), 0, FALSE);
 
             if (result == WAIT_FAILED)
+            {
                 throw std::exception("WaitForSingleObjectEx");
+            }
 
             if (result == WAIT_OBJECT_0)
             {
@@ -87,7 +97,9 @@ public:
     void SetMode(Mode mode)
     {
         if (mMode == mode)
+        {
             return;
+        }
 
         SetEvent((mode == MODE_ABSOLUTE) ? mAbsoluteMode.get() : mRelativeMode.get());
 
@@ -98,7 +110,7 @@ public:
         tme.dwFlags = TME_HOVER;
         tme.hwndTrack = mWindow;
         tme.dwHoverTime = 1;
-        if (!TrackMouseEvent(&tme))
+        if (TrackMouseEvent(&tme) == FALSE)
         {
             throw std::exception("TrackMouseEvent");
         }
@@ -112,10 +124,12 @@ public:
     bool IsVisible() const
     {
         if (mMode == MODE_RELATIVE)
+        {
             return false;
+        }
 
         CURSORINFO info = { sizeof(CURSORINFO), 0, nullptr, {} };
-        if (!GetCursorInfo(&info))
+        if (GetCursorInfo(&info) == FALSE)
         {
             throw std::exception("GetCursorInfo");
         }
@@ -126,10 +140,12 @@ public:
     void SetVisible(bool visible)
     {
         if (mMode == MODE_RELATIVE)
+        {
             return;
+        }
 
         CURSORINFO info = { sizeof(CURSORINFO), 0, nullptr, {} };
-        if (!GetCursorInfo(&info))
+        if (GetCursorInfo(&info) == FALSE)
         {
             throw std::exception("GetCursorInfo");
         }
@@ -137,14 +153,16 @@ public:
         bool isvisible = (info.flags & CURSOR_SHOWING) != 0;
         if (isvisible != visible)
         {
-            ShowCursor(visible);
+            ShowCursor(visible ? TRUE : FALSE);
         }
     }
 
     void SetWindow(HWND window)
     {
         if (mWindow == window)
+        {
             return;
+        }
 
         assert(window != nullptr);
 
@@ -153,7 +171,7 @@ public:
         Rid.usUsage = 0x2 /* HID_USAGE_GENERIC_MOUSE */;
         Rid.dwFlags = RIDEV_INPUTSINK;
         Rid.hwndTarget = window;
-        if (!RegisterRawInputDevices(&Rid, 1, sizeof(RAWINPUTDEVICE)))
+        if (RegisterRawInputDevices(&Rid, 1, sizeof(RAWINPUTDEVICE)) == FALSE)
         {
             throw std::exception("RegisterRawInputDevices");
         }
@@ -223,9 +241,10 @@ void Mouse::SetWindow(HWND window)
 void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
     auto pImpl = Impl::s_mouse;
-
-    if (!pImpl)
+    if (pImpl == nullptr)
+    {
         return;
+    }
 
     HANDLE evts[3];
     evts[0] = pImpl->mScrollWheelValue.get();
@@ -250,7 +269,7 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
         // We show the cursor before moving it to support Remote Desktop
         ShowCursor(TRUE);
 
-        if (MapWindowPoints(pImpl->mWindow, nullptr, &point, 1))
+        if (MapWindowPoints(pImpl->mWindow, nullptr, &point, 1) != 0)
         {
             SetCursorPos(point.x, point.y);
         }
@@ -297,7 +316,7 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
         else
         {
             int scrollWheel = pImpl->mState.scrollWheelValue;
-            memset(&pImpl->mState, 0, sizeof(State));
+            std::memset(&pImpl->mState, 0, sizeof(State));
             pImpl->mState.scrollWheelValue = scrollWheel;
 
             pImpl->mInFocus = false;
@@ -318,14 +337,14 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
             if (raw.header.dwType == RIM_TYPEMOUSE)
             {
-                if (!(raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE))
+                if ((raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) == 0)
                 {
                     pImpl->mState.x = raw.data.mouse.lLastX;
                     pImpl->mState.y = raw.data.mouse.lLastY;
 
                     ResetEvent(pImpl->mRelativeRead.get());
                 }
-                else if (raw.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP)
+                else if ((raw.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP) != 0)
                 {
                     // This is used to make Remote Desktop sessons work
                     const int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
@@ -421,8 +440,8 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
     if (pImpl->mMode == MODE_ABSOLUTE)
     {
         // All mouse messages provide a new pointer position
-        int xPos = static_cast<short>(LOWORD(lParam)); // GET_X_LPARAM(lParam);
-        int yPos = static_cast<short>(HIWORD(lParam)); // GET_Y_LPARAM(lParam);
+        int xPos = static_cast<int16_t>(LOWORD(lParam));
+        int yPos = static_cast<int16_t>(HIWORD(lParam));
 
         pImpl->mState.x = pImpl->mLastX = xPos;
         pImpl->mState.y = pImpl->mLastY = yPos;
@@ -431,20 +450,17 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
 #pragma warning(disable : 4355)
 
-// Public constructor.
 Mouse::Mouse() noexcept(false)
     : pImpl(std::make_unique<Impl>(this))
 {
 }
 
-// Move constructor.
 Mouse::Mouse(Mouse && moveFrom) noexcept
     : pImpl(std::move(moveFrom.pImpl))
 {
     pImpl->mOwner = this;
 }
 
-// Move assignment.
 Mouse & Mouse::operator=(Mouse && moveFrom) noexcept
 {
     pImpl = std::move(moveFrom.pImpl);
@@ -452,14 +468,13 @@ Mouse & Mouse::operator=(Mouse && moveFrom) noexcept
     return *this;
 }
 
-// Public destructor.
 Mouse::~Mouse()
 {
 }
 
 Mouse::State Mouse::GetState() const
 {
-    State state;
+    State state{};
     pImpl->GetState(state);
     return state;
 }
@@ -491,15 +506,17 @@ void Mouse::SetVisible(bool visible)
 
 Mouse & Mouse::Get()
 {
-    if (!Impl::s_mouse || !Impl::s_mouse->mOwner)
+    if (Impl::s_mouse == nullptr || Impl::s_mouse->mOwner == nullptr)
+    {
         throw std::exception("Mouse is a singleton");
+    }
 
     return *Impl::s_mouse->mOwner;
 }
 
-    //======================================================================================
-    // ButtonStateTracker
-    //======================================================================================
+//======================================================================================
+// ButtonStateTracker
+//======================================================================================
 
 #define UPDATE_BUTTON_STATE(field) field = static_cast<ButtonState>((!!state.field) | ((!!state.field ^ !!lastState.field) << 1));
 

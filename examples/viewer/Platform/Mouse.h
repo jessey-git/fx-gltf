@@ -11,11 +11,11 @@ class Mouse
 {
 public:
     Mouse() noexcept(false);
-    Mouse(Mouse&& moveFrom) noexcept;
-    Mouse& operator= (Mouse&& moveFrom) noexcept;
+    Mouse(Mouse && moveFrom) noexcept;
+    Mouse & operator=(Mouse && moveFrom) noexcept;
 
-    Mouse(Mouse const&) = delete;
-    Mouse& operator=(Mouse const&) = delete;
+    Mouse(Mouse const &) = delete;
+    Mouse & operator=(Mouse const &) = delete;
 
     virtual ~Mouse();
 
@@ -27,15 +27,15 @@ public:
 
     struct State
     {
-        bool    leftButton;
-        bool    middleButton;
-        bool    rightButton;
-        bool    xButton1;
-        bool    xButton2;
-        int     x;
-        int     y;
-        int     scrollWheelValue;
-        Mode    positionMode;
+        bool leftButton;
+        bool middleButton;
+        bool rightButton;
+        bool xButton1;
+        bool xButton2;
+        int x;
+        int y;
+        int scrollWheelValue;
+        Mode positionMode;
     };
 
     class ButtonStateTracker
@@ -43,10 +43,10 @@ public:
     public:
         enum ButtonState
         {
-            UP = 0,         // Button is up
-            HELD = 1,       // Button is held down
-            RELEASED = 2,   // Button was just released
-            PRESSED = 3,    // Buton was just pressed
+            UP = 0, // Button is up
+            HELD = 1, // Button is held down
+            RELEASED = 2, // Button was just released
+            PRESSED = 3, // Buton was just pressed
         };
 
         ButtonState leftButton{};
@@ -55,13 +55,19 @@ public:
         ButtonState xButton1{};
         ButtonState xButton2{};
 
-        ButtonStateTracker() noexcept { Reset(); }
+        ButtonStateTracker() noexcept
+        {
+            Reset();
+        }
 
-        void __cdecl Update(const State& state);
+        void __cdecl Update(const State & state);
 
         void __cdecl Reset() noexcept;
 
-        State __cdecl GetLastState() const { return lastState; }
+        State __cdecl GetLastState() const
+        {
+            return lastState;
+        }
 
     private:
         State lastState{};
@@ -87,11 +93,10 @@ public:
     static void __cdecl ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
     // Singleton
-    static Mouse& __cdecl Get();
+    static Mouse & __cdecl Get();
 
 private:
     class Impl;
 
     std::unique_ptr<Impl> pImpl;
 };
-

@@ -8,11 +8,11 @@
 #include <DirectXMath.h>
 #include <DXGIFormat.h>
 #include <fx/gltf.h>
-#include <Platform/COMUtil.h>
 #include <string>
 #include <wrl.h>
 
 #include "Logger.h"
+#include "Platform/COMUtil.h"
 
 namespace Util
 {
@@ -86,7 +86,6 @@ namespace Util
 
     inline BBox TransformBBox(BBox const & currentBBox, DirectX::XMFLOAT3 const & centerTranslation, float scalingFactor)
     {
-        using namespace DirectX;
         const DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
         const DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
 
