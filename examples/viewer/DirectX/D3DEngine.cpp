@@ -61,6 +61,8 @@ void D3DEngine::Update(float elapsedTime) noexcept
             m_curRotationAngleRad -= DirectX::XM_2PI;
         }
     }
+
+    m_camera.Update(MouseTracker);
 }
 
 void D3DEngine::Render()
@@ -70,11 +72,11 @@ void D3DEngine::Render()
 
     D3DFrameResource const & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
-    const DirectX::XMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
+    const DirectX::XMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_camera.ViewProjectionMatrix);
 
     SceneConstantBuffer sceneParameters{};
     sceneParameters.ViewProj = DirectX::XMMatrixTranspose(viewProj);
-    sceneParameters.Camera = m_eye;
+    sceneParameters.Camera = m_camera.Position;
     sceneParameters.DirectionalLight = m_directionalLight;
     sceneParameters.PointLights[0] = m_pointLights[0];
     sceneParameters.PointLights[1] = m_pointLights[1];
@@ -154,11 +156,8 @@ void D3DEngine::CreateDeviceDependentResources()
         mesh.FinishUpload();
     }
 
-    // Initialize the view matrix
-    m_eye = { Config.CameraX, Config.CameraY, Config.CameraZ, 0.0f };
-    static const DirectX::XMVECTORF32 c_at = { 0.0f, 0.0f, 0.0f, 0.0f };
-    static const DirectX::XMVECTORF32 c_up = { 0.0f, 1.0f, 0.0f, 0.0 };
-    DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(m_eye, c_at, c_up));
+    // Initialize the camera system
+    m_camera.Reset(DirectX::XMFLOAT3(Config.CameraX, Config.CameraY, Config.CameraZ));
 
     // Initialize the lighting parameters
     m_directionalLight.Direction = DirectX::XMFLOAT3(-0.57f, 0.57f, 0.57f);
@@ -177,11 +176,7 @@ void D3DEngine::CreateWindowSizeDependentResources()
 {
     // Initialize the projection matrix
     const auto size = m_deviceResources->GetOutputSize();
-    const DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, static_cast<float>(size.right) / size.bottom, 0.01f, 400.0f);
-    const DirectX::XMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewMatrix) * projection;
-
-    DirectX::XMStoreFloat4x4(&m_projectionMatrix, projection);
-    DirectX::XMStoreFloat4x4(&m_viewProjectionMatrix, viewProj);
+    m_camera.SetProjection(DirectX::XM_PIDIV4, static_cast<float>(size.right) / size.bottom, 0.01f, 400.0f);
 }
 
 void D3DEngine::PrepareRender()

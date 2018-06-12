@@ -10,10 +10,11 @@
 #include <vector>
 
 #include "CLI11/CLI11.hpp"
-#include "Platform/COMUtil.h"
 #include "DirectX/D3DEngine.h"
 #include "Engine.h"
 #include "EngineOptions.h"
+#include "Platform/COMUtil.h"
+#include "Platform/Mouse.h"
 
 class Win32Application
 {
@@ -55,13 +56,13 @@ public:
             hInstance,
             engine.get());
 
-        // Initialize the sample. OnInit is defined in each child-implementation of DXSample.
+        // Initialize the engine...
         engine->Initialize(hwnd);
 
         ShowWindow(hwnd, nCmdShow);
 
         // Main sample loop.
-        MSG msg = {};
+        MSG msg{};
         while (msg.message != WM_QUIT)
         {
             // Process any messages in the queue.
@@ -87,6 +88,8 @@ private:
             {
                 LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
                 SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+
+                Mouse::ProcessMessage(message, wParam, lParam);
             }
             return 0;
 
@@ -105,6 +108,21 @@ private:
             }
 
             return 0;
+
+        case WM_INPUT:
+        case WM_MOUSEMOVE:
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+        case WM_MOUSEWHEEL:
+        case WM_XBUTTONDOWN:
+        case WM_XBUTTONUP:
+        case WM_MOUSEHOVER:
+            Mouse::ProcessMessage(message, wParam, lParam);
+            break;
 
         case WM_DESTROY:
             PostQuitMessage(0);

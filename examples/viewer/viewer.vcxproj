@@ -107,6 +107,7 @@
     <ClInclude Include="DirectX\D3DMesh.h" />
     <ClInclude Include="DirectX\D3DEngine.h" />
     <ClInclude Include="DirectX\D3DMeshInstance.h" />
+    <ClInclude Include="DirectX\D3DOrbitCamera.h" />
     <ClInclude Include="DirectX\D3DRenderContext.h" />
     <ClInclude Include="DirectX\D3DTexture.h" />
     <ClInclude Include="DirectX\D3DTextureSet.h" />
@@ -120,6 +121,7 @@
     <ClInclude Include="MaterialData.h" />
     <ClInclude Include="MeshData.h" />
     <ClInclude Include="Platform\COMUtil.h" />
+    <ClInclude Include="Platform\Mouse.h" />
     <ClInclude Include="Platform\platform.h" />
     <ClInclude Include="ShaderOptions.h" />
     <ClInclude Include="stdafx.h" />
@@ -132,8 +134,10 @@
     <ClCompile Include="DirectX\D3DMesh.cpp" />
     <ClCompile Include="DirectX\D3DEngine.cpp" />
     <ClCompile Include="DirectX\D3DDeviceResources.cpp" />
+    <ClCompile Include="DirectX\D3DOrbitCamera.cpp" />
     <ClCompile Include="DirectX\D3DTexture.cpp" />
     <ClCompile Include="DirectX\D3DTextureSet.cpp" />
+    <ClCompile Include="Platform\Mouse.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

@@ -13,6 +13,7 @@
 #include "D3DEnvironmentIBL.h"
 #include "D3DMesh.h"
 #include "D3DMeshInstance.h"
+#include "D3DOrbitCamera.h"
 #include "D3DTexture.h"
 #include "Engine.h"
 #include "EngineOptions.h"
@@ -37,7 +38,7 @@ public:
 
     void ChangeWindowSizeCore(int width, int height) override;
 
-    // IDeviceNotify
+    // ID3DDeviceNotify
     void OnDeviceLost() override;
     void OnDeviceRestored() override;
 
@@ -53,13 +54,10 @@ private:
     Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_pipelineStateSky{};
     std::unordered_map<ShaderOptions, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipelineStateMap{};
 
-    DirectX::XMFLOAT4X4                             m_viewMatrix{};
-    DirectX::XMFLOAT4X4                             m_projectionMatrix{};
-    DirectX::XMFLOAT4X4                             m_viewProjectionMatrix{};
+    D3DOrbitCamera                                  m_camera{};
 
-    DirectX::XMVECTORF32                            m_eye{};
     Light                                           m_directionalLight{};
-    Light                                           m_pointLights[2]{};
+    Light                                           m_pointLights[2]{ {} };
 
     D3DEnvironmentIBL                               m_environment{};
     std::vector<D3DTexture>                         m_textures{};

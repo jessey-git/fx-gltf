@@ -9,6 +9,7 @@
 
 #include "DirectX/D3DEngine.h"
 #include "EngineOptions.h"
+#include "Platform/Mouse.h"
 #include "Platform/platform.h"
 #include "StepTimer.h"
 
@@ -29,6 +30,8 @@ public:
 
     const EngineOptions Config;
 
+    Mouse::ButtonStateTracker MouseTracker{};
+
     void Initialize(HWND hwnd)
     {
         const int MaxTextLength = 32;
@@ -38,6 +41,9 @@ public:
         m_window = hwnd;
         m_windowTitle.assign(currentWindowText);
 
+        m_mouse.SetWindow(hwnd);
+        m_mouse.ResetScrollWheelValue();
+
         InitializeCore(hwnd);
     }
 
@@ -45,7 +51,11 @@ public:
     {
         UpdateStats();
 
-        m_timer.Tick([this]() { Update(static_cast<float>(m_timer.GetElapsedSeconds())); });
+        m_timer.Tick([this]() {
+            MouseTracker.Update(m_mouse.GetState());
+
+            Update(static_cast<float>(m_timer.GetElapsedSeconds()));
+        });
 
         Render();
     }
@@ -62,10 +72,11 @@ protected:
     virtual void ChangeWindowSizeCore(int width, int height) = 0;
 
 private:
-    StepTimer m_timer{};
-
     HWND m_window{};
     std::wstring m_windowTitle{};
+
+    Mouse m_mouse{};
+    StepTimer m_timer{};
 
     void UpdateStats()
     {
