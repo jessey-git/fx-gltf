@@ -17,11 +17,12 @@ enum class ShaderOptions : uint64_t
     USE_MANUAL_SRGB             = (1u << 2u),
     USE_IBL                     = (1u << 3u),
     HAS_BASECOLORMAP            = (1u << 4u),
-    HAS_NORMALMAP               = (1u << 5u),
-    HAS_METALROUGHNESSMAP       = (1u << 6u),
-    HAS_OCCLUSIONMAP            = (1u << 7u),
-    HAS_OCCLUSIONMAP_COMBINED   = (1u << 8u),
-    HAS_EMISSIVEMAP             = (1u << 9u),
+    HAS_TANGENTS                = (1u << 5u),
+    HAS_NORMALMAP               = (1u << 6u),
+    HAS_METALROUGHNESSMAP       = (1u << 7u),
+    HAS_OCCLUSIONMAP            = (1u << 8u),
+    HAS_OCCLUSIONMAP_COMBINED   = (1u << 9u),
+    HAS_EMISSIVEMAP             = (1u << 10u),
 
     IS_GROUND                   = (1u << 12u),
     // clang-format on
@@ -90,6 +91,10 @@ inline std::vector<std::string> GetShaderDefines(ShaderOptions options)
     if (IsSet(options, ShaderOptions::HAS_BASECOLORMAP))
     {
         defines.emplace_back("HAS_BASECOLORMAP");
+    }
+    if (IsSet(options, ShaderOptions::HAS_TANGENTS))
+    {
+        defines.emplace_back("HAS_TANGENTS");
     }
     if (IsSet(options, ShaderOptions::HAS_NORMALMAP))
     {

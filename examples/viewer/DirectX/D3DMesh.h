@@ -11,6 +11,7 @@
 #include "D3DDeviceResources.h"
 #include "D3DRenderContext.h"
 #include "D3DUtil.h"
+#include "MaterialData.h"
 #include "ShaderOptions.h"
 
 class D3DMesh
@@ -64,6 +65,8 @@ private:
 
         MeshShaderData ShaderData{};
         ShaderOptions ShaderConfig{};
+
+        void SetMaterial(MaterialData const & materialData);
     };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};
