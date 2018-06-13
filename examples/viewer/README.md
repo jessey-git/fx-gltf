@@ -36,6 +36,9 @@ Options:
   -x FLOAT               Camera x position
   -y FLOAT               Camera y position
   -z FLOAT               Camera z position
+
+Orbit: left mouse button
+Dolly: middle mouse button
 ```
 
 ## Design
@@ -90,7 +93,6 @@ This matters when creating the PipelineStateObject's InputLayout.  To properly u
 
 ## Known Issues and TODOs
 * General
-    * Input from keyboard/mouse (i.e. simple arcball rotation control etc.)
     * Interleaved buffers from glTF are not supported currently
     * Scene centering does not seem to be working for all tested models. Some scenes still seem shifted away from 0,0,0
 

@@ -188,7 +188,11 @@ private:
 
         if (showHelp)
         {
-            std::cout << app.help(25) << std::endl << std::endl;
+            std::cout << app.help(25) << std::endl;
+            std::cout << "Orbit: left mouse button" << std::endl;
+            std::cout << "Dolly: middle mouse button" << std::endl;
+            std::cout << std::endl;
+
             if (!errorMessage.empty())
             {
                 std::cout << errorMessage << std::endl;

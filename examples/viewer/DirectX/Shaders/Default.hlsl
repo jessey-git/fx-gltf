@@ -173,7 +173,7 @@ float4 GroundPS(PS_INPUT input)
     const float gridSizeMinor = 1;
     const float epsilon = 0.05f;
 
-    float4 finalColor = 0.96f;
+    float4 finalColor = 0.98f;
 
     float wx = input.PosW.x;
     float wz = input.PosW.z;
@@ -206,6 +206,6 @@ float4 GroundPS(PS_INPUT input)
         finalColor.rgb = lerp(float3(1, 0, 0), finalColor.rgb, awz / epsilon);
     }
 
-    finalColor.a *= 1.0 - clamp((length(input.PosW.xz) - 15) / 20.0, 0.1, 1.0);
+    finalColor.a *= 1.0 - clamp((length(input.PosW.xz) - 20) / 25.0, 0.1, 1.0);
     return finalColor;
 }
