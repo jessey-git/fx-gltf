@@ -57,7 +57,7 @@ Controls:
 * Uses ```fx::gltf::Document``` and ```fx::gltf::Node``` to visit each node in the scene-graph
 * Applies the node's transformation data so we can use it during update/render
 
-#### ```DirectX/D3DScene.h```
+#### ```DirectX/D3DEngine.h```
 * Builds all DirectX 12 resources necessary for rendering
 * Uses ```D3DGraph``` to build/traverse the scene-graph, building up ```D3DMeshInstance```s along the way
 * Coordinates the update/render sequencing flow
@@ -66,10 +66,10 @@ Controls:
 * Win32Application::Run
 * D3DEngine / Engine
     * Initialization
-        * Load glTF document
-        * Load glTF textures
-        * Build glTF mesh pieces
-        * Build glTF scene-graph
+        * Load and process the glTF document
+            * Textures
+            * Mesh pieces
+            * Scene-graph
         * Compile necessary shaders to support the loaded materials
         * Establish all DirectX resources (Heaps, PSO's, constant buffers, etc.)
     * Update/Render loop
