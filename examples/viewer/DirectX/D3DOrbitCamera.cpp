@@ -4,17 +4,27 @@
 
 void D3DOrbitCamera::Reset(DirectX::XMFLOAT3 position)
 {
-    const DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(&position);
-    const DirectX::XMVECTOR length = DirectX::XMVector3Length(pos);
-    const DirectX::XMVECTOR norm = DirectX::XMVector3Normalize(pos);
+    constexpr DirectX::XMVECTOR zAxis = { { 0, 0, 1, 0 } };
+    constexpr DirectX::XMVECTOR yAxis = { { 0, 1, 0, 0 } };
 
-    Reset(DirectX::XMVectorGetX(length), DirectX::XMVectorGetY(norm), DirectX::XMVectorGetX(norm));
+    position.y = -position.y;
+    const DirectX::XMVECTOR original = DirectX::XMLoadFloat3(&position);
+
+    position.y = 0;
+    const DirectX::XMVECTOR projected = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&position));
+
+    int xFlip = position.x < 0 ? -1 : 1;
+
+    Reset(
+        DirectX::XMVectorGetX(DirectX::XMVector3Length(original)),
+        DirectX::XMVectorGetX(DirectX::XMVector3AngleBetweenNormals(DirectX::XMVector3Normalize(original), yAxis)),
+        xFlip * DirectX::XMVectorGetX(DirectX::XMVector3AngleBetweenNormals(projected, zAxis)));
 }
 
 void D3DOrbitCamera::Reset(float radius, float phi, float theta)
 {
     m_radius = 1;
-    m_phi = 0;
+    m_phi = DirectX::XM_PIDIV2;
     m_theta = 0;
 
     Update(radius, phi, theta);
@@ -75,9 +85,9 @@ void D3DOrbitCamera::SetProjection(float fovAngleY, float aspectRatio, float nea
 
 void D3DOrbitCamera::Calculate()
 {
-    constexpr DirectX::XMVECTORF32 Backward = { { 0.0f, 0.0f, 1.0f, 0.0f } };
-    constexpr DirectX::XMVECTORF32 At = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-    constexpr DirectX::XMVECTORF32 Up = { { 0.0f, 1.0f, 0.0f, 0.0 } };
+    constexpr DirectX::XMVECTOR Backward = { { 0.0f, 0.0f, 1.0f, 0.0f } };
+    constexpr DirectX::XMVECTOR At = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+    constexpr DirectX::XMVECTOR Up = { { 0.0f, 1.0f, 0.0f, 0.0 } };
 
     // Update camera position...
     Position = DirectX::XMVector3Transform(Backward, DirectX::XMMatrixRotationRollPitchYaw(m_phi, m_theta, 0.0f));
