@@ -19,11 +19,11 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 
 ## Usage
 ```
-viewer.exe
-Usage: [OPTIONS] file
+A simple glTF2.0 scene viewer using DirectX 12
+Usage: viewer.exe [OPTIONS] file
 
 Positionals:
-  file TEXT (REQUIRED)   Model to load
+  file TEXT (REQUIRED)   Scene to load (.gltf or .glb)
 
 Options:
   -h,--help              Print this help message and exit
@@ -37,8 +37,9 @@ Options:
   -y FLOAT               Camera y position
   -z FLOAT               Camera z position
 
-Orbit: left mouse button
-Dolly: middle mouse button
+Controls:
+  Orbit with left mouse button
+  Dolly with middle mouse button
 ```
 
 ## Design

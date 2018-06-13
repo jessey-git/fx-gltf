@@ -137,7 +137,7 @@ private:
     {
         bool showHelp{};
 
-        CLI::App app{ "viewer.exe" };
+        CLI::App app{ "A simple glTF2.0 scene viewer using DirectX 12", "viewer.exe" };
         app.add_option("--width", options.Width, "Initial window width");
         app.add_option("--height", options.Height, "Initial window height");
         app.add_flag("-r,--rotate", options.AutoRotate, "Auto rotate model");
@@ -147,7 +147,7 @@ private:
         app.add_option("-x", options.CameraX, "Camera x position");
         app.add_option("-y", options.CameraY, "Camera y position");
         app.add_option("-z", options.CameraZ, "Camera z position");
-        app.add_option("file", options.ModelPath, "Model to load (.gltf or .glb)")->required(true);
+        app.add_option("file", options.ModelPath, "Scene to load (.gltf or .glb)")->required(true);
 
         int argc;
         std::vector<std::string> args{};
@@ -189,8 +189,9 @@ private:
         if (showHelp)
         {
             std::cout << app.help(25) << std::endl;
-            std::cout << "Orbit: left mouse button" << std::endl;
-            std::cout << "Dolly: middle mouse button" << std::endl;
+            std::cout << "Controls:" << std::endl;
+            std::cout << "  Orbit with left mouse button" << std::endl;
+            std::cout << "  Dolly with middle mouse button" << std::endl;
             std::cout << std::endl;
 
             if (!errorMessage.empty())

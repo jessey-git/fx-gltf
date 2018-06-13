@@ -44,6 +44,7 @@ void D3DOrbitCamera::Update(Mouse::ButtonStateTracker tracker)
     using ButtonState = Mouse::ButtonStateTracker::ButtonState;
 
     // Query mouse state...
+    bool changed = false;
     Mouse::State state = tracker.GetLastState();
     if (tracker.leftButton == ButtonState::PRESSED || tracker.middleButton == ButtonState::PRESSED)
     {
@@ -54,6 +55,7 @@ void D3DOrbitCamera::Update(Mouse::ButtonStateTracker tracker)
         RotateLeft(DirectX::XM_2PI * (state.x - m_lastCursorPos.x) / 540.0f);
         RotateUp(DirectX::XM_2PI * (state.y - m_lastCursorPos.y) / 540.0f);
 
+        changed = true;
         TrackLastCursorPosition(state);
     }
     else if (tracker.middleButton == ButtonState::HELD)
@@ -68,10 +70,14 @@ void D3DOrbitCamera::Update(Mouse::ButtonStateTracker tracker)
             Dolly(1.0f / 0.95f);
         }
 
+        changed = true;
         TrackLastCursorPosition(state);
     }
 
-    Calculate();
+    if (changed)
+    {
+        Calculate();
+    }
 }
 
 void D3DOrbitCamera::SetProjection(float fovAngleY, float aspectRatio, float nearZ, float farZ)
