@@ -13,7 +13,7 @@
 uint32_t D3DMesh::CurrentMeshPartId = 1;
 
 void D3DMesh::Create(
-    fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources const * deviceResources)
+    fx::gltf::Document const & doc, std::size_t meshIndex, D3DDeviceResources const * deviceResources)
 {
     ID3D12Device * device = deviceResources->GetD3DDevice();
     ID3D12GraphicsCommandList * commandList = deviceResources->GetCommandList();
@@ -44,7 +44,7 @@ void D3DMesh::Create(
 
         D3DMeshPart & meshPart = m_meshParts[i];
         const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
-        DX::ThrowIfFailed(device->CreateCommittedResource(
+        COMUtil::ThrowIfFailed(device->CreateCommittedResource(
             &defaultHeapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDescV,
@@ -52,7 +52,7 @@ void D3DMesh::Create(
             nullptr,
             IID_PPV_ARGS(meshPart.DefaultBuffer.ReleaseAndGetAddressOf())));
 
-        DX::ThrowIfFailed(device->CreateCommittedResource(
+        COMUtil::ThrowIfFailed(device->CreateCommittedResource(
             &uploadHeapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDescV,
@@ -63,7 +63,7 @@ void D3DMesh::Create(
         uint8_t * bufferStart{};
         uint32_t offset{};
         const CD3DX12_RANGE readRange(0, 0); // We do not intend to read from this resource on the CPU.
-        DX::ThrowIfFailed(meshPart.UploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
+        COMUtil::ThrowIfFailed(meshPart.UploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
 
         // Copy vertex buffer to upload...
         std::memcpy(bufferStart, vBuffer.data, vBuffer.totalSize);
@@ -120,65 +120,16 @@ void D3DMesh::Create(
 
         // Set material properties for this mesh piece...
         meshPart.ShaderData.MeshAutoColor = Util::HSVtoRBG(std::fmodf(CurrentMeshPartId++ * 0.618033988749895f, 1.0), 0.65f, 0.65f);
-        if (mesh.Material().HasData())
+        meshPart.SetMaterial(mesh.Material());
+        if (tBuffer.HasData())
         {
-            auto material = mesh.Material().Data();
-            meshPart.ShaderData.BaseColorIndex = material.pbrMetallicRoughness.baseColorTexture.index;
-            meshPart.ShaderData.BaseColorFactor = DirectX::XMFLOAT4(material.pbrMetallicRoughness.baseColorFactor.data());
-
-            meshPart.ShaderData.MetalRoughIndex = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
-            meshPart.ShaderData.MetallicFactor = material.pbrMetallicRoughness.metallicFactor;
-            meshPart.ShaderData.RoughnessFactor = material.pbrMetallicRoughness.roughnessFactor;
-
-            meshPart.ShaderData.NormalIndex = material.normalTexture.index;
-            meshPart.ShaderData.NormalScale = material.normalTexture.scale;
-
-            meshPart.ShaderData.AOIndex = material.occlusionTexture.index;
-            meshPart.ShaderData.AOStrength = material.occlusionTexture.strength;
-
-            meshPart.ShaderData.EmissiveIndex = material.emissiveTexture.index;
-            meshPart.ShaderData.EmissiveFactor = DirectX::XMFLOAT3(material.emissiveFactor.data());
-
-            ShaderOptions options = ShaderOptions::None;
-            if (meshPart.ShaderData.BaseColorIndex >= 0)
-                options |= ShaderOptions::HAS_BASECOLORMAP;
-            if (meshPart.ShaderData.NormalIndex >= 0)
-                options |= ShaderOptions::HAS_NORMALMAP;
-            if (meshPart.ShaderData.MetalRoughIndex >= 0)
-                options |= ShaderOptions::HAS_METALROUGHNESSMAP;
-            if (meshPart.ShaderData.AOIndex >= 0)
-            {
-                options |= ShaderOptions::HAS_OCCLUSIONMAP;
-
-                if (meshPart.ShaderData.AOIndex == meshPart.ShaderData.MetalRoughIndex)
-                {
-                    options |= ShaderOptions::HAS_OCCLUSIONMAP_COMBINED;
-                }
-            }
-            if (meshPart.ShaderData.EmissiveIndex >= 0)
-                options |= ShaderOptions::HAS_EMISSIVEMAP;
-
-            if (options == ShaderOptions::None)
-            {
-                options = ShaderOptions::USE_FACTORS_ONLY;
-            }
-
-            meshPart.ShaderConfig = options;
-        }
-        else
-        {
-            // Use a default material
-            meshPart.ShaderConfig = ShaderOptions::USE_FACTORS_ONLY;
-            meshPart.ShaderData.BaseColorFactor = DirectX::XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-            meshPart.ShaderData.MetallicFactor = 0;
-            meshPart.ShaderData.RoughnessFactor = 0.5f;
+            meshPart.ShaderConfig |= ShaderOptions::HAS_TANGENTS;
         }
     }
 }
 
 void D3DMesh::SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor)
 {
-    using namespace DirectX;
     const DirectX::XMMATRIX translation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&centerTranslation));
     const DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationY(rotationY);
     const DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
@@ -232,5 +183,62 @@ void D3DMesh::Reset()
     for (auto & meshPart : m_meshParts)
     {
         meshPart.DefaultBuffer.Reset();
+    }
+}
+
+void D3DMesh::D3DMeshPart::SetMaterial(MaterialData const & materialData)
+{
+    if (materialData.HasData())
+    {
+        auto material = materialData.Data();
+        ShaderData.BaseColorIndex = material.pbrMetallicRoughness.baseColorTexture.index;
+        ShaderData.BaseColorFactor = DirectX::XMFLOAT4(material.pbrMetallicRoughness.baseColorFactor.data());
+
+        ShaderData.MetalRoughIndex = material.pbrMetallicRoughness.metallicRoughnessTexture.index;
+        ShaderData.MetallicFactor = material.pbrMetallicRoughness.metallicFactor;
+        ShaderData.RoughnessFactor = material.pbrMetallicRoughness.roughnessFactor;
+
+        ShaderData.NormalIndex = material.normalTexture.index;
+        ShaderData.NormalScale = material.normalTexture.scale;
+
+        ShaderData.AOIndex = material.occlusionTexture.index;
+        ShaderData.AOStrength = material.occlusionTexture.strength;
+
+        ShaderData.EmissiveIndex = material.emissiveTexture.index;
+        ShaderData.EmissiveFactor = DirectX::XMFLOAT3(material.emissiveFactor.data());
+
+        ShaderOptions options = ShaderOptions::None;
+        if (ShaderData.BaseColorIndex >= 0)
+            options |= ShaderOptions::HAS_BASECOLORMAP;
+        if (ShaderData.NormalIndex >= 0)
+            options |= ShaderOptions::HAS_NORMALMAP;
+        if (ShaderData.MetalRoughIndex >= 0)
+            options |= ShaderOptions::HAS_METALROUGHNESSMAP;
+        if (ShaderData.AOIndex >= 0)
+        {
+            options |= ShaderOptions::HAS_OCCLUSIONMAP;
+
+            if (ShaderData.AOIndex == ShaderData.MetalRoughIndex)
+            {
+                options |= ShaderOptions::HAS_OCCLUSIONMAP_COMBINED;
+            }
+        }
+        if (ShaderData.EmissiveIndex >= 0)
+            options |= ShaderOptions::HAS_EMISSIVEMAP;
+
+        if (options == ShaderOptions::None)
+        {
+            options = ShaderOptions::USE_FACTORS_ONLY;
+        }
+
+        ShaderConfig = options;
+    }
+    else
+    {
+        // Use a default material
+        ShaderConfig = ShaderOptions::USE_FACTORS_ONLY;
+        ShaderData.BaseColorFactor = DirectX::XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+        ShaderData.MetallicFactor = 0;
+        ShaderData.RoughnessFactor = 0.5f;
     }
 }

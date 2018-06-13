@@ -5,10 +5,11 @@
 // ------------------------------------------------------------
 #include "stdafx.h"
 #include "D3DDeviceResources.h"
-#include "D3DUtil.h"
+#include "Platform/COMUtil.h"
+#include "Platform/platform.h"
 
 using namespace DirectX;
-using namespace DX;
+using namespace COMUtil;
 
 using Microsoft::WRL::ComPtr;
 
@@ -197,9 +198,9 @@ void D3DDeviceResources::CreateDeviceResources()
     }
 
     // Create a command list for recording graphics commands.
-    DX::ThrowIfFailed(m_d3dDevice->CreateCommandList(
+    COMUtil::ThrowIfFailed(m_d3dDevice->CreateCommandList(
         0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_frameResources[0].CommandAllocator.Get(), nullptr, IID_PPV_ARGS(m_commandList.ReleaseAndGetAddressOf())));
-    DX::ThrowIfFailed(m_commandList->Close());
+    COMUtil::ThrowIfFailed(m_commandList->Close());
 
     // Create a fence for tracking GPU execution progress.
     ThrowIfFailed(m_d3dDevice->CreateFence(m_frameResources[m_backBufferIndex].Fence, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));

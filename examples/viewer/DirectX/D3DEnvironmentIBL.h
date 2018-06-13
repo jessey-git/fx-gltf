@@ -10,7 +10,7 @@
 class D3DEnvironmentIBL
 {
 public:
-    void Create(DX::D3DDeviceResources const * deviceResources);
+    void Create(D3DDeviceResources const * deviceResources);
 
     void CreateSRV(ID3D12Device * device, CD3DX12_CPU_DESCRIPTOR_HANDLE & descriptor);
 

@@ -40,7 +40,7 @@ void D3DEngine::InitializeCore(HWND window)
     m_gltfGround = fx::gltf::LoadFromText("Assets/ground_plane.gltf");
 
     const uint32_t BackBufferCount = 3;
-    m_deviceResources = std::make_unique<DX::D3DDeviceResources>(BackBufferCount, D3D_FEATURE_LEVEL_12_0, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+    m_deviceResources = std::make_unique<D3DDeviceResources>(BackBufferCount, D3D_FEATURE_LEVEL_12_0, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
     m_deviceResources->SetWindow(window, Config.Width, Config.Height);
     m_deviceResources->RegisterDeviceNotify(this);
 
@@ -61,6 +61,8 @@ void D3DEngine::Update(float elapsedTime) noexcept
             m_curRotationAngleRad -= DirectX::XM_2PI;
         }
     }
+
+    m_camera.Update(MouseTracker);
 }
 
 void D3DEngine::Render()
@@ -70,11 +72,11 @@ void D3DEngine::Render()
 
     D3DFrameResource const & currentFrame = m_deviceResources->GetCurrentFrameResource();
 
-    const DirectX::XMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewProjectionMatrix);
+    const DirectX::XMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_camera.ViewProjectionMatrix);
 
     SceneConstantBuffer sceneParameters{};
     sceneParameters.ViewProj = DirectX::XMMatrixTranspose(viewProj);
-    sceneParameters.Camera = m_eye;
+    sceneParameters.Camera = m_camera.Position;
     sceneParameters.DirectionalLight = m_directionalLight;
     sceneParameters.PointLights[0] = m_pointLights[0];
     sceneParameters.PointLights[1] = m_pointLights[1];
@@ -154,11 +156,8 @@ void D3DEngine::CreateDeviceDependentResources()
         mesh.FinishUpload();
     }
 
-    // Initialize the view matrix
-    m_eye = { Config.CameraX, Config.CameraY, Config.CameraZ, 0.0f };
-    static const DirectX::XMVECTORF32 c_at = { 0.0f, 0.0f, 0.0f, 0.0f };
-    static const DirectX::XMVECTORF32 c_up = { 0.0f, 1.0f, 0.0f, 0.0 };
-    DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookAtLH(m_eye, c_at, c_up));
+    // Initialize the camera system
+    m_camera.Reset(DirectX::XMFLOAT3(Config.CameraX, Config.CameraY, Config.CameraZ));
 
     // Initialize the lighting parameters
     m_directionalLight.Direction = DirectX::XMFLOAT3(-0.57f, 0.57f, 0.57f);
@@ -177,11 +176,7 @@ void D3DEngine::CreateWindowSizeDependentResources()
 {
     // Initialize the projection matrix
     const auto size = m_deviceResources->GetOutputSize();
-    const DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV4, static_cast<float>(size.right) / size.bottom, 0.01f, 400.0f);
-    const DirectX::XMMATRIX viewProj = DirectX::XMLoadFloat4x4(&m_viewMatrix) * projection;
-
-    DirectX::XMStoreFloat4x4(&m_projectionMatrix, projection);
-    DirectX::XMStoreFloat4x4(&m_viewProjectionMatrix, viewProj);
+    m_camera.SetProjection(DirectX::XM_PIDIV4, static_cast<float>(size.right) / size.bottom, 0.01f, 400.0f);
 }
 
 void D3DEngine::PrepareRender()
@@ -335,11 +330,11 @@ void D3DEngine::BuildRootSignature()
             throw std::runtime_error(static_cast<const char *>(error->GetBufferPointer()));
         }
 
-        throw DX::com_exception(hr);
+        throw COMUtil::com_exception(hr);
     }
 
     ID3D12Device * device = m_deviceResources->GetD3DDevice();
-    DX::ThrowIfFailed(device->CreateRootSignature(
+    COMUtil::ThrowIfFailed(device->CreateRootSignature(
         0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(m_rootSignature.ReleaseAndGetAddressOf())));
 }
 
@@ -352,7 +347,7 @@ void D3DEngine::BuildDescriptorHeaps()
     cbvHeapDesc.NodeMask = 0;
 
     ID3D12Device * device = m_deviceResources->GetD3DDevice();
-    DX::ThrowIfFailed(device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+    COMUtil::ThrowIfFailed(device->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
 
     const uint32_t size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
@@ -380,7 +375,7 @@ void D3DEngine::BuildPipelineStateObjects()
         };
 
     Logger::WriteLine("Compiling shaders...");
-    auto standardVS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "StandardVS", "vs_5_1", nullptr);
+    auto standardVS = Util::CompileShader(L"DirectX\\Shaders\\Default.hlsl", "StandardVS", "vs_5_1", nullptr);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { &inputLayout[0], static_cast<UINT>(inputLayout.size()) };
@@ -431,12 +426,12 @@ void D3DEngine::CompileShaderPerumutation(std::string const & entryPoint, Shader
 
         shaderDefines.emplace_back(D3D_SHADER_MACRO{ nullptr, nullptr });
 
-        auto permutedPS = DX::CompileShader(L"DirectX\\Shaders\\Default.hlsl", entryPoint, "ps_5_1", shaderDefines.data());
+        auto permutedPS = Util::CompileShader(L"DirectX\\Shaders\\Default.hlsl", entryPoint, "ps_5_1", shaderDefines.data());
         psoDescTemplate.PS = { permutedPS->GetBufferPointer(), permutedPS->GetBufferSize() };
 
         Microsoft::WRL::ComPtr<ID3D12PipelineState> pso;
         ID3D12Device * device = m_deviceResources->GetD3DDevice();
-        DX::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDescTemplate, IID_PPV_ARGS(pso.ReleaseAndGetAddressOf())));
+        COMUtil::ThrowIfFailed(device->CreateGraphicsPipelineState(&psoDescTemplate, IID_PPV_ARGS(pso.ReleaseAndGetAddressOf())));
 
         m_pipelineStateMap[options] = pso;
     }

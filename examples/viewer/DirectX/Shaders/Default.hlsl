@@ -91,15 +91,30 @@ float4 UberPS(PS_INPUT input)
     float3 specularEnvironmentR0 = specularColor.rgb;
     float3 specularEnvironmentR90 = reflectance90;
 
+#if HAS_TANGENTS
+    float3x3 TBN = float3x3(normalize(input.TangentW), normalize(input.BinormalW), input.NormalW);
+#else
+    float3 pos_dx = ddx(input.PosW);
+    float3 pos_dy = ddy(input.PosW);
+    float3 tex_dx = ddx(float3(input.TexC, 0.0));
+    float3 tex_dy = ddy(float3(input.TexC, 0.0));
+    float3 t = (tex_dy.y * pos_dx - tex_dx.y * pos_dy) / (tex_dx.x * tex_dy.y - tex_dy.x * tex_dx.y);
+
+    float3 n = input.NormalW;
+    t = normalize(t - n * dot(n, t));
+    float3 b = normalize(cross(n, t));
+
+    float3x3 TBN = float3x3(t, b, n);
+#endif
+
 #if HAS_NORMALMAP
     float4 normalMapSample = Textures[matData.NormalIndex].Sample(SampAnisotropicWrap, input.TexC);
     normalMapSample.g = 1.0f - normalMapSample.g;
 
     float3 normal = (2.0f * normalMapSample.rgb - 1.0f) * float3(matData.NormalScale, matData.NormalScale, 1.0f);
-    float3x3 TBN = float3x3(normalize(input.TangentW), normalize(input.BinormalW), input.NormalW);
     float3 N = normalize(mul(normal, TBN));
 #else
-    float3 N = input.NormalW;
+    float3 N = TBN[2].xyz;
 #endif
 
     float3 V = normalize(Camera.xyz - input.PosW); // Vector from surface point to camera
@@ -158,7 +173,7 @@ float4 GroundPS(PS_INPUT input)
     const float gridSizeMinor = 1;
     const float epsilon = 0.05f;
 
-    float4 finalColor = 0.96f;
+    float4 finalColor = 0.98f;
 
     float wx = input.PosW.x;
     float wz = input.PosW.z;
@@ -191,6 +206,6 @@ float4 GroundPS(PS_INPUT input)
         finalColor.rgb = lerp(float3(1, 0, 0), finalColor.rgb, awz / epsilon);
     }
 
-    finalColor.a *= 1.0 - clamp((length(input.PosW.xz) - 15) / 20.0, 0.1, 1.0);
+    finalColor.a *= 1.0 - clamp((length(input.PosW.xz) - 20) / 25.0, 0.1, 1.0);
     return finalColor;
 }

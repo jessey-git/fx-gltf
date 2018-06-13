@@ -22,7 +22,7 @@ public:
 
         const D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(m_elementByteSize * elementCount);
-        DX::ThrowIfFailed(device->CreateCommittedResource(
+        COMUtil::ThrowIfFailed(device->CreateCommittedResource(
             &uploadHeapProperties,
             D3D12_HEAP_FLAG_NONE,
             &resourceDescV,

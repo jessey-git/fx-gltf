@@ -11,13 +11,14 @@
 #include "D3DDeviceResources.h"
 #include "D3DRenderContext.h"
 #include "D3DUtil.h"
+#include "MaterialData.h"
 #include "ShaderOptions.h"
 
 class D3DMesh
 {
 public:
     void Create(
-        fx::gltf::Document const & doc, std::size_t meshIndex, DX::D3DDeviceResources const * deviceResources);
+        fx::gltf::Document const & doc, std::size_t meshIndex, D3DDeviceResources const * deviceResources);
 
     void SetWorldMatrix(DirectX::XMMATRIX const & baseTransform, DirectX::XMFLOAT3 const & centerTranslation, float rotationY, float scalingFactor);
 
@@ -64,6 +65,8 @@ private:
 
         MeshShaderData ShaderData{};
         ShaderOptions ShaderConfig{};
+
+        void SetMaterial(MaterialData const & materialData);
     };
 
     DirectX::XMFLOAT4X4 m_worldMatrix{};

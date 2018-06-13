@@ -19,11 +19,11 @@ An application for demonstrating the practical usage of [fx-gltf](https://github
 
 ## Usage
 ```
-viewer.exe
-Usage: [OPTIONS] file
+A simple glTF2.0 scene viewer using DirectX 12
+Usage: viewer.exe [OPTIONS] file
 
 Positionals:
-  file TEXT (REQUIRED)   Model to load
+  file TEXT (REQUIRED)   Scene to load (.gltf or .glb)
 
 Options:
   -h,--help              Print this help message and exit
@@ -36,6 +36,10 @@ Options:
   -x FLOAT               Camera x position
   -y FLOAT               Camera y position
   -z FLOAT               Camera z position
+
+Controls:
+  Orbit with left mouse button
+  Dolly with middle mouse button
 ```
 
 ## Design
@@ -53,7 +57,7 @@ Options:
 * Uses ```fx::gltf::Document``` and ```fx::gltf::Node``` to visit each node in the scene-graph
 * Applies the node's transformation data so we can use it during update/render
 
-#### ```DirectX/D3DScene.h```
+#### ```DirectX/D3DEngine.h```
 * Builds all DirectX 12 resources necessary for rendering
 * Uses ```D3DGraph``` to build/traverse the scene-graph, building up ```D3DMeshInstance```s along the way
 * Coordinates the update/render sequencing flow
@@ -62,10 +66,10 @@ Options:
 * Win32Application::Run
 * D3DEngine / Engine
     * Initialization
-        * Load glTF document
-        * Load glTF textures
-        * Build glTF mesh pieces
-        * Build glTF scene-graph
+        * Load and process the glTF document
+            * Textures
+            * Mesh pieces
+            * Scene-graph
         * Compile necessary shaders to support the loaded materials
         * Establish all DirectX resources (Heaps, PSO's, constant buffers, etc.)
     * Update/Render loop
@@ -90,7 +94,6 @@ This matters when creating the PipelineStateObject's InputLayout.  To properly u
 
 ## Known Issues and TODOs
 * General
-    * Input from keyboard/mouse (i.e. simple arcball rotation control etc.)
     * Interleaved buffers from glTF are not supported currently
     * Scene centering does not seem to be working for all tested models. Some scenes still seem shifted away from 0,0,0
 

@@ -13,6 +13,8 @@
 #include "DirectX/D3DEngine.h"
 #include "Engine.h"
 #include "EngineOptions.h"
+#include "Platform/COMUtil.h"
+#include "Platform/Mouse.h"
 
 class Win32Application
 {
@@ -54,13 +56,13 @@ public:
             hInstance,
             engine.get());
 
-        // Initialize the sample. OnInit is defined in each child-implementation of DXSample.
+        // Initialize the engine...
         engine->Initialize(hwnd);
 
         ShowWindow(hwnd, nCmdShow);
 
         // Main sample loop.
-        MSG msg = {};
+        MSG msg{};
         while (msg.message != WM_QUIT)
         {
             // Process any messages in the queue.
@@ -86,6 +88,8 @@ private:
             {
                 LPCREATESTRUCT pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
                 SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+
+                Mouse::ProcessMessage(message, wParam, lParam);
             }
             return 0;
 
@@ -105,6 +109,21 @@ private:
 
             return 0;
 
+        case WM_INPUT:
+        case WM_MOUSEMOVE:
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+        case WM_MOUSEWHEEL:
+        case WM_XBUTTONDOWN:
+        case WM_XBUTTONUP:
+        case WM_MOUSEHOVER:
+            Mouse::ProcessMessage(message, wParam, lParam);
+            break;
+
         case WM_DESTROY:
             PostQuitMessage(0);
             return 0;
@@ -118,7 +137,7 @@ private:
     {
         bool showHelp{};
 
-        CLI::App app{ "viewer.exe" };
+        CLI::App app{ "A simple glTF2.0 scene viewer using DirectX 12", "viewer.exe" };
         app.add_option("--width", options.Width, "Initial window width");
         app.add_option("--height", options.Height, "Initial window height");
         app.add_flag("-r,--rotate", options.AutoRotate, "Auto rotate model");
@@ -128,7 +147,7 @@ private:
         app.add_option("-x", options.CameraX, "Camera x position");
         app.add_option("-y", options.CameraY, "Camera y position");
         app.add_option("-z", options.CameraZ, "Camera z position");
-        app.add_option("file", options.ModelPath, "Model to load (.gltf or .glb)")->required(true);
+        app.add_option("file", options.ModelPath, "Scene to load (.gltf or .glb)")->required(true);
 
         int argc;
         std::vector<std::string> args{};
@@ -169,7 +188,12 @@ private:
 
         if (showHelp)
         {
-            std::cout << app.help(25) << std::endl << std::endl;
+            std::cout << app.help(25) << std::endl;
+            std::cout << "Controls:" << std::endl;
+            std::cout << "  Orbit with left mouse button" << std::endl;
+            std::cout << "  Dolly with middle mouse button" << std::endl;
+            std::cout << std::endl;
+
             if (!errorMessage.empty())
             {
                 std::cout << errorMessage << std::endl;
@@ -193,22 +217,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
     }
 
     int result = -1;
-
-    HRESULT hr = CoInitializeEx(nullptr, 0);
-    if (SUCCEEDED(hr))
+    try
     {
-        try
-        {
-            result = Win32Application::Run(hInstance, nCmdShow);
-        }
-        catch (std::exception & e)
-        {
-            std::cout << e.what() << std::endl;
-        }
+        COMUtil::Init();
+        result = Win32Application::Run(hInstance, nCmdShow);
     }
-    else
+    catch (std::exception & e)
     {
-        std::cout << "CoCoInitializeEx failed : " << hr << std::endl;
+        std::cout << e.what() << std::endl;
     }
 
     if (result < 0)

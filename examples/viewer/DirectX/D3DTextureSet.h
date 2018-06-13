@@ -19,7 +19,7 @@ public:
     void Initialize(std::vector<std::string> const & textures);
 
     void LoadToMemory(
-        DX::D3DDeviceResources const * deviceResources,
+        D3DDeviceResources const * deviceResources,
         Microsoft::WRL::ComPtr<ID3D12Resource> & defaultBuffer,
         Microsoft::WRL::ComPtr<ID3D12Resource> & uploadBuffer,
         UINT16 depthOrArraySize,

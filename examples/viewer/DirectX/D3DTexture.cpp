@@ -9,7 +9,7 @@
 #include "D3DTextureSet.h"
 #include "D3DUtil.h"
 
-void D3DTexture::Create(std::string const & texture, DX::D3DDeviceResources const * deviceResources)
+void D3DTexture::Create(std::string const & texture, D3DDeviceResources const * deviceResources)
 {
     D3DTextureSet tset;
 
