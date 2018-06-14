@@ -121,8 +121,8 @@ TEST_CASE("exceptions")
         Mutate(json, [](nlohmann::json & m) { m["accessors"][0]["type"] = "vec3"; }, "accessor.type");
         Mutate(json, [](nlohmann::json & m) { m["animations"][0]["samplers"][0]["interpolation"] = "linear"; }, "animation.sampler.interpolation");
         Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 0; }, "buffer.byteLength");
-        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 2; }, "bad base64");
-        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "data:application/octet-stream;base64,$$$$"; }, "bad base64");
+        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 2; }, "malformed base64");
+        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "data:application/octet-stream;base64,$$$$"; }, "malformed base64");
         Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "../dir/traversal.bin"; }, "buffer.uri");
         Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "nonexistant.bin"; }, "buffer.uri");
         Mutate(json, [](nlohmann::json & m) { m["cameras"][0]["type"] = "D-SLR"; }, "camera.type");
@@ -150,8 +150,8 @@ TEST_CASE("exceptions")
 
     SECTION("load : mismatched")
     {
-        REQUIRE_THROWS_AS(fx::gltf::LoadFromText("data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"), fx::gltf::invalid_gltf_document);
-        REQUIRE_THROWS_AS(fx::gltf::LoadFromBinary("data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf"), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromText("data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("json.exception", true));
+        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary("data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf"), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("GLB header"));
     }
 
     SECTION("load / save : invalid path")

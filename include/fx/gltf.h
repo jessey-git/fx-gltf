@@ -498,7 +498,7 @@ namespace gltf
             const std::size_t decodedEstimate = base64Length / 4 * 3;
             if ((decodedEstimate - 2) > byteLength) // we need to give room for padding...
             {
-                throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
+                throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
             }
 
 #if defined(FX_GLTF_HAS_CPP_17)
@@ -508,7 +508,7 @@ namespace gltf
 #endif
             if (!success)
             {
-                throw invalid_gltf_document("Invalid buffer.uri value", "bad base64");
+                throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
             }
         }
     };
@@ -833,79 +833,68 @@ namespace gltf
 
         inline Document Create(nlohmann::json const & json, DataContext const & dataContext)
         {
-            try
-            {
-                Document document = json;
+            Document document = json;
 
-                if (document.buffers.size() > dataContext.readQuotas.MaxBufferCount)
+            if (document.buffers.size() > dataContext.readQuotas.MaxBufferCount)
+            {
+                throw invalid_gltf_document("Quota exceeded : number of buffers > MaxBufferCount");
+            }
+
+            for (auto & buffer : document.buffers)
+            {
+                if (buffer.byteLength == 0)
                 {
-                    throw invalid_gltf_document("Quota exceeded.", "Number of buffers > MaxBufferCount");
+                    throw invalid_gltf_document("Invalid buffer.byteLength value : 0");
                 }
 
-                for (auto & buffer : document.buffers)
+                if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
                 {
-                    if (buffer.byteLength == 0)
+                    throw invalid_gltf_document("Quota exceeded : buffer.byteLength > MaxBufferByteLength");
+                }
+
+                if (!buffer.uri.empty())
+                {
+                    if (buffer.IsEmbeddedResource())
                     {
-                        throw invalid_gltf_document("Invalid buffer.byteLength value", "byteLength == 0");
+                        buffer.MaterializeData();
                     }
-
-                    if (buffer.byteLength > dataContext.readQuotas.MaxBufferByteLength)
+                    else
                     {
-                        throw invalid_gltf_document("Quota exceeded.", "Buffer byteLength > MaxBufferByteLength");
-                    }
-
-                    if (!buffer.uri.empty())
-                    {
-                        if (buffer.IsEmbeddedResource())
+                        std::ifstream fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
+                        if (!fileData.good())
                         {
-                            buffer.MaterializeData();
-                        }
-                        else
-                        {
-                            std::ifstream fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
-                            if (!fileData.good())
-                            {
-                                throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
-                            }
-
-                            buffer.data.resize(buffer.byteLength);
-                            fileData.read(reinterpret_cast<char *>(&buffer.data[0]), buffer.byteLength);
-                        }
-                    }
-                    else if (dataContext.binaryData != nullptr)
-                    {
-                        detail::ChunkHeader header;
-
-                        std::vector<uint8_t> & binary = *dataContext.binaryData;
-                        std::memcpy(&header, &binary[dataContext.binaryOffset], detail::ChunkHeaderSize);
-
-                        if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
-                        {
-                            throw invalid_gltf_document("Invalid buffer data");
+                            throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
                         }
 
                         buffer.data.resize(buffer.byteLength);
-                        std::memcpy(&buffer.data[0], &binary[dataContext.binaryOffset + detail::ChunkHeaderSize], buffer.byteLength);
+                        fileData.read(reinterpret_cast<char *>(&buffer.data[0]), buffer.byteLength);
                     }
                 }
+                else if (dataContext.binaryData != nullptr)
+                {
+                    detail::ChunkHeader header;
 
-                return document;
+                    std::vector<uint8_t> & binary = *dataContext.binaryData;
+                    std::memcpy(&header, &binary[dataContext.binaryOffset], detail::ChunkHeaderSize);
+
+                    if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
+                    {
+                        throw invalid_gltf_document("Invalid GLB buffer data");
+                    }
+
+                    buffer.data.resize(buffer.byteLength);
+                    std::memcpy(&buffer.data[0], &binary[dataContext.binaryOffset + detail::ChunkHeaderSize], buffer.byteLength);
+                }
             }
-            catch (fx::gltf::invalid_gltf_document &)
-            {
-                throw; // Do not nest unnecessarily...
-            }
-            catch (std::exception &)
-            {
-                std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
-            }
+
+            return document;
         }
 
         inline void ValidateBuffers(Document const & document, bool useBinaryFormat)
         {
             if (document.buffers.empty())
             {
-                throw invalid_gltf_document("Invalid document. A document must have at least 1 buffer.");
+                throw invalid_gltf_document("Invalid glTF document. A document must have at least 1 buffer.");
             }
 
             bool foundBinaryBuffer = false;
@@ -914,12 +903,12 @@ namespace gltf
                 Buffer const & buffer = document.buffers[bufferIndex];
                 if (buffer.byteLength == 0)
                 {
-                    throw invalid_gltf_document("Invalid buffer.byteLength value.", "0");
+                    throw invalid_gltf_document("Invalid buffer.byteLength value : 0");
                 }
 
                 if (buffer.byteLength != buffer.data.size())
                 {
-                    throw invalid_gltf_document("Invalid buffer.byteLength value.", "does not match buffer.data size");
+                    throw invalid_gltf_document("Invalid buffer.byteLength value : does not match buffer.data size");
                 }
 
                 if (buffer.uri.empty())
@@ -927,14 +916,14 @@ namespace gltf
                     foundBinaryBuffer = true;
                     if (bufferIndex != 0)
                     {
-                        throw invalid_gltf_document("Invalid document. Only 1 buffer, the very first, is allowed to have an empty buffer.uri field.");
+                        throw invalid_gltf_document("Invalid glTF document. Only 1 buffer, the very first, is allowed to have an empty buffer.uri field.");
                     }
                 }
             }
 
             if (useBinaryFormat && !foundBinaryBuffer)
             {
-                throw invalid_gltf_document("Invalid document. No buffer found which can meet the criteria for saving to a .glb file.");
+                throw invalid_gltf_document("Invalid glTF document. No buffer found which can meet the criteria for saving to a .glb file.");
             }
         }
 
@@ -1778,81 +1767,101 @@ namespace gltf
 
     inline Document LoadFromText(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
-        nlohmann::json json;
+        try
         {
-            std::ifstream file(documentFilePath);
-            if (!file.is_open())
+            nlohmann::json json;
             {
-                throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
-            }
+                std::ifstream file(documentFilePath);
+                if (!file.is_open())
+                {
+                    throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
+                }
 
-            try
-            {
                 file >> json;
             }
-            catch (std::exception &)
-            {
-                std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
-            }
-        }
 
-        return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath), readQuotas });
+            return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath), readQuotas });
+        }
+        catch (invalid_gltf_document &) { throw; }
+        catch (std::system_error &) { throw; }
+        catch (...)
+        {
+            std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
+        }
     }
 
     inline Document LoadFromBinary(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
-        std::vector<uint8_t> binary{};
+        try
         {
-            std::ifstream file(documentFilePath, std::ios::binary);
-            if (!file.is_open())
+            std::vector<uint8_t> binary{};
             {
-                throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
+                std::ifstream file(documentFilePath, std::ios::binary);
+                if (!file.is_open())
+                {
+                    throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
+                }
+
+                const std::size_t fileSize = detail::GetFileSize(file);
+                if (fileSize < detail::HeaderSize)
+                {
+                    throw invalid_gltf_document("Invalid GLB file");
+                }
+
+                if (fileSize > readQuotas.MaxFileSize)
+                {
+                    throw invalid_gltf_document("Quota exceeded : file size > MaxFileSize");
+                }
+
+                binary.resize(fileSize);
+                file.read(reinterpret_cast<char *>(&binary[0]), fileSize);
             }
 
-            const std::size_t fileSize = detail::GetFileSize(file);
-            if (fileSize < detail::HeaderSize)
+            detail::GLBHeader header;
+            std::memcpy(&header, &binary[0], detail::HeaderSize);
+            if (header.magic != detail::GLBHeaderMagic ||
+                header.jsonHeader.chunkType != detail::GLBChunkJSON ||
+                header.jsonHeader.chunkLength + detail::HeaderSize > header.length)
             {
-                throw invalid_gltf_document("Invalid GLB file");
+                throw invalid_gltf_document("Invalid GLB header");
             }
 
-            if (fileSize > readQuotas.MaxFileSize)
-            {
-                throw invalid_gltf_document("Quota exceeded.", "File size > MaxFileSize");
-            }
-
-            binary.resize(fileSize);
-            file.read(reinterpret_cast<char *>(&binary[0]), fileSize);
+            return detail::Create(
+                nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
+                { detail::GetDocumentRootPath(documentFilePath), readQuotas, &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
         }
-
-        detail::GLBHeader header;
-        std::memcpy(&header, &binary[0], detail::HeaderSize);
-        if (header.magic != detail::GLBHeaderMagic ||
-            header.jsonHeader.chunkType != detail::GLBChunkJSON ||
-            header.jsonHeader.chunkLength + detail::HeaderSize > header.length)
+        catch (invalid_gltf_document &) { throw; }
+        catch (std::system_error &) { throw; }
+        catch (...)
         {
-            throw invalid_gltf_document("Invalid GLB header");
+            std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
         }
-
-        return detail::Create(
-            nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
-            { detail::GetDocumentRootPath(documentFilePath), readQuotas, &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
     }
 
     inline void Save(Document const & document, std::string documentFilePath, bool useBinaryFormat)
     {
-        detail::ValidateBuffers(document, useBinaryFormat);
+        try
+        {
+            detail::ValidateBuffers(document, useBinaryFormat);
 
-        detail::Save(document, documentFilePath, useBinaryFormat);
+            detail::Save(document, documentFilePath, useBinaryFormat);
+        }
+        catch (invalid_gltf_document &) { throw; }
+        catch (std::system_error &) { throw; }
+        catch (...)
+        {
+            std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
+        }
     }
 } // namespace gltf
 
 // A general-purpose utility to format an exception hierarchy into a string for output
-inline void FormatException(std::string & output, std::exception const & e, int level = 0)
+inline void FormatException(std::string & output, std::exception const & ex, int level = 0)
 {
-    output.append(std::string(level, ' ')).append(e.what()).append("\n");
+    output.append(std::string(level, ' ')).append(ex.what()).append("\n");
     try
     {
-        std::rethrow_if_nested(e);
+        std::rethrow_if_nested(ex);
     }
     catch (std::exception const & e)
     {
