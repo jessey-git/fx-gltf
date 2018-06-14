@@ -72,6 +72,7 @@ TEST_CASE("exceptions")
               "buffers": [ { "byteLength": 10, "uri": "data:application/octet-stream;base64,AAAABB==" } ],
               "bufferViews": [ { "buffer": 0, "byteLength": 10 } ],
               "cameras": [ { "perspective": { "yfov": 0.6, "znear": 1.0 }, "type": "perspective" } ],
+              "images" : [ { "uri" : "data:image/jpeg;base64,$$$$" } ],
               "materials": [ { "alphaMode": "OPAQUE", "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 }, "metallicRoughnessTexture": { "index": 1 } }, "normalTexture": { "index": 2 }, "occlusionTexture": { "index": 1 }, "emissiveTexture": { "index": 3 } } ],
               "meshes": [ { "primitives": [ { "attributes": { "NORMAL": 1, "POSITION": 2 } } ] } ],
               "skins": [ { "joints": [ 2 ]  } ]
@@ -127,6 +128,9 @@ TEST_CASE("exceptions")
         Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "nonexistant.bin"; }, "buffer.uri");
         Mutate(json, [](nlohmann::json & m) { m["cameras"][0]["type"] = "D-SLR"; }, "camera.type");
         Mutate(json, [](nlohmann::json & m) { m["materials"][0]["alphaMode"] = "opaque"; }, "material.alphaMode");
+
+        std::vector<uint8_t> data{};
+        REQUIRE_THROWS_MATCHES(mainDocument.images[0].MaterializeData(data), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("malformed base64"));
     }
 
     SECTION("load : quotas")
@@ -139,13 +143,13 @@ TEST_CASE("exceptions")
         REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromText(externalFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxBufferByteLength"));
 
         readQuotas.MaxFileSize = 500;
-        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary(externalFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxFileSize"));
+        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary(glbFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxFileSize"));
 
         readQuotas = {};
         readQuotas.MaxBufferCount = 1;
-        nlohmann::json json = utility::LoadJsonFromFile(externalFile);
-        json["buffers"].push_back(json["buffers"][0]); // Duplicate so we have 2 identical buffers
-        REQUIRE_THROWS_MATCHES(fx::gltf::detail::Create(json, { fx::gltf::detail::GetDocumentRootPath(externalFile), readQuotas }), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxBufferCount"));
+        nlohmann::json external = utility::LoadJsonFromFile(externalFile);
+        external["buffers"].push_back(json["buffers"][0]); // Duplicate so we have 2 identical buffers
+        REQUIRE_THROWS_MATCHES(fx::gltf::detail::Create(external, { fx::gltf::detail::GetDocumentRootPath(externalFile), readQuotas }), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxBufferCount"));
     }
 
     SECTION("load : mismatched")

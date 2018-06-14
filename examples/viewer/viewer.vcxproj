@@ -115,6 +115,7 @@
     <ClInclude Include="DirectX\D3DUtil.h" />
     <ClInclude Include="DirectX\d3dx12.h" />
     <ClInclude Include="DirectX\D3DDeviceResources.h" />
+    <ClInclude Include="ImageData.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="EngineOptions.h" />

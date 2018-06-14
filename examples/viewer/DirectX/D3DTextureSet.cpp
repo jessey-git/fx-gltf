@@ -10,7 +10,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-void D3DTextureSet::Initialize(std::vector<std::string> const & textures)
+void D3DTextureSet::Initialize(std::vector<ImageData> const & textures)
 {
     m_images.resize(textures.size());
 
@@ -20,10 +20,22 @@ void D3DTextureSet::Initialize(std::vector<std::string> const & textures)
     for (std::size_t i = 0; i < textures.size(); i++)
     {
         Image & image = m_images[i];
-        std::wstring texture(textures[i].begin(), textures[i].end());
+        ImageData::ImageInfo const & imageInfo = textures[i].Info();
 
         ComPtr<IWICBitmapDecoder> decoder;
-        COMUtil::ThrowIfFailed(factory->CreateDecoderFromFilename(texture.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
+        if (imageInfo.IsBinary())
+        {
+            IWICStream * stream;
+            COMUtil::ThrowIfFailed(factory->CreateStream(&stream));
+            COMUtil::ThrowIfFailed(stream->InitializeFromMemory(reinterpret_cast<BYTE *>(const_cast<uint8_t *>(imageInfo.BinaryData)), static_cast<DWORD>(imageInfo.BinarySize)));
+            COMUtil::ThrowIfFailed(factory->CreateDecoderFromStream(stream, nullptr, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
+        }
+        else
+        {
+            std::wstring texture(imageInfo.FileName.begin(), imageInfo.FileName.end());
+            COMUtil::ThrowIfFailed(factory->CreateDecoderFromFilename(texture.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
+        }
+
         COMUtil::ThrowIfFailed(decoder->GetFrame(0, image.frame.GetAddressOf()));
 
         WICPixelFormatGUID pixelFormat;
