@@ -1858,14 +1858,14 @@ namespace gltf
 // A general-purpose utility to format an exception hierarchy into a string for output
 inline void FormatException(std::string & output, std::exception const & ex, int level = 0)
 {
-    output.append(std::string(level, ' ')).append(ex.what()).append("\n");
+    output.append(std::string(level, ' ')).append(ex.what());
     try
     {
         std::rethrow_if_nested(ex);
     }
     catch (std::exception const & e)
     {
-        FormatException(output, e, level + 2);
+        FormatException(output.append("\n"), e, level + 2);
     }
 }
 

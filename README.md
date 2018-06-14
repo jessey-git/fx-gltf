@@ -277,5 +277,6 @@ SOFTWARE.
 
 This software would not be possible without the help of these great resources. Thanks a lot!
 
+* [nlohmann::json](https://github.com/nlohmann/json) for JSON serialization
 * [Catch2](https://github.com/catchorg/Catch2) for testing
 * [glTF-Sample-Models](https://github.com/KhronosGroup/glTF-Sample-Models) for glTF sample models. All 1.2gb of it...
