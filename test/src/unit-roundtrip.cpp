@@ -72,7 +72,7 @@ void RoundtripCompare(std::string const & filePath, bool checkExtensions = false
     }
     catch (fx::gltf::invalid_gltf_document & e)
     {
-        utility::FormatException(errorString, e);
+        fx::FormatException(errorString, e);
 
         throw std::runtime_error(errorString);
     }
@@ -97,7 +97,7 @@ void CheckBinary(std::string const & filePath)
     }
     catch (fx::gltf::invalid_gltf_document & e)
     {
-        utility::FormatException(errorString, e);
+        fx::FormatException(errorString, e);
 
         throw std::runtime_error(errorString);
     }

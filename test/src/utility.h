@@ -11,8 +11,6 @@
 
 namespace utility
 {
-    void FormatException(std::string & output, std::exception const & e, int level = 0);
-
     std::string GetTestOutputDir();
     void CreateTestOutputDir();
     void CleanupTestOutputDir();

@@ -14,26 +14,34 @@
 class ExceptionContainsMatcher : public Catch::MatcherBase<std::exception>
 {
 public:
-    ExceptionContainsMatcher(std::string text) : text_(text) {}
+    ExceptionContainsMatcher(std::string text, bool shouldBeNested = false) : text_(text), shouldBeNested_(shouldBeNested) {}
 
     virtual bool match(std::exception const & e) const override
     {
-        utility::FormatException(message_, e);
-        return message_.find(text_) != std::string::npos;
+        fx::FormatException(message_, e);
+
+        bool isNestedException = message_.find("nested") != std::string::npos;
+        bool properlyNested = shouldBeNested_ ? isNestedException : !isNestedException;
+        return properlyNested && message_.find(text_) != std::string::npos;
     }
 
     virtual std::string describe() const 
     {
-        return std::string("Message '").append(message_).append("' contains text '").append(text_).append("'");
+        std::ostringstream str;
+        str << "Message '" << message_ << "' contains text '" << text_ << "' (should be nested: " << shouldBeNested_ << ")";
+
+        return str.str();
     }
 
 private:
     std::string text_;
+    bool shouldBeNested_;
+
     mutable std::string message_;
 };
 
 template <typename TMutator>
-void Mutate(nlohmann::json const & incoming, TMutator && mutator, std::string const & text)
+void Mutate(nlohmann::json const & incoming, TMutator && mutator, std::string const & text, bool shouldBeNested = false)
 {
     nlohmann::json mutated = incoming;
     mutator(mutated);
@@ -41,11 +49,14 @@ void Mutate(nlohmann::json const & incoming, TMutator && mutator, std::string co
     INFO("Expecting exception containing : " << text);
     INFO("Mutated json : " << mutated.dump(2));
 
-    REQUIRE_THROWS_MATCHES(fx::gltf::detail::Create(mutated, {}), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher(text));
+    REQUIRE_THROWS_MATCHES(fx::gltf::detail::Create(mutated, {}), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher(text, shouldBeNested));
 }
 
 TEST_CASE("exceptions")
 {
+    utility::CleanupTestOutputDir();
+    utility::CreateTestOutputDir();
+
     nlohmann::json json =
         R"(
             {
@@ -110,6 +121,8 @@ TEST_CASE("exceptions")
         Mutate(json, [](nlohmann::json & m) { m["accessors"][0]["type"] = "vec3"; }, "accessor.type");
         Mutate(json, [](nlohmann::json & m) { m["animations"][0]["samplers"][0]["interpolation"] = "linear"; }, "animation.sampler.interpolation");
         Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 0; }, "buffer.byteLength");
+        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 2; }, "bad base64");
+        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "data:application/octet-stream;base64,$$$$"; }, "bad base64");
         Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "../dir/traversal.bin"; }, "buffer.uri");
         Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "nonexistant.bin"; }, "buffer.uri");
         Mutate(json, [](nlohmann::json & m) { m["cameras"][0]["type"] = "D-SLR"; }, "camera.type");
@@ -135,6 +148,30 @@ TEST_CASE("exceptions")
         REQUIRE_THROWS_MATCHES(fx::gltf::detail::Create(json, { fx::gltf::detail::GetDocumentRootPath(externalFile), readQuotas }), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxBufferCount"));
     }
 
+    SECTION("load : mismatched")
+    {
+        REQUIRE_THROWS_AS(fx::gltf::LoadFromText("data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::LoadFromBinary("data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf"), fx::gltf::invalid_gltf_document);
+    }
+
+    SECTION("load / save : invalid path")
+    {
+        fx::gltf::Document doc;
+        doc = json;
+        doc.buffers[0].data.resize(doc.buffers[0].byteLength);
+        doc.buffers.push_back(doc.buffers[0]);
+        doc.buffers[0].uri.clear();
+
+        REQUIRE_THROWS_AS(fx::gltf::LoadFromText("./"), std::system_error);
+        REQUIRE_THROWS_AS(fx::gltf::LoadFromBinary("./"), std::system_error);
+
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/./", false), std::system_error);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/./", true), std::system_error);
+
+        doc.buffers[1].uri = "./";
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", true), fx::gltf::invalid_gltf_document);
+    }
+
     SECTION("save : invalid buffers")
     {
         fx::gltf::Document doc;
@@ -142,18 +179,18 @@ TEST_CASE("exceptions")
         INFO("No buffers");
         doc = json;
         doc.buffers.clear();
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Buffer byteLength = 0");
         doc = json;
         doc.buffers[0].byteLength = 0;
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Buffer byteLength != data size");
         doc = json;
         doc.buffers[0].byteLength = 20;
         doc.buffers[0].data.resize(10);
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("A second buffer with empty uri");
         doc = json;
@@ -164,13 +201,15 @@ TEST_CASE("exceptions")
         doc.buffers[1].uri.clear();
         doc.buffers[1].byteLength = 20;
         doc.buffers[1].data.resize(20);
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Binary save with invalid buffer uri");
         doc = json;
         doc.buffers[0].uri = "not empty";
         doc.buffers[0].byteLength = 20;
         doc.buffers[0].data.resize(20);
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, "nop", true), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", true), fx::gltf::invalid_gltf_document);
     }
+
+    utility::CleanupTestOutputDir();
 }

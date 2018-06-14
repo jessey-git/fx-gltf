@@ -891,6 +891,10 @@ namespace gltf
 
                 return document;
             }
+            catch (fx::gltf::invalid_gltf_document &)
+            {
+                throw; // Do not nest unnecessarily...
+            }
             catch (std::exception &)
             {
                 std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
@@ -1782,7 +1786,14 @@ namespace gltf
                 throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
             }
 
-            file >> json;
+            try
+            {
+                file >> json;
+            }
+            catch (std::exception &)
+            {
+                std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
+            }
         }
 
         return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath), readQuotas });
@@ -1834,6 +1845,21 @@ namespace gltf
         detail::Save(document, documentFilePath, useBinaryFormat);
     }
 } // namespace gltf
+
+// A general-purpose utility to format an exception hierarchy into a string for output
+inline void FormatException(std::string & output, std::exception const & e, int level = 0)
+{
+    output.append(std::string(level, ' ')).append(e.what()).append("\n");
+    try
+    {
+        std::rethrow_if_nested(e);
+    }
+    catch (std::exception const & e)
+    {
+        FormatException(output, e, level + 2);
+    }
+}
+
 } // namespace fx
 
 #undef FX_GLTF_HAS_CPP_17
