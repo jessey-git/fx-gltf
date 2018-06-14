@@ -13,15 +13,15 @@ class MeshData
 public:
     struct BufferInfo
     {
-        fx::gltf::Accessor const * accessor;
+        fx::gltf::Accessor const * Accessor;
 
-        uint8_t const * data;
-        uint32_t dataStride;
-        uint32_t totalSize;
+        uint8_t const * Data;
+        uint32_t DataStride;
+        uint32_t TotalSize;
 
         bool HasData() const noexcept
         {
-            return data != nullptr;
+            return Data != nullptr;
         }
     };
 
