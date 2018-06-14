@@ -149,7 +149,7 @@ namespace base64
             if (bitCount >= 0)
             {
                 const uint32_t shiftOperand = bitCount;
-                out.push_back(uint8_t{ (value >> shiftOperand) & 0xffu });
+                out.push_back(static_cast<uint8_t>(value >> shiftOperand));
                 bitCount -= 8;
             }
         }
