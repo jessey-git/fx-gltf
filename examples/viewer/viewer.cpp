@@ -4,6 +4,7 @@
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
 #include "stdafx.h"
+#include <fx/gltf.h>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -224,7 +225,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
     }
     catch (std::exception & e)
     {
-        std::cout << e.what() << std::endl;
+        std::string message;
+        fx::FormatException(message, e);
+        std::cout << message << std::endl;
     }
 
     if (result < 0)

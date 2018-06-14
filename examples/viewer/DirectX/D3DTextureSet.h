@@ -12,11 +12,12 @@
 #include <wrl.h>
 
 #include "D3DDeviceResources.h"
+#include "ImageData.h"
 
 class D3DTextureSet
 {
 public:
-    void Initialize(std::vector<std::string> const & textures);
+    void Initialize(std::vector<ImageData> const & textures);
 
     void LoadToMemory(
         D3DDeviceResources const * deviceResources,

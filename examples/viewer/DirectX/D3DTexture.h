@@ -6,11 +6,12 @@
 #pragma once
 
 #include "D3DDeviceResources.h"
+#include "ImageData.h"
 
 class D3DTexture
 {
 public:
-    void Create(std::string const & texture, D3DDeviceResources const * deviceResources);
+    void Create(ImageData const & texture, D3DDeviceResources const * deviceResources);
 
     void CreateSRV(ID3D12Device * device, CD3DX12_CPU_DESCRIPTOR_HANDLE const & descriptor);
 

@@ -36,11 +36,11 @@ void D3DMesh::Create(
         }
 
         const std::size_t totalBufferSize =
-            static_cast<std::size_t>(vBuffer.totalSize) +
-            static_cast<std::size_t>(nBuffer.totalSize) +
-            static_cast<std::size_t>(tBuffer.totalSize) +
-            static_cast<std::size_t>(cBuffer.totalSize) +
-            static_cast<std::size_t>(iBuffer.totalSize);
+            static_cast<std::size_t>(vBuffer.TotalSize) +
+            static_cast<std::size_t>(nBuffer.TotalSize) +
+            static_cast<std::size_t>(tBuffer.TotalSize) +
+            static_cast<std::size_t>(cBuffer.TotalSize) +
+            static_cast<std::size_t>(iBuffer.TotalSize);
 
         D3DMeshPart & meshPart = m_meshParts[i];
         const CD3DX12_RESOURCE_DESC resourceDescV = CD3DX12_RESOURCE_DESC::Buffer(totalBufferSize);
@@ -66,45 +66,45 @@ void D3DMesh::Create(
         COMUtil::ThrowIfFailed(meshPart.UploadBuffer->Map(0, &readRange, reinterpret_cast<void **>(&bufferStart)));
 
         // Copy vertex buffer to upload...
-        std::memcpy(bufferStart, vBuffer.data, vBuffer.totalSize);
+        std::memcpy(bufferStart, vBuffer.Data, vBuffer.TotalSize);
         meshPart.VertexBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress();
-        meshPart.VertexBufferView.StrideInBytes = vBuffer.dataStride;
-        meshPart.VertexBufferView.SizeInBytes = vBuffer.totalSize;
-        offset += vBuffer.totalSize;
+        meshPart.VertexBufferView.StrideInBytes = vBuffer.DataStride;
+        meshPart.VertexBufferView.SizeInBytes = vBuffer.TotalSize;
+        offset += vBuffer.TotalSize;
 
         // Copy normal buffer to upload...
-        std::memcpy(bufferStart + offset, nBuffer.data, nBuffer.totalSize);
+        std::memcpy(bufferStart + offset, nBuffer.Data, nBuffer.TotalSize);
         meshPart.NormalBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
-        meshPart.NormalBufferView.StrideInBytes = nBuffer.dataStride;
-        meshPart.NormalBufferView.SizeInBytes = nBuffer.totalSize;
-        offset += nBuffer.totalSize;
+        meshPart.NormalBufferView.StrideInBytes = nBuffer.DataStride;
+        meshPart.NormalBufferView.SizeInBytes = nBuffer.TotalSize;
+        offset += nBuffer.TotalSize;
 
         if (tBuffer.HasData())
         {
             // Copy tangent buffer to upload...
-            std::memcpy(bufferStart + offset, tBuffer.data, tBuffer.totalSize);
+            std::memcpy(bufferStart + offset, tBuffer.Data, tBuffer.TotalSize);
             meshPart.TangentBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
-            meshPart.TangentBufferView.StrideInBytes = tBuffer.dataStride;
-            meshPart.TangentBufferView.SizeInBytes = tBuffer.totalSize;
-            offset += tBuffer.totalSize;
+            meshPart.TangentBufferView.StrideInBytes = tBuffer.DataStride;
+            meshPart.TangentBufferView.SizeInBytes = tBuffer.TotalSize;
+            offset += tBuffer.TotalSize;
         }
 
         if (cBuffer.HasData())
         {
             // Copy tex-coord buffer to upload...
-            std::memcpy(bufferStart + offset, cBuffer.data, cBuffer.totalSize);
+            std::memcpy(bufferStart + offset, cBuffer.Data, cBuffer.TotalSize);
             meshPart.TexCoord0BufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
-            meshPart.TexCoord0BufferView.StrideInBytes = cBuffer.dataStride;
-            meshPart.TexCoord0BufferView.SizeInBytes = cBuffer.totalSize;
-            offset += cBuffer.totalSize;
+            meshPart.TexCoord0BufferView.StrideInBytes = cBuffer.DataStride;
+            meshPart.TexCoord0BufferView.SizeInBytes = cBuffer.TotalSize;
+            offset += cBuffer.TotalSize;
         }
 
         // Copy index buffer to upload...
-        std::memcpy(bufferStart + offset, iBuffer.data, iBuffer.totalSize);
+        std::memcpy(bufferStart + offset, iBuffer.Data, iBuffer.TotalSize);
         meshPart.IndexBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
-        meshPart.IndexBufferView.Format = Util::GetFormat(iBuffer.accessor);
-        meshPart.IndexBufferView.SizeInBytes = iBuffer.totalSize;
-        meshPart.IndexCount = iBuffer.accessor->count;
+        meshPart.IndexBufferView.Format = Util::GetFormat(iBuffer.Accessor);
+        meshPart.IndexBufferView.SizeInBytes = iBuffer.TotalSize;
+        meshPart.IndexCount = iBuffer.Accessor->count;
 
         // Copy from upload to default...
         commandList->CopyBufferRegion(meshPart.DefaultBuffer.Get(), 0, meshPart.UploadBuffer.Get(), 0, totalBufferSize);
@@ -112,8 +112,8 @@ void D3DMesh::Create(
         commandList->ResourceBarrier(1, &barrier);
 
         Util::BBox boundingBox{};
-        boundingBox.Min = DirectX::XMFLOAT3(vBuffer.accessor->min.data());
-        boundingBox.Max = DirectX::XMFLOAT3(vBuffer.accessor->max.data());
+        boundingBox.Min = DirectX::XMFLOAT3(vBuffer.Accessor->min.data());
+        boundingBox.Max = DirectX::XMFLOAT3(vBuffer.Accessor->max.data());
         Util::UnionBBox(m_boundingBox, boundingBox);
 
         meshPart.UploadBuffer->Unmap(0, nullptr);

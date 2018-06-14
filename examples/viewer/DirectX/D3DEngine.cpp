@@ -10,6 +10,7 @@
 #include "D3DMeshInstance.h"
 #include "Engine.h"
 #include "EngineOptions.h"
+#include "ImageData.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -226,8 +227,7 @@ void D3DEngine::BuildScene()
         m_textures.resize(m_gltfScene.textures.size());
         for (uint32_t i = 0; i < m_gltfScene.textures.size(); i++)
         {
-            std::string image = fx::gltf::detail::GetDocumentRootPath(Config.ModelPath) + "/" + m_gltfScene.images[m_gltfScene.textures[i].source].uri;
-            Logger::WriteLine("    {0}", image);
+            ImageData image(m_gltfScene, i, Config.ModelPath);
             m_textures[i].Create(image, m_deviceResources.get());
         }
     }

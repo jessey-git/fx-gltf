@@ -49,15 +49,22 @@ Controls:
 #### ```MeshData.h```
 * Processes a given ```fx::gltf::Mesh```/```fx::gltf::Mesh::Primitive``` pair using its ```fx::gltf::Buffer``` and ```fx::gltf::Accessor``` information and exposes it in a more graphics-api friendly manner
 
-#### ```DirectX/D3DMeshData.h```
+#### ```ImageData.h```
+* Processes a given ```fx::gltf::Image``` and fills in the appropriate set of information for actual loading
+* The difference between external, embedded, and binary glTF formats are handled here
+
+#### ```DirectX/D3DMeshData.cpp```
 * Uses ```MeshData``` to build the actual vertex/normal/index etc. buffers for DirectX 12
 * Performs the mesh's command list drawing during scene render
+
+#### ```DirectX/D3DTextureSet.cpp```
+* Uses ```ImageData``` to load in the actual image textures with the WIC API
 
 #### ```DirectX/D3DGraph.h```
 * Uses ```fx::gltf::Document``` and ```fx::gltf::Node``` to visit each node in the scene-graph
 * Applies the node's transformation data so we can use it during update/render
 
-#### ```DirectX/D3DEngine.h```
+#### ```DirectX/D3DEngine.cpp```
 * Builds all DirectX 12 resources necessary for rendering
 * Uses ```D3DGraph``` to build/traverse the scene-graph, building up ```D3DMeshInstance```s along the way
 * Coordinates the update/render sequencing flow
@@ -67,7 +74,7 @@ Controls:
 * D3DEngine / Engine
     * Initialization
         * Load and process the glTF document
-            * Textures
+            * Textures and materials
             * Mesh pieces
             * Scene-graph
         * Compile necessary shaders to support the loaded materials

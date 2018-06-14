@@ -9,12 +9,12 @@
 #include "D3DTextureSet.h"
 #include "D3DUtil.h"
 
-void D3DTexture::Create(std::string const & texture, D3DDeviceResources const * deviceResources)
+void D3DTexture::Create(ImageData const & texture, D3DDeviceResources const * deviceResources)
 {
-    D3DTextureSet tset;
+    D3DTextureSet texSet;
 
-    tset.Initialize({ texture });
-    tset.LoadToMemory(deviceResources, m_data.DefaultBuffer, m_data.UploadBuffer, 1, 1);
+    texSet.Initialize({ texture });
+    texSet.LoadToMemory(deviceResources, m_data.DefaultBuffer, m_data.UploadBuffer, 1, 1);
 }
 
 void D3DTexture::CreateSRV(ID3D12Device * device, CD3DX12_CPU_DESCRIPTOR_HANDLE const & descriptor)

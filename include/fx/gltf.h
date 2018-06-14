@@ -318,6 +318,8 @@ namespace gltf
         constexpr uint32_t GLBChunkBIN = 0x004e4942u;
 
         constexpr char const * const MimetypeApplicationOctet = "data:application/octet-stream;base64";
+        constexpr char const * const MimetypeImagePNG = "data:image/png;base64";
+        constexpr char const * const MimetypeImageJPG = "data:image/jpeg;base64";
     } // namespace detail
 
     namespace defaults
@@ -490,27 +492,6 @@ namespace gltf
         {
             uri = std::string(detail::MimetypeApplicationOctet).append(",").append(base64::Encode(data));
         }
-
-        void MaterializeData()
-        {
-            const std::size_t startPos = std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1;
-            const std::size_t base64Length = uri.length() - startPos;
-            const std::size_t decodedEstimate = base64Length / 4 * 3;
-            if ((decodedEstimate - 2) > byteLength) // we need to give room for padding...
-            {
-                throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
-            }
-
-#if defined(FX_GLTF_HAS_CPP_17)
-            const bool success = base64::TryDecode({ &uri[startPos], base64Length }, data);
-#else
-            const bool success = base64::TryDecode(uri.substr(startPos), data);
-#endif
-            if (!success)
-            {
-                throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
-            }
-        }
     };
 
     struct BufferView
@@ -581,6 +562,28 @@ namespace gltf
         std::string mimeType;
 
         nlohmann::json extensionsAndExtras{};
+
+        bool IsEmbeddedResource() const noexcept
+        {
+            return uri.find(detail::MimetypeImagePNG) != std::string::npos || uri.find(detail::MimetypeImageJPG) != std::string::npos;
+        }
+
+        void MaterializeData(std::vector<uint8_t> & data) const
+        {
+            char const * const mimetype = uri.find(detail::MimetypeImagePNG) != std::string::npos ? detail::MimetypeImagePNG : detail::MimetypeImageJPG;
+            const std::size_t startPos = std::char_traits<char>::length(mimetype) + 1;
+            const std::size_t base64Length = uri.length() - startPos;
+
+#if defined(FX_GLTF_HAS_CPP_17)
+            const bool success = base64::TryDecode({ &uri[startPos], base64Length }, data);
+#else
+            const bool success = base64::TryDecode(uri.substr(startPos), data);
+#endif
+            if (!success)
+            {
+                throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
+            }
+        }
     };
 
     struct Material
@@ -831,6 +834,28 @@ namespace gltf
             return static_cast<std::size_t>(fileSize);
         }
 
+        inline void MaterializeData(Buffer & buffer)
+        {
+            const std::size_t startPos = std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1;
+            const std::size_t base64Length = buffer.uri.length() - startPos;
+            const std::size_t decodedEstimate = base64Length / 4 * 3;
+            if ((decodedEstimate - 2) > buffer.byteLength) // we need to give room for padding...
+            {
+                throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
+            }
+
+#if defined(FX_GLTF_HAS_CPP_17)
+            const bool success = base64::TryDecode({ &buffer.uri[startPos], base64Length }, buffer.data);
+#else
+            const bool success = base64::TryDecode(buffer.uri.substr(startPos), buffer.data);
+#endif
+            if (!success)
+            {
+                throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
+            }
+        }
+
+
         inline Document Create(nlohmann::json const & json, DataContext const & dataContext)
         {
             Document document = json;
@@ -856,7 +881,7 @@ namespace gltf
                 {
                     if (buffer.IsEmbeddedResource())
                     {
-                        buffer.MaterializeData();
+                        detail::MaterializeData(buffer);
                     }
                     else
                     {

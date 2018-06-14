@@ -9,6 +9,7 @@
 #include "D3DEnvironmentIBL.h"
 #include "D3DTextureSet.h"
 #include "D3DUtil.h"
+#include "ImageData.h"
 #include "StringFormatter.h"
 
 void D3DEnvironmentIBL::Create(D3DDeviceResources const * deviceResources)
@@ -17,8 +18,8 @@ void D3DEnvironmentIBL::Create(D3DDeviceResources const * deviceResources)
     D3DTextureSet specularSet;
     D3DTextureSet lutSet;
 
-    std::vector<std::string> diffuseTextures;
-    std::vector<std::string> specularTextures;
+    std::vector<ImageData> diffuseTextures;
+    std::vector<ImageData> specularTextures;
 
     for (auto axis : { "x", "y", "z" })
     {
@@ -37,7 +38,7 @@ void D3DEnvironmentIBL::Create(D3DDeviceResources const * deviceResources)
 
     diffuseSet.Initialize(diffuseTextures);
     specularSet.Initialize(specularTextures);
-    lutSet.Initialize({ "Assets/Environment/LUT.png" });
+    lutSet.Initialize({ ImageData("Assets/Environment/LUT.png") });
 
     diffuseSet.LoadToMemory(deviceResources, m_data.DiffuseBuffer, m_data.DiffuseUploadBuffer, 6, 1);
     specularSet.LoadToMemory(deviceResources, m_data.SpecularBuffer, m_data.SpecularUploadBuffer, 6, 7);
