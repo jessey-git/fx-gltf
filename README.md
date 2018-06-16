@@ -220,7 +220,6 @@ fxgltf_Test/Embedded_ReciprocatingSaw     122586 us     109375 us          1    
 ### Command line
 
 ```Shell
-$ cd test
 $ mkdir build
 $ cd build
 $ cmake ..

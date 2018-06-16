@@ -6,14 +6,17 @@
 
 #include "utility.h"
 
-#include <filesystem>
 #include <fstream>
 #include <system_error>
 
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER >= 1914)
-#define FX_GLTF_FILESYSTEM std::filesystem
+#if (defined(__clang__)) || \
+    (defined(__GNUC__) && ((__GNUC__ < 8) || (defined(__cplusplus) && __cplusplus < 201703L))) || \
+    (defined(_MSC_VER) && (_MSC_VER < 1914))
+    #include <experimental/filesystem>
+    #define FX_GLTF_FILESYSTEM std::experimental::filesystem::v1
 #else
-#define FX_GLTF_FILESYSTEM std::experimental::filesystem
+    #include <filesystem>
+    #define FX_GLTF_FILESYSTEM std::filesystem
 #endif
 
 namespace utility
