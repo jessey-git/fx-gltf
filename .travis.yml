@@ -4,6 +4,9 @@ dist: trusty
 sudo: required
 group: edge
 
+git:
+  depth: 10
+
 matrix:
   include:
 

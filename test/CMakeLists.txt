@@ -25,6 +25,10 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
 endif()
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+
 #############################################################################
 # One executable for each unit test file
 #############################################################################
@@ -49,6 +53,12 @@ foreach(file ${files})
     target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
     target_include_directories(${testcase} PRIVATE ${THIRDPARTY_INCLUDE_DIR})
     target_include_directories(${testcase} PRIVATE ${FX_GLTF_INCLUDE_DIR})
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
+        target_link_libraries(${testcase} stdc++fs)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+        target_link_libraries(${testcase} c++experimental)
+    endif()
 
     add_test(NAME "${testcase}"
       COMMAND ${testcase} ${CATCH_TEST_FILTER}
