@@ -39,7 +39,7 @@ TEST_CASE("base64")
         std::mt19937 gen(29);
         const std::uniform_int_distribution<> dist(0, 255);
 
-        for (int iteration = 1; iteration < 1024; iteration++)
+        for (std::size_t iteration = 1; iteration < 1024; iteration++)
         {
             // Random bytes...
             std::vector<uint8_t> bytes(iteration);
@@ -71,7 +71,7 @@ TEST_CASE("base64")
             }
         }
 
-        for (int iteration = 1; iteration < 1024; iteration++)
+        for (std::size_t iteration = 1; iteration < 1024; iteration++)
         {
             // Random, valid, encoded string...
             std::string encoded(iteration, '\0');

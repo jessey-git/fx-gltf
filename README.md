@@ -2,6 +2,10 @@
 
 A C++14/C++17 header-only library for simple, efficient, and robust serialization/deserialization of [glTF 2.0](https://www.khronos.org/gltf/)
 
+[![Build status](https://ci.appveyor.com/api/projects/status/hqrjm0fweyc0dod6/branch/master?svg=true)](https://ci.appveyor.com/project/jessey-git/fx-gltf/branch/master)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jessey-git/fx-gltf/master/LICENSE)
+[![GitHub Releases](https://img.shields.io/github/release/jessey-git/fx-gltf.svg)](https://github.com/jessey-git/fx-gltf/releases)
+
 ## Features
 * Complete support for required glTF 2.0 schema elements
     * Full serialization (save) and deserialization (load) capability
@@ -220,7 +224,6 @@ fxgltf_Test/Embedded_ReciprocatingSaw     122586 us     109375 us          1    
 ### Command line
 
 ```Shell
-$ cd test
 $ mkdir build
 $ cd build
 $ cmake ..
