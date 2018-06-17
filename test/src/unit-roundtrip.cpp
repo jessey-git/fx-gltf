@@ -35,7 +35,7 @@ void RoundtripCompare(std::string const & filePath, bool checkExtensions = false
         fx::gltf::Document doc = fx::gltf::LoadFromText(filePath);
 
         nlohmann::json current = doc;
-        nlohmann::json original{ utility::LoadJsonFromFile(filePath) };
+        nlohmann::json original = utility::LoadJsonFromFile(filePath);
 
         nlohmann::json diff = nlohmann::json::diff(current, original);
         nlohmann::json filteredDiff = utility::FilterDefaultElements(diff);
@@ -276,7 +276,7 @@ TEST_CASE("roundtrip")
                 "data/glTF-Sample-Models/2.0/ReciprocatingSaw/glTF-Binary/ReciprocatingSaw.glb",
                 "data/glTF-Sample-Models/2.0/RiggedFigure/glTF-Binary/RiggedFigure.glb",
                 "data/glTF-Sample-Models/2.0/RiggedSimple/glTF-Binary/RiggedSimple.glb",
-                "data/glTF-Sample-Models/2.0/Sponza/glTF-Binary/Sponza.glb",
+                "data/glTF-Sample-Models/2.0/Sponza/glTF-Binary/sponza.glb",
                 "data/glTF-Sample-Models/2.0/TextureCoordinateTest/glTF-Binary/TextureCoordinateTest.glb",
                 "data/glTF-Sample-Models/2.0/TextureSettingsTest/glTF-Binary/TextureSettingsTest.glb",
                 "data/glTF-Sample-Models/2.0/VC/glTF-Binary/VC.glb",
