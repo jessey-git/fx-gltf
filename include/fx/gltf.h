@@ -598,13 +598,13 @@ namespace gltf
         struct Texture
         {
             int32_t index{ -1 };
-            int32_t texCoord{ -1 };
+            int32_t texCoord{};
 
             nlohmann::json extensionsAndExtras{};
 
             bool empty() const noexcept
             {
-                return index == -1 && texCoord == -1;
+                return index == -1 && texCoord == 0;
             }
         };
 
@@ -1657,7 +1657,7 @@ namespace gltf
     inline void to_json(nlohmann::json & json, Material::Texture const & materialTexture)
     {
         detail::WriteField("index", json, materialTexture.index, -1);
-        detail::WriteField("texCoord", json, materialTexture.texCoord, -1);
+        detail::WriteField("texCoord", json, materialTexture.texCoord, 0);
         detail::WriteExtensions(json, materialTexture.extensionsAndExtras);
     }
 
