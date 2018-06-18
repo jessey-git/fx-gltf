@@ -8,9 +8,9 @@ set(TEST_LanguageStandard "17" CACHE STRING "14 or 17")
 add_library(catch2_main OBJECT "src/unit.cpp" "src/utility.cpp")
 target_include_directories(catch2_main PRIVATE ${THIRDPARTY_INCLUDE_DIR})
 
-if(TEST_LanguageStandard EQUAL "17")
+if(TEST_LanguageStandard STREQUAL "17")
     target_compile_features(catch2_main PUBLIC cxx_std_17)
-elseif(TEST_LanguageStandard EQUAL "14")
+elseif(TEST_LanguageStandard STREQUAL "14")
     target_compile_features(catch2_main PUBLIC cxx_std_14)
 endif()
 
@@ -23,10 +23,6 @@ if(MSVC)
     endif()
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
-endif()
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
 #############################################################################
@@ -44,9 +40,9 @@ foreach(file ${files})
         COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
     )
 
-    if(TEST_LanguageStandard EQUAL "17")
+    if(TEST_LanguageStandard STREQUAL "17")
         target_compile_features(${testcase} PRIVATE cxx_std_17)
-    elseif(TEST_LanguageStandard EQUAL "14")
+    elseif(TEST_LanguageStandard STREQUAL "14")
         target_compile_features(${testcase} PRIVATE cxx_std_14)
     endif()
 
@@ -56,8 +52,6 @@ foreach(file ${files})
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
         target_link_libraries(${testcase} stdc++fs)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-        target_link_libraries(${testcase} c++experimental)
     endif()
 
     add_test(NAME "${testcase}"
