@@ -2,6 +2,7 @@
 
 A C++14/C++17 header-only library for simple, efficient, and robust serialization/deserialization of [glTF 2.0](https://www.khronos.org/gltf/)
 
+[![Build Status](https://travis-ci.org/jessey-git/fx-gltf.svg?branch=master)](https://travis-ci.org/jessey-git/fx-gltf)
 [![Build status](https://ci.appveyor.com/api/projects/status/hqrjm0fweyc0dod6/branch/master?svg=true)](https://ci.appveyor.com/project/jessey-git/fx-gltf/branch/master)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jessey-git/fx-gltf/master/LICENSE)
 [![GitHub Releases](https://img.shields.io/github/release/jessey-git/fx-gltf.svg)](https://github.com/jessey-git/fx-gltf/releases)

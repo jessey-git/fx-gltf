@@ -1,0 +1,84 @@
+language: cpp
+
+dist: trusty
+sudo: required
+group: edge
+
+git:
+  depth: 10
+
+matrix:
+  include:
+
+  # Linux / GCC
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-6
+      - TEST_LANGUAGE_STANDARD=14
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-6', 'ninja-build']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-7
+      - TEST_LANGUAGE_STANDARD=17
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-7', 'ninja-build']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-8
+      - TEST_LANGUAGE_STANDARD=17
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-8', 'ninja-build']
+
+  # Linux / Clang -- Broken: Cannot get things to build with <filesystem> support...
+
+  # - os: linux
+    # compiler: clang
+    # env:
+      # - COMPILER=clang++-5.0
+      # - TEST_LANGUAGE_STANDARD=14
+    # addons:
+      # apt:
+        # sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
+        # packages: ['g++-7', 'clang-5.0', 'ninja-build']
+
+  # - os: linux
+    # compiler: clang
+    # env:
+      # - COMPILER=clang++-6.0
+      # - TEST_LANGUAGE_STANDARD=17
+    # addons:
+      # apt:
+        # sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+        # packages: ['g++-7', 'clang-6.0', 'ninja-build']
+
+################
+# build script #
+################
+
+script:
+  # make sure CXX is correctly set
+  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+
+  # show OS/compiler version
+  - uname -a
+  - $CXX --version
+
+  # compile and execute unit tests
+  - mkdir -p build && cd build
+  - cmake .. ${CMAKE_OPTIONS} -DTEST_LanguageStandard=${TEST_LANGUAGE_STANDARD} -GNinja
+  - cmake --build . --config Release
+  - ctest -C Release -V -j
+  - cd ..

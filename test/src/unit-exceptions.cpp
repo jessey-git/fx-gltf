@@ -166,8 +166,8 @@ TEST_CASE("exceptions")
         doc.buffers.push_back(doc.buffers[0]);
         doc.buffers[0].uri.clear();
 
-        REQUIRE_THROWS_AS(fx::gltf::LoadFromText("./"), std::system_error);
-        REQUIRE_THROWS_AS(fx::gltf::LoadFromBinary("./"), std::system_error);
+        REQUIRE_THROWS_AS(fx::gltf::LoadFromText("not-exist"), std::system_error);
+        REQUIRE_THROWS_AS(fx::gltf::LoadFromBinary("not-exist"), std::system_error);
 
         REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/./", false), std::system_error);
         REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/./", true), std::system_error);

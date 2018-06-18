@@ -72,17 +72,17 @@ namespace utility
         {
             if (element["op"] == "add")
             {
-                if (element["path"].get<std::string>().find("emissiveFactor") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f } ||
-                    element["path"].get<std::string>().find("baseColorFactor") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 1.0f, 1.0f, 1.0f, 1.0f } ||
-                    element["path"].get<std::string>().find("translation") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f } ||
-                    element["path"].get<std::string>().find("rotation") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f, 1.0f } ||
-                    element["path"].get<std::string>().find("scale") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 1.0f, 1.0f, 1.0f } ||
-                    element["path"].get<std::string>().find("mode") != std::string::npos && element["value"] == 4 ||
-                    element["path"].get<std::string>().find("byteOffset") != std::string::npos && element["value"] == 0 ||
-                    element["path"].get<std::string>().find("interpolation") != std::string::npos && element["value"] == "LINEAR" ||
-                    element["path"].get<std::string>().find("wrapS") != std::string::npos && element["value"] == 10497 ||
-                    element["path"].get<std::string>().find("wrapT") != std::string::npos && element["value"] == 10497 ||
-                    element["path"].get<std::string>().find("doubleSided") != std::string::npos && element["value"] == false)
+                if ((element["path"].get<std::string>().find("emissiveFactor") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f }) ||
+                    (element["path"].get<std::string>().find("baseColorFactor") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 1.0f, 1.0f, 1.0f, 1.0f }) ||
+                    (element["path"].get<std::string>().find("translation") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f }) ||
+                    (element["path"].get<std::string>().find("rotation") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f, 1.0f }) ||
+                    (element["path"].get<std::string>().find("scale") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 1.0f, 1.0f, 1.0f }) ||
+                    (element["path"].get<std::string>().find("mode") != std::string::npos && element["value"] == 4) ||
+                    (element["path"].get<std::string>().find("byteOffset") != std::string::npos && element["value"] == 0) ||
+                    (element["path"].get<std::string>().find("interpolation") != std::string::npos && element["value"] == "LINEAR") ||
+                    (element["path"].get<std::string>().find("wrapS") != std::string::npos && element["value"] == 10497) ||
+                    (element["path"].get<std::string>().find("wrapT") != std::string::npos && element["value"] == 10497) ||
+                    (element["path"].get<std::string>().find("doubleSided") != std::string::npos && element["value"] == false))
                 {
                     continue;
                 }

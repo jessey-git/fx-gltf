@@ -37,7 +37,7 @@ TEST_CASE("base64")
     SECTION("random encode/decode")
     {
         std::mt19937 gen(29);
-        const std::uniform_int_distribution<> dist(0, 255);
+        std::uniform_int_distribution<> dist(0, 255);
 
         for (std::size_t iteration = 1; iteration < 1024; iteration++)
         {
@@ -60,7 +60,7 @@ TEST_CASE("base64")
     SECTION("random negative")
     {
         std::mt19937 gen(29);
-        const std::uniform_int_distribution<> dist(0, 255);
+        std::uniform_int_distribution<> dist(0, 255);
 
         std::vector<uint8_t> invalidChars(192);
         for (auto c : fx::base64::detail::DecodeMap)
