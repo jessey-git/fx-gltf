@@ -25,7 +25,7 @@ public:
         return properlyNested && message_.find(text_) != std::string::npos;
     }
 
-    virtual std::string describe() const 
+    virtual std::string describe() const override
     {
         std::ostringstream str;
         str << "Message '" << message_ << "' contains text '" << text_ << "' (should be nested: " << shouldBeNested_ << ")";

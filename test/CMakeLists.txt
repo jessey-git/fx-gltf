@@ -50,7 +50,7 @@ foreach(file ${files})
     target_include_directories(${testcase} PRIVATE ${THIRDPARTY_INCLUDE_DIR})
     target_include_directories(${testcase} PRIVATE ${FX_GLTF_INCLUDE_DIR})
 
-    if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL GNU OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
         target_link_libraries(${testcase} stdc++fs)
     endif()
 
