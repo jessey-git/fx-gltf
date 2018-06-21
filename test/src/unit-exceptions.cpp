@@ -14,7 +14,7 @@
 class ExceptionContainsMatcher : public Catch::MatcherBase<std::exception>
 {
 public:
-    ExceptionContainsMatcher(std::string text, bool shouldBeNested = false) : text_(text), shouldBeNested_(shouldBeNested) {}
+    ExceptionContainsMatcher(std::string const & text, bool shouldBeNested = false) : text_(text), shouldBeNested_(shouldBeNested) {}
 
     virtual bool match(std::exception const & e) const override
     {

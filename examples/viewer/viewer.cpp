@@ -10,7 +10,9 @@
 #include <string_view>
 #include <vector>
 
+#define CLI11_BOOST_OPTIONAL 0
 #include "CLI11/CLI11.hpp"
+
 #include "DirectX/D3DEngine.h"
 #include "Engine.h"
 #include "EngineOptions.h"
@@ -207,7 +209,7 @@ private:
     }
 };
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow)
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int nCmdShow)
 {
     FILE * attachedOut{};
     FILE * attachedIn{};
