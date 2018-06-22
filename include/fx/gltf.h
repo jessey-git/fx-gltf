@@ -330,7 +330,7 @@ namespace gltf
         constexpr std::array<float, 3> IdentityVec3{ 1, 1, 1 };
         constexpr std::array<float, 3> NullVec3{ 0, 0, 0 };
         constexpr float IdentityScalar = 1;
-        constexpr float FloatSentinal = 65536;
+        constexpr float FloatSentinal = 10000;
 
         constexpr bool AccessorNormalized = false;
 
@@ -528,8 +528,8 @@ namespace gltf
         {
             float xmag{ defaults::FloatSentinal };
             float ymag{ defaults::FloatSentinal };
-            float zfar{ defaults::FloatSentinal };
-            float znear{ defaults::FloatSentinal };
+            float zfar{ -defaults::FloatSentinal };
+            float znear{ -defaults::FloatSentinal };
 
             nlohmann::json extensionsAndExtras{};
         };
@@ -1599,8 +1599,8 @@ namespace gltf
     {
         detail::WriteField("xmag", json, camera.xmag, defaults::FloatSentinal);
         detail::WriteField("ymag", json, camera.ymag, defaults::FloatSentinal);
-        detail::WriteField("zfar", json, camera.zfar, defaults::FloatSentinal);
-        detail::WriteField("znear", json, camera.znear, defaults::FloatSentinal);
+        detail::WriteField("zfar", json, camera.zfar, -defaults::FloatSentinal);
+        detail::WriteField("znear", json, camera.znear, -defaults::FloatSentinal);
         detail::WriteExtensions(json, camera.extensionsAndExtras);
     }
 
