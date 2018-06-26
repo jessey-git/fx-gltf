@@ -330,7 +330,7 @@ namespace gltf
         constexpr std::array<float, 3> IdentityVec3{ 1, 1, 1 };
         constexpr std::array<float, 3> NullVec3{ 0, 0, 0 };
         constexpr float IdentityScalar = 1;
-        constexpr float FloatSentinal = 10000;
+        constexpr float FloatSentinel = 10000;
 
         constexpr bool AccessorNormalized = false;
 
@@ -526,10 +526,10 @@ namespace gltf
 
         struct Orthographic : NeverEmpty
         {
-            float xmag{ defaults::FloatSentinal };
-            float ymag{ defaults::FloatSentinal };
-            float zfar{ -defaults::FloatSentinal };
-            float znear{ -defaults::FloatSentinal };
+            float xmag{ defaults::FloatSentinel };
+            float ymag{ defaults::FloatSentinel };
+            float zfar{ -defaults::FloatSentinel };
+            float znear{ -defaults::FloatSentinel };
 
             nlohmann::json extensionsAndExtras{};
         };
@@ -1597,10 +1597,10 @@ namespace gltf
 
     inline void to_json(nlohmann::json & json, Camera::Orthographic const & camera)
     {
-        detail::WriteField("xmag", json, camera.xmag, defaults::FloatSentinal);
-        detail::WriteField("ymag", json, camera.ymag, defaults::FloatSentinal);
-        detail::WriteField("zfar", json, camera.zfar, -defaults::FloatSentinal);
-        detail::WriteField("znear", json, camera.znear, -defaults::FloatSentinal);
+        detail::WriteField("xmag", json, camera.xmag, defaults::FloatSentinel);
+        detail::WriteField("ymag", json, camera.ymag, defaults::FloatSentinel);
+        detail::WriteField("zfar", json, camera.zfar, -defaults::FloatSentinel);
+        detail::WriteField("znear", json, camera.znear, -defaults::FloatSentinel);
         detail::WriteExtensions(json, camera.extensionsAndExtras);
     }
 
