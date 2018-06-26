@@ -329,8 +329,8 @@ namespace gltf
         constexpr std::array<float, 4> IdentityVec4{ 1, 1, 1, 1 };
         constexpr std::array<float, 3> IdentityVec3{ 1, 1, 1 };
         constexpr std::array<float, 3> NullVec3{ 0, 0, 0 };
-        constexpr float IdentityScalar = 1.0f;
-        constexpr float FloatSentinal = 9999.75;
+        constexpr float IdentityScalar = 1;
+        constexpr float FloatSentinel = 10000;
 
         constexpr bool AccessorNormalized = false;
 
@@ -485,7 +485,7 @@ namespace gltf
 
         bool IsEmbeddedResource() const noexcept
         {
-            return uri.find(detail::MimetypeApplicationOctet) != std::string::npos;
+            return uri.find(detail::MimetypeApplicationOctet) == 0;
         }
 
         void SetEmbeddedResource()
@@ -526,10 +526,10 @@ namespace gltf
 
         struct Orthographic : NeverEmpty
         {
-            float xmag{ defaults::FloatSentinal };
-            float ymag{ defaults::FloatSentinal };
-            float zfar{ defaults::FloatSentinal };
-            float znear{ defaults::FloatSentinal };
+            float xmag{ defaults::FloatSentinel };
+            float ymag{ defaults::FloatSentinel };
+            float zfar{ -defaults::FloatSentinel };
+            float znear{ -defaults::FloatSentinel };
 
             nlohmann::json extensionsAndExtras{};
         };
@@ -565,12 +565,12 @@ namespace gltf
 
         bool IsEmbeddedResource() const noexcept
         {
-            return uri.find(detail::MimetypeImagePNG) != std::string::npos || uri.find(detail::MimetypeImageJPG) != std::string::npos;
+            return uri.find(detail::MimetypeImagePNG) == 0 || uri.find(detail::MimetypeImageJPG) == 0;
         }
 
         void MaterializeData(std::vector<uint8_t> & data) const
         {
-            char const * const mimetype = uri.find(detail::MimetypeImagePNG) != std::string::npos ? detail::MimetypeImagePNG : detail::MimetypeImageJPG;
+            char const * const mimetype = uri.find(detail::MimetypeImagePNG) == 0 ? detail::MimetypeImagePNG : detail::MimetypeImageJPG;
             const std::size_t startPos = std::char_traits<char>::length(mimetype) + 1;
             const std::size_t base64Length = uri.length() - startPos;
 
@@ -1597,10 +1597,10 @@ namespace gltf
 
     inline void to_json(nlohmann::json & json, Camera::Orthographic const & camera)
     {
-        detail::WriteField("xmag", json, camera.xmag, defaults::FloatSentinal);
-        detail::WriteField("ymag", json, camera.ymag, defaults::FloatSentinal);
-        detail::WriteField("zfar", json, camera.zfar, defaults::FloatSentinal);
-        detail::WriteField("znear", json, camera.znear, defaults::FloatSentinal);
+        detail::WriteField("xmag", json, camera.xmag, defaults::FloatSentinel);
+        detail::WriteField("ymag", json, camera.ymag, defaults::FloatSentinel);
+        detail::WriteField("zfar", json, camera.zfar, -defaults::FloatSentinel);
+        detail::WriteField("znear", json, camera.znear, -defaults::FloatSentinel);
         detail::WriteExtensions(json, camera.extensionsAndExtras);
     }
 
