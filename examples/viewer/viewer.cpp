@@ -191,7 +191,7 @@ private:
 
         if (showHelp)
         {
-            std::cout << app.help(25) << std::endl;
+            std::cout << app.help() << std::endl;
             std::cout << "Controls:" << std::endl;
             std::cout << "  Orbit with left mouse button" << std::endl;
             std::cout << "  Dolly with middle mouse button" << std::endl;
