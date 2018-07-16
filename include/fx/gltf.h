@@ -970,7 +970,7 @@ namespace gltf
                 binHeader.chunkLength = binPaddedLength;
 
                 header.jsonHeader.chunkLength = ((jsonText.length() + 3) & (~3u));
-                const uint32_t headerPadding = (uint32_t)(header.jsonHeader.chunkLength-jsonText.length());
+                const uint32_t headerPadding = static_cast<uint32_t>(header.jsonHeader.chunkLength-jsonText.length());
                 header.length = detail::HeaderSize + header.jsonHeader.chunkLength + detail::ChunkHeaderSize + binHeader.chunkLength;
 
                 std::ofstream fileData(documentFilePath, std::ios::binary);
@@ -979,13 +979,14 @@ namespace gltf
                     throw std::system_error(std::make_error_code(std::errc::io_error));
                 }
 
+                const char spaces[3] = { ' ', ' ', ' ' };
+                const char nulls[3] = { 0, 0, 0 };
+
                 fileData.write(reinterpret_cast<char *>(&header), detail::HeaderSize);
                 fileData.write(jsonText.c_str(), jsonText.length());
-                const char spaces[3] = {' ', ' ', ' '};
-                fileData.write(spaces, headerPadding );
+                fileData.write(&spaces[0], headerPadding );
                 fileData.write(reinterpret_cast<char *>(&binHeader), detail::ChunkHeaderSize);
                 fileData.write(reinterpret_cast<char const *>(&binBuffer.data[0]), binBuffer.byteLength);
-                const char nulls[3] = {0,0,0};
                 fileData.write(&nulls[0], binPadding);
 
                 externalBufferIndex = 1;
