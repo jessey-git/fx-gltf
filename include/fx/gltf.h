@@ -604,7 +604,7 @@ namespace gltf
 
             bool empty() const noexcept
             {
-                return index == -1 && texCoord == 0;
+                return index == -1;
             }
         };
 
@@ -743,7 +743,7 @@ namespace gltf
 
         bool empty() const noexcept
         {
-            return name.empty() && magFilter == MagFilter::None && minFilter == MinFilter::None && wrapS == WrappingMode::Repeat && wrapT == WrappingMode::Repeat;
+            return name.empty() && magFilter == MagFilter::None && minFilter == MinFilter::None && wrapS == WrappingMode::Repeat && wrapT == WrappingMode::Repeat && extensionsAndExtras.empty();
         }
     };
 
@@ -1634,7 +1634,7 @@ namespace gltf
 
     inline void to_json(nlohmann::json & json, Image const & image)
     {
-        detail::WriteField("bufferView", json, image.bufferView, {});
+        detail::WriteField("bufferView", json, image.bufferView, image.uri.empty() ? -1 : 0); // bufferView or uri need to be written; even if default 0
         detail::WriteField("mimeType", json, image.mimeType);
         detail::WriteField("name", json, image.name);
         detail::WriteField("uri", json, image.uri);
@@ -1738,12 +1738,20 @@ namespace gltf
 
     inline void to_json(nlohmann::json & json, Sampler const & sampler)
     {
-        detail::WriteField("name", json, sampler.name);
-        detail::WriteField("magFilter", json, sampler.magFilter, Sampler::MagFilter::None);
-        detail::WriteField("minFilter", json, sampler.minFilter, Sampler::MinFilter::None);
-        detail::WriteField("wrapS", json, sampler.wrapS, Sampler::WrappingMode::Repeat);
-        detail::WriteField("wrapT", json, sampler.wrapT, Sampler::WrappingMode::Repeat);
-        detail::WriteExtensions(json, sampler.extensionsAndExtras);
+        if (!sampler.empty())
+        {
+            detail::WriteField("name", json, sampler.name);
+            detail::WriteField("magFilter", json, sampler.magFilter, Sampler::MagFilter::None);
+            detail::WriteField("minFilter", json, sampler.minFilter, Sampler::MinFilter::None);
+            detail::WriteField("wrapS", json, sampler.wrapS, Sampler::WrappingMode::Repeat);
+            detail::WriteField("wrapT", json, sampler.wrapT, Sampler::WrappingMode::Repeat);
+            detail::WriteExtensions(json, sampler.extensionsAndExtras);
+        }
+        else
+        {
+            // If a sampler is completely empty we still need to write out an empty object for the encompassing array...
+            json = nlohmann::json::object();
+        }
     }
 
     inline void to_json(nlohmann::json & json, Scene const & scene)
