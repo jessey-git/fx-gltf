@@ -604,7 +604,7 @@ namespace gltf
 
             bool empty() const noexcept
             {
-                return index == -1 && texCoord == 0;
+                return index == -1;
             }
         };
 
@@ -743,7 +743,7 @@ namespace gltf
 
         bool empty() const noexcept
         {
-            return name.empty() && magFilter == MagFilter::None && minFilter == MinFilter::None && wrapS == WrappingMode::Repeat && wrapT == WrappingMode::Repeat;
+            return name.empty() && magFilter == MagFilter::None && minFilter == MinFilter::None && wrapS == WrappingMode::Repeat && wrapT == WrappingMode::Repeat && extensionsAndExtras.empty();
         }
     };
 
@@ -854,7 +854,6 @@ namespace gltf
                 throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
             }
         }
-
 
         inline Document Create(nlohmann::json const & json, DataContext const & dataContext)
         {
@@ -970,7 +969,7 @@ namespace gltf
                 binHeader.chunkLength = binPaddedLength;
 
                 header.jsonHeader.chunkLength = ((jsonText.length() + 3) & (~3u));
-                const uint32_t headerPadding = static_cast<uint32_t>(header.jsonHeader.chunkLength-jsonText.length());
+                const uint32_t headerPadding = static_cast<uint32_t>(header.jsonHeader.chunkLength - jsonText.length());
                 header.length = detail::HeaderSize + header.jsonHeader.chunkLength + detail::ChunkHeaderSize + binHeader.chunkLength;
 
                 std::ofstream fileData(documentFilePath, std::ios::binary);
@@ -984,7 +983,7 @@ namespace gltf
 
                 fileData.write(reinterpret_cast<char *>(&header), detail::HeaderSize);
                 fileData.write(jsonText.c_str(), jsonText.length());
-                fileData.write(&spaces[0], headerPadding );
+                fileData.write(&spaces[0], headerPadding);
                 fileData.write(reinterpret_cast<char *>(&binHeader), detail::ChunkHeaderSize);
                 fileData.write(reinterpret_cast<char const *>(&binBuffer.data[0]), binBuffer.byteLength);
                 fileData.write(&nulls[0], binPadding);
@@ -1635,7 +1634,7 @@ namespace gltf
 
     inline void to_json(nlohmann::json & json, Image const & image)
     {
-        detail::WriteField("bufferView", json, image.bufferView, {});
+        detail::WriteField("bufferView", json, image.bufferView, image.uri.empty() ? -1 : 0); // bufferView or uri need to be written; even if default 0
         detail::WriteField("mimeType", json, image.mimeType);
         detail::WriteField("name", json, image.name);
         detail::WriteField("uri", json, image.uri);
@@ -1739,12 +1738,20 @@ namespace gltf
 
     inline void to_json(nlohmann::json & json, Sampler const & sampler)
     {
-        detail::WriteField("name", json, sampler.name);
-        detail::WriteField("magFilter", json, sampler.magFilter, Sampler::MagFilter::None);
-        detail::WriteField("minFilter", json, sampler.minFilter, Sampler::MinFilter::None);
-        detail::WriteField("wrapS", json, sampler.wrapS, Sampler::WrappingMode::Repeat);
-        detail::WriteField("wrapT", json, sampler.wrapT, Sampler::WrappingMode::Repeat);
-        detail::WriteExtensions(json, sampler.extensionsAndExtras);
+        if (!sampler.empty())
+        {
+            detail::WriteField("name", json, sampler.name);
+            detail::WriteField("magFilter", json, sampler.magFilter, Sampler::MagFilter::None);
+            detail::WriteField("minFilter", json, sampler.minFilter, Sampler::MinFilter::None);
+            detail::WriteField("wrapS", json, sampler.wrapS, Sampler::WrappingMode::Repeat);
+            detail::WriteField("wrapT", json, sampler.wrapT, Sampler::WrappingMode::Repeat);
+            detail::WriteExtensions(json, sampler.extensionsAndExtras);
+        }
+        else
+        {
+            // If a sampler is completely empty we still need to write out an empty object for the encompassing array...
+            json = nlohmann::json::object();
+        }
     }
 
     inline void to_json(nlohmann::json & json, Scene const & scene)
@@ -1811,8 +1818,14 @@ namespace gltf
 
             return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath), readQuotas });
         }
-        catch (invalid_gltf_document &) { throw; }
-        catch (std::system_error &) { throw; }
+        catch (invalid_gltf_document &)
+        {
+            throw;
+        }
+        catch (std::system_error &)
+        {
+            throw;
+        }
         catch (...)
         {
             std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
@@ -1859,8 +1872,14 @@ namespace gltf
                 nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
                 { detail::GetDocumentRootPath(documentFilePath), readQuotas, &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
         }
-        catch (invalid_gltf_document &) { throw; }
-        catch (std::system_error &) { throw; }
+        catch (invalid_gltf_document &)
+        {
+            throw;
+        }
+        catch (std::system_error &)
+        {
+            throw;
+        }
         catch (...)
         {
             std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
@@ -1875,8 +1894,14 @@ namespace gltf
 
             detail::Save(document, documentFilePath, useBinaryFormat);
         }
-        catch (invalid_gltf_document &) { throw; }
-        catch (std::system_error &) { throw; }
+        catch (invalid_gltf_document &)
+        {
+            throw;
+        }
+        catch (std::system_error &)
+        {
+            throw;
+        }
         catch (...)
         {
             std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
