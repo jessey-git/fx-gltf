@@ -41,7 +41,7 @@ void D3DEngine::InitializeCore(HWND window)
     m_gltfGround = fx::gltf::LoadFromText("Assets/ground_plane.gltf");
 
     const uint32_t BackBufferCount = 3;
-    m_deviceResources = std::make_unique<D3DDeviceResources>(BackBufferCount, D3D_FEATURE_LEVEL_12_0, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+    m_deviceResources = std::make_unique<D3DDeviceResources>(BackBufferCount, D3D_FEATURE_LEVEL_11_1, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
     m_deviceResources->SetWindow(window, Config.Width, Config.Height);
     m_deviceResources->RegisterDeviceNotify(this);
 
