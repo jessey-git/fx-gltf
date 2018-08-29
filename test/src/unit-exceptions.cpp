@@ -7,6 +7,7 @@
 #include <catch2/catch.hpp>
 #include <fx/gltf.h>
 #include <nlohmann/json.hpp>
+#include <sstream>
 
 #include "utility.h"
 
