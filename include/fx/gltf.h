@@ -572,9 +572,9 @@ namespace gltf
         {
             char const * const mimetype = uri.find(detail::MimetypeImagePNG) == 0 ? detail::MimetypeImagePNG : detail::MimetypeImageJPG;
             const std::size_t startPos = std::char_traits<char>::length(mimetype) + 1;
-            const std::size_t base64Length = uri.length() - startPos;
 
 #if defined(FX_GLTF_HAS_CPP_17)
+            const std::size_t base64Length = uri.length() - startPos;
             const bool success = base64::TryDecode({ &uri[startPos], base64Length }, data);
 #else
             const bool success = base64::TryDecode(uri.substr(startPos), data);
