@@ -1731,7 +1731,7 @@ namespace gltf
             }
         }
 
-        inline void Save(Document const & document, std::string documentFilePath, bool useBinaryFormat)
+        inline void Save(Document const & document, std::string const & documentFilePath, bool useBinaryFormat)
         {
             nlohmann::json json = document;
 
@@ -1886,7 +1886,7 @@ namespace gltf
         }
     }
 
-    inline void Save(Document const & document, std::string documentFilePath, bool useBinaryFormat)
+    inline void Save(Document const & document, std::string const & documentFilePath, bool useBinaryFormat)
     {
         try
         {
