@@ -33,7 +33,7 @@ public:
     {
         fx::gltf::Image const & image = doc.images[doc.textures[textureIndex].source];
 
-        bool isEmbedded = image.IsEmbeddedResource();
+        const bool isEmbedded = image.IsEmbeddedResource();
         if (!image.uri.empty() && !isEmbedded)
         {
             m_info.FileName = fx::gltf::detail::GetDocumentRootPath(modelPath) + "/" + image.uri;

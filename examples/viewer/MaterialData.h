@@ -21,7 +21,7 @@ public:
         return m_material;
     }
 
-    bool HasData() const noexcept
+    bool HasData() const
     {
         return m_hasData && !m_material.pbrMetallicRoughness.empty();
     }

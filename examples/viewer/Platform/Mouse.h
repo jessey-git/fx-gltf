@@ -60,11 +60,11 @@ public:
             Reset();
         }
 
-        void __cdecl Update(const State & state);
+        void __cdecl Update(const State & state) noexcept;
 
         void __cdecl Reset() noexcept;
 
-        State __cdecl GetLastState() const
+        State __cdecl GetLastState() const noexcept
         {
             return lastState;
         }
@@ -77,13 +77,13 @@ public:
     State __cdecl GetState() const;
 
     // Resets the accumulated scroll wheel value
-    void __cdecl ResetScrollWheelValue();
+    void __cdecl ResetScrollWheelValue() noexcept;
 
     // Sets mouse mode (defaults to absolute)
     void __cdecl SetMode(Mode mode);
 
     // Feature detection
-    bool __cdecl IsConnected() const;
+    bool __cdecl IsConnected() const noexcept;
 
     // Cursor visibility
     bool __cdecl IsVisible() const;

@@ -8,7 +8,7 @@
 
 struct handle_closer
 {
-    void operator()(HANDLE h)
+    void operator()(HANDLE h) noexcept
     {
         if (h != nullptr)
         {
@@ -89,7 +89,7 @@ public:
         }
     }
 
-    void ResetScrollWheelValue()
+    void ResetScrollWheelValue() noexcept
     {
         SetEvent(mScrollWheelValue.get());
     }
@@ -116,7 +116,7 @@ public:
         }
     }
 
-    bool IsConnected() const
+    bool IsConnected() const noexcept
     {
         return GetSystemMetrics(SM_MOUSEPRESENT) != 0;
     }
@@ -150,7 +150,7 @@ public:
             throw std::exception("GetCursorInfo");
         }
 
-        bool isvisible = (info.flags & CURSOR_SHOWING) != 0;
+        const bool isvisible = (info.flags & CURSOR_SHOWING) != 0;
         if (isvisible != visible)
         {
             ShowCursor(visible ? TRUE : FALSE);
@@ -203,7 +203,7 @@ private:
 
     friend void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
-    void ClipToWindow()
+    void ClipToWindow() noexcept
     {
         assert(mWindow != nullptr);
 
@@ -246,11 +246,12 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
         return;
     }
 
-    HANDLE evts[3];
+    const DWORD HandleCount = 3;
+    HANDLE evts[HandleCount];
     evts[0] = pImpl->mScrollWheelValue.get();
     evts[1] = pImpl->mAbsoluteMode.get();
     evts[2] = pImpl->mRelativeMode.get();
-    switch (WaitForMultipleObjectsEx(_countof(evts), evts, FALSE, 0, FALSE))
+    switch (WaitForMultipleObjectsEx(HandleCount, evts, FALSE, 0, FALSE))
     {
     case WAIT_OBJECT_0:
         pImpl->mState.scrollWheelValue = 0;
@@ -315,7 +316,7 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
         }
         else
         {
-            int scrollWheel = pImpl->mState.scrollWheelValue;
+            const int scrollWheel = pImpl->mState.scrollWheelValue;
             std::memset(&pImpl->mState, 0, sizeof(State));
             pImpl->mState.scrollWheelValue = scrollWheel;
 
@@ -326,11 +327,11 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
     case WM_INPUT:
         if (pImpl->mInFocus && pImpl->mMode == MODE_RELATIVE)
         {
-            RAWINPUT raw;
+            RAWINPUT raw{};
             UINT rawSize = sizeof(raw);
 
-            UINT resultData = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &rawSize, sizeof(RAWINPUTHEADER));
-            if (resultData == UINT(-1))
+            const UINT resultData = GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &rawSize, sizeof(RAWINPUTHEADER));
+            if (resultData == static_cast<UINT>(-1))
             {
                 throw std::exception("GetRawInputData");
             }
@@ -350,8 +351,8 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
                     const int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
                     const int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-                    int x = static_cast<int>((float(raw.data.mouse.lLastX) / 65535.0f) * width);
-                    int y = static_cast<int>((float(raw.data.mouse.lLastY) / 65535.0f) * height);
+                    const int x = static_cast<int>((static_cast<float>(raw.data.mouse.lLastX) / 65535.0f) * width);
+                    const int y = static_cast<int>((static_cast<float>(raw.data.mouse.lLastY) / 65535.0f) * height);
 
                     if (pImpl->mRelativeX == INT32_MAX)
                     {
@@ -440,8 +441,8 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
     if (pImpl->mMode == MODE_ABSOLUTE)
     {
         // All mouse messages provide a new pointer position
-        int xPos = static_cast<int16_t>(LOWORD(lParam));
-        int yPos = static_cast<int16_t>(HIWORD(lParam));
+        const int xPos = static_cast<int16_t>(LOWORD(lParam));
+        const int yPos = static_cast<int16_t>(HIWORD(lParam));
 
         pImpl->mState.x = pImpl->mLastX = xPos;
         pImpl->mState.y = pImpl->mLastY = yPos;
@@ -479,7 +480,7 @@ Mouse::State Mouse::GetState() const
     return state;
 }
 
-void Mouse::ResetScrollWheelValue()
+void Mouse::ResetScrollWheelValue() noexcept
 {
     pImpl->ResetScrollWheelValue();
 }
@@ -489,7 +490,7 @@ void Mouse::SetMode(Mode mode)
     pImpl->SetMode(mode);
 }
 
-bool Mouse::IsConnected() const
+bool Mouse::IsConnected() const noexcept
 {
     return pImpl->IsConnected();
 }
@@ -520,7 +521,7 @@ Mouse & Mouse::Get()
 
 #define UPDATE_BUTTON_STATE(field) field = static_cast<ButtonState>((!!state.field) | ((!!state.field ^ !!lastState.field) << 1));
 
-void Mouse::ButtonStateTracker::Update(const Mouse::State & state)
+void Mouse::ButtonStateTracker::Update(const Mouse::State & state) noexcept
 {
     UPDATE_BUTTON_STATE(leftButton);
 

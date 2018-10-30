@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 #pragma once
 
+#include <array>
 #include <fx/gltf.h>
 #include <vector>
 
@@ -49,16 +50,20 @@ public:
         return requiredShaderOptions;
     }
 
+    static const UINT SlotVertex = 0;
+    static const UINT SlotNormal = 1;
+    static const UINT SlotTangent = 2;
+    static const UINT SlotTexCoord0 = 3;
+
 private:
     struct D3DMeshPart
     {
         Microsoft::WRL::ComPtr<ID3D12Resource> DefaultBuffer{};
         Microsoft::WRL::ComPtr<ID3D12Resource> UploadBuffer{};
 
-        D3D12_VERTEX_BUFFER_VIEW VertexBufferView{};
-        D3D12_VERTEX_BUFFER_VIEW NormalBufferView{};
-        D3D12_VERTEX_BUFFER_VIEW TangentBufferView{};
-        D3D12_VERTEX_BUFFER_VIEW TexCoord0BufferView{};
+        // Views 0-3 should match the input-slot order defined by the PSO
+        std::array<D3D12_VERTEX_BUFFER_VIEW, 4> Buffers{};
+
         D3D12_INDEX_BUFFER_VIEW IndexBufferView{};
 
         uint32_t IndexCount{};

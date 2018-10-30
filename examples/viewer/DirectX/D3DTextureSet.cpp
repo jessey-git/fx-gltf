@@ -115,16 +115,16 @@ void D3DTextureSet::LoadToMemory(
     std::vector<D3D12_SUBRESOURCE_DATA> subresources(totalSubresources);
     for (std::size_t i = 0; i < totalSubresources; i++)
     {
-        Image & image = m_images[i];
+        Image const & image = m_images[i];
 
         // Load the image data right into the upload buffer...
         if (image.formatConverter)
         {
-            COMUtil::ThrowIfFailed(image.formatConverter->CopyPixels(0, image.width * 4, image.size, bufferStart + offset));
+            COMUtil::ThrowIfFailed(image.formatConverter->CopyPixels(nullptr, image.width * 4, image.size, bufferStart + offset));
         }
         else
         {
-            COMUtil::ThrowIfFailed(image.frame->CopyPixels(0, image.width * 4, image.size, bufferStart + offset));
+            COMUtil::ThrowIfFailed(image.frame->CopyPixels(nullptr, image.width * 4, image.size, bufferStart + offset));
         }
 
         subresources[i].pData = bufferStart + offset;
