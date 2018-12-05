@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 #pragma once
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -33,7 +34,7 @@ inline constexpr ShaderOptions operator|(ShaderOptions a, ShaderOptions b) noexc
     return static_cast<ShaderOptions>(static_cast<uint64_t>(a) | static_cast<uint64_t>(b));
 }
 
-inline constexpr ShaderOptions & operator|=(ShaderOptions & a, ShaderOptions b) noexcept
+inline ShaderOptions & operator|=(ShaderOptions & a, ShaderOptions b) noexcept
 {
     return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) |= static_cast<uint64_t>(b));
 }
@@ -43,7 +44,7 @@ inline constexpr ShaderOptions operator&(ShaderOptions a, ShaderOptions b) noexc
     return static_cast<ShaderOptions>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
 }
 
-inline constexpr ShaderOptions & operator&=(ShaderOptions & a, ShaderOptions b) noexcept
+inline ShaderOptions & operator&=(ShaderOptions & a, ShaderOptions b) noexcept
 {
     return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) &= static_cast<uint64_t>(b));
 }
@@ -58,7 +59,7 @@ inline constexpr ShaderOptions operator^(ShaderOptions a, ShaderOptions b) noexc
     return static_cast<ShaderOptions>(static_cast<uint64_t>(a) ^ static_cast<uint64_t>(b));
 }
 
-inline constexpr ShaderOptions & operator^=(ShaderOptions & a, ShaderOptions b) noexcept
+inline ShaderOptions & operator^=(ShaderOptions & a, ShaderOptions b) noexcept
 {
     return reinterpret_cast<ShaderOptions &>(reinterpret_cast<uint64_t &>(a) ^= static_cast<uint64_t>(b));
 }
