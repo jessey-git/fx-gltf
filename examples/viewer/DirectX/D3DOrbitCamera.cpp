@@ -13,7 +13,7 @@ void D3DOrbitCamera::Reset(DirectX::XMFLOAT3 position)
     position.y = 0;
     const DirectX::XMVECTOR projected = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&position));
 
-    int xFlip = position.x < 0 ? -1 : 1;
+    const int xFlip = position.x < 0 ? -1 : 1;
 
     Reset(
         DirectX::XMVectorGetX(DirectX::XMVector3Length(original)),
@@ -45,7 +45,7 @@ void D3DOrbitCamera::Update(Mouse::ButtonStateTracker tracker)
 
     // Query mouse state...
     bool changed = false;
-    Mouse::State state = tracker.GetLastState();
+    const Mouse::State state = tracker.GetLastState();
     if (tracker.leftButton == ButtonState::PRESSED || tracker.middleButton == ButtonState::PRESSED)
     {
         TrackLastCursorPosition(state);
@@ -104,23 +104,23 @@ void D3DOrbitCamera::Calculate()
     DirectX::XMStoreFloat4x4(&ViewProjectionMatrix, DirectX::XMLoadFloat4x4(&ViewMatrix) * DirectX::XMLoadFloat4x4(&m_projectionMatrix));
 }
 
-void D3DOrbitCamera::TrackLastCursorPosition(Mouse::State const & state)
+void D3DOrbitCamera::TrackLastCursorPosition(Mouse::State const & state) noexcept
 {
     m_lastCursorPos.x = state.x;
     m_lastCursorPos.y = state.y;
 }
 
-void D3DOrbitCamera::Dolly(float zoomFactor)
+void D3DOrbitCamera::Dolly(float zoomFactor) noexcept
 {
     m_radius *= zoomFactor;
 }
 
-void D3DOrbitCamera::RotateLeft(float deltaTheta)
+void D3DOrbitCamera::RotateLeft(float deltaTheta) noexcept
 {
     m_theta += deltaTheta;
 }
 
-void D3DOrbitCamera::RotateUp(float deltaPhi)
+void D3DOrbitCamera::RotateUp(float deltaPhi) noexcept
 {
     constexpr float Epsilon = 0.000001f;
 

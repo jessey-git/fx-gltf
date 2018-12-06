@@ -31,11 +31,11 @@ private:
     float m_theta{};
 
     DirectX::XMINT2 m_lastCursorPos{};
-    void TrackLastCursorPosition(Mouse::State const & state);
+    void TrackLastCursorPosition(Mouse::State const & state) noexcept;
 
     void Calculate();
 
-    void Dolly(float zoomFactor);
-    void RotateLeft(float deltaTheta);
-    void RotateUp(float deltaPhi);
+    void Dolly(float zoomFactor) noexcept;
+    void RotateLeft(float deltaTheta) noexcept;
+    void RotateUp(float deltaPhi) noexcept;
 };

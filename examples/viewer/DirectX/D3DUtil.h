@@ -43,7 +43,7 @@ namespace Util
         }
     }
 
-    inline uint64_t ResourceSize(uint32_t size) noexcept
+    inline constexpr uint64_t ResourceSize(uint32_t size) noexcept
     {
         const std::size_t MinResourceSize = 64 * 1024;
         return size < MinResourceSize ? MinResourceSize : size;
@@ -59,7 +59,7 @@ namespace Util
         DirectX::XMStoreFloat3(&currentBBox.CenterTranslation, mid);
     }
 
-    inline void UnionBBox(BBox & currentBBox, BBox const & other) noexcept
+    inline void UnionBBox(BBox & currentBBox, BBox const & other)
     {
         const DirectX::XMVECTOR cMin = DirectX::XMLoadFloat3(&currentBBox.Min);
         const DirectX::XMVECTOR cMax = DirectX::XMLoadFloat3(&currentBBox.Max);

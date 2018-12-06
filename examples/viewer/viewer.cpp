@@ -183,7 +183,7 @@ private:
         {
             showHelp = true;
         }
-        catch (CLI::ParseError & e)
+        catch (CLI::ParseError const & e)
         {
             errorMessage = e.what();
             showHelp = true;
@@ -225,7 +225,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR, _
         COMUtil::Init();
         result = Win32Application::Run(hInstance, nCmdShow);
     }
-    catch (std::exception & e)
+    catch (std::exception const & e)
     {
         std::string message;
         fx::FormatException(message, e);

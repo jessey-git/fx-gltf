@@ -67,25 +67,25 @@ void D3DMesh::Create(
 
         // Copy vertex buffer to upload...
         std::memcpy(bufferStart, vBuffer.Data, vBuffer.TotalSize);
-        meshPart.VertexBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress();
-        meshPart.VertexBufferView.StrideInBytes = vBuffer.DataStride;
-        meshPart.VertexBufferView.SizeInBytes = vBuffer.TotalSize;
+        meshPart.Buffers[SlotVertex].BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress();
+        meshPart.Buffers[SlotVertex].StrideInBytes = vBuffer.DataStride;
+        meshPart.Buffers[SlotVertex].SizeInBytes = vBuffer.TotalSize;
         offset += vBuffer.TotalSize;
 
         // Copy normal buffer to upload...
         std::memcpy(bufferStart + offset, nBuffer.Data, nBuffer.TotalSize);
-        meshPart.NormalBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
-        meshPart.NormalBufferView.StrideInBytes = nBuffer.DataStride;
-        meshPart.NormalBufferView.SizeInBytes = nBuffer.TotalSize;
+        meshPart.Buffers[SlotNormal].BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
+        meshPart.Buffers[SlotNormal].StrideInBytes = nBuffer.DataStride;
+        meshPart.Buffers[SlotNormal].SizeInBytes = nBuffer.TotalSize;
         offset += nBuffer.TotalSize;
 
         if (tBuffer.HasData())
         {
             // Copy tangent buffer to upload...
             std::memcpy(bufferStart + offset, tBuffer.Data, tBuffer.TotalSize);
-            meshPart.TangentBufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
-            meshPart.TangentBufferView.StrideInBytes = tBuffer.DataStride;
-            meshPart.TangentBufferView.SizeInBytes = tBuffer.TotalSize;
+            meshPart.Buffers[SlotTangent].BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
+            meshPart.Buffers[SlotTangent].StrideInBytes = tBuffer.DataStride;
+            meshPart.Buffers[SlotTangent].SizeInBytes = tBuffer.TotalSize;
             offset += tBuffer.TotalSize;
         }
 
@@ -93,9 +93,9 @@ void D3DMesh::Create(
         {
             // Copy tex-coord buffer to upload...
             std::memcpy(bufferStart + offset, cBuffer.Data, cBuffer.TotalSize);
-            meshPart.TexCoord0BufferView.BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
-            meshPart.TexCoord0BufferView.StrideInBytes = cBuffer.DataStride;
-            meshPart.TexCoord0BufferView.SizeInBytes = cBuffer.TotalSize;
+            meshPart.Buffers[SlotTexCoord0].BufferLocation = meshPart.DefaultBuffer->GetGPUVirtualAddress() + offset;
+            meshPart.Buffers[SlotTexCoord0].StrideInBytes = cBuffer.DataStride;
+            meshPart.Buffers[SlotTexCoord0].SizeInBytes = cBuffer.TotalSize;
             offset += cBuffer.TotalSize;
         }
 
@@ -158,8 +158,7 @@ void D3DMesh::Render(D3DRenderContext & renderContext)
         renderContext.CurrentFrame.MeshCB->CopyData(cbIndex, meshParameters);
         renderContext.CurrentFrame.MeshDataBuffer->CopyData(cbIndex, meshPart.ShaderData);
 
-        D3D12_VERTEX_BUFFER_VIEW const * views[4] = { &meshPart.VertexBufferView, &meshPart.NormalBufferView, &meshPart.TangentBufferView, &meshPart.TexCoord0BufferView };
-        renderContext.CommandList->IASetVertexBuffers(0, 4, views[0]);
+        renderContext.CommandList->IASetVertexBuffers(0, 4, &meshPart.Buffers[0]);
         renderContext.CommandList->IASetIndexBuffer(&meshPart.IndexBufferView);
         renderContext.CommandList->SetGraphicsRootConstantBufferView(1, renderContext.CurrentFrame.MeshCB->GetGPUVirtualAddress(cbIndex));
         renderContext.CommandList->DrawIndexedInstanced(meshPart.IndexCount, 1, 0, 0, 0);
