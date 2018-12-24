@@ -81,7 +81,10 @@ namespace utility
                     (element["path"].get<std::string>().find("interpolation") != std::string::npos && element["value"] == "LINEAR") ||
                     (element["path"].get<std::string>().find("wrapS") != std::string::npos && element["value"] == 10497) ||
                     (element["path"].get<std::string>().find("wrapT") != std::string::npos && element["value"] == 10497) ||
-                    (element["path"].get<std::string>().find("doubleSided") != std::string::npos && element["value"] == false))
+                    (element["path"].get<std::string>().find("doubleSided") != std::string::npos && element["value"] == false) ||
+                    (element["path"].get<std::string>().find("roughnessFactor") != std::string::npos && element["value"] == 1.0f) ||
+                    (element["path"].get<std::string>().find("alphaMode") != std::string::npos && element["value"] == "OPAQUE") ||
+                    (element["path"].get<std::string>().find("texCoord") != std::string::npos && element["value"] == 0))
                 {
                     continue;
                 }
