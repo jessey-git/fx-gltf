@@ -1,1 +1,1 @@
-Checks: '*,-readability-named-parameter,-google-runtime-references,-llvm-header-guard,-fuchsia-*'
+Checks: '*,-abseil-*,-fuchsia-*,-readability-named-parameter,-google-runtime-references,-hicpp-use-auto,-modernize-use-auto,-llvm-header-guard'

@@ -1602,9 +1602,9 @@ namespace gltf
 
         inline std::size_t GetFileSize(std::ifstream & file)
         {
-            file.seekg(0, file.end);
+            file.seekg(0, std::ifstream::end);
             const std::streampos fileSize = file.tellg();
-            file.seekg(0, file.beg);
+            file.seekg(0, std::ifstream::beg);
 
             if (fileSize < 0)
             {
