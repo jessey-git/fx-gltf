@@ -6,6 +6,8 @@
 
 #include "utility.h"
 
+#include "catch2/catch.hpp"
+
 #include <fstream>
 #include <system_error>
 
@@ -65,31 +67,84 @@ namespace utility
         return result;
     }
 
-    nlohmann::json FilterDefaultElements(nlohmann::json const & incoming)
+    // https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+    union Float_t
+    {
+        Float_t(float num = 0.0f) : f(num) {}
+        bool Negative() const { return i < 0; }
+
+        int32_t i;
+        float f;
+    };
+
+    bool AlmostEqual(float A, float B)
+    {
+        // Check if the numbers are really close -- needed
+        // when comparing numbers near zero.
+        float absDiff = std::fabs(A - B);
+        if (absDiff <= 1e-5f)
+        {
+            return true;
+        }
+
+        float absA = std::fabs(A);
+        float absB = std::fabs(B);
+        float largest = (absB > absA) ? absB : absA;
+        const float maxDiff = largest * FLT_EPSILON;
+
+        if (absDiff <= maxDiff)
+        {
+            return true;
+        }
+
+        Float_t uA(A);
+        Float_t uB(B);
+
+        // Different signs means they do not match.
+        if (uA.Negative() != uB.Negative())
+        {
+            return false;
+        }
+
+        // Find the difference in ULPs.
+        int ulpsDiff = abs(uA.i - uB.i);
+        if (ulpsDiff <= 2)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    nlohmann::json DiffAndFilter(nlohmann::json const & current, nlohmann::json const & original)
     {
         nlohmann::json filtered{};
-        for (auto & element : incoming)
+        nlohmann::json diff = nlohmann::json::diff(current, original);
+
+        for (auto & element : diff)
         {
+            std::string path = element["path"].get<std::string>();
+
             if (element["op"] == "add")
             {
-                if ((element["path"].get<std::string>().find("emissiveFactor") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f }) ||
-                    (element["path"].get<std::string>().find("baseColorFactor") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 1.0f, 1.0f, 1.0f, 1.0f }) ||
-                    (element["path"].get<std::string>().find("translation") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f }) ||
-                    (element["path"].get<std::string>().find("rotation") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f, 1.0f }) ||
-                    (element["path"].get<std::string>().find("mode") != std::string::npos && element["value"] == 4) ||
-                    (element["path"].get<std::string>().find("byteOffset") != std::string::npos && element["value"] == 0) ||
-                    (element["path"].get<std::string>().find("interpolation") != std::string::npos && element["value"] == "LINEAR") ||
-                    (element["path"].get<std::string>().find("wrapS") != std::string::npos && element["value"] == 10497) ||
-                    (element["path"].get<std::string>().find("wrapT") != std::string::npos && element["value"] == 10497) ||
-                    (element["path"].get<std::string>().find("doubleSided") != std::string::npos && element["value"] == false) ||
-                    (element["path"].get<std::string>().find("roughnessFactor") != std::string::npos && element["value"] == 1.0f) ||
-                    (element["path"].get<std::string>().find("alphaMode") != std::string::npos && element["value"] == "OPAQUE") ||
-                    (element["path"].get<std::string>().find("texCoord") != std::string::npos && element["value"] == 0))
+                if ((path.find("emissiveFactor") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f }) ||
+                    (path.find("baseColorFactor") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 1.0f, 1.0f, 1.0f, 1.0f }) ||
+                    (path.find("translation") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f }) ||
+                    (path.find("rotation") != std::string::npos && element["value"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f, 1.0f }) ||
+                    (path.find("mode") != std::string::npos && element["value"] == 4) ||
+                    (path.find("byteOffset") != std::string::npos && element["value"] == 0) ||
+                    (path.find("interpolation") != std::string::npos && element["value"] == "LINEAR") ||
+                    (path.find("wrapS") != std::string::npos && element["value"] == 10497) ||
+                    (path.find("wrapT") != std::string::npos && element["value"] == 10497) ||
+                    (path.find("doubleSided") != std::string::npos && element["value"] == false) ||
+                    (path.find("roughnessFactor") != std::string::npos && element["value"] == 1.0f) ||
+                    (path.find("alphaMode") != std::string::npos && element["value"] == "OPAQUE") ||
+                    (path.find("texCoord") != std::string::npos && element["value"] == 0))
                 {
                     continue;
                 }
 
-                if (element["path"].get<std::string>().find("scale") != std::string::npos)
+                if (path.find("scale") != std::string::npos)
                 {
                     if ((element["value"].is_array() && element["value"].get<std::vector<float>>() == std::vector<float>{ 1.0f, 1.0f, 1.0f }) ||
                         (element["value"].is_number() && element["value"].get<float>() == 1.0f))
@@ -102,7 +157,15 @@ namespace utility
             {
                 if (element["value"].is_number_float())
                 {
-                    continue;
+                    // The text-based json diff says our numbers are mismatched but that could be
+                    // because the text actually has more digits of precision than what can fit in
+                    // a float. Let's just double-check aginst current and original...
+                    float currentValue = current[nlohmann::json::json_pointer(path)].get<float>();
+                    float originalValue = original[nlohmann::json::json_pointer(path)].get<float>();
+                    if (AlmostEqual(currentValue, originalValue))
+                    {
+                        continue;
+                    }
                 }
 
                 if (element["value"].size() == 0)

@@ -17,10 +17,10 @@ namespace utility
 
     nlohmann::json LoadJsonFromFile(std::string const & filePath);
 
-    // Several sample .glTF files contain json elements which are optional.
+    // Many .glTF files contain json elements which are optional.
     // When performing roundtrip tests against such files, fx-gltf will
     // remove these optional elements in the final json, causing the diff
-    // to fail. This function filters such cases out before comparison.
-    nlohmann::json FilterDefaultElements(nlohmann::json const & incoming);
+    // to fail. This function performs the diff and filters such cases.
+    nlohmann::json DiffAndFilter(nlohmann::json const & current, nlohmann::json const & original);
 
 } // namespace utility
