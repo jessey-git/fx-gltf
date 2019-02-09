@@ -8,6 +8,7 @@
 
 #include "catch2/catch.hpp"
 
+#include <cfloat>
 #include <fstream>
 #include <system_error>
 

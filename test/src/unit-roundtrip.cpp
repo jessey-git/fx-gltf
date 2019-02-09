@@ -133,6 +133,7 @@ TEST_CASE("roundtrip")
                 "data/glTF-Sample-Models/2.0/Cube/glTF/Cube.gltf",
                 "data/glTF-Sample-Models/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf",
                 "data/glTF-Sample-Models/2.0/Duck/glTF/Duck.gltf",
+                "data/glTF-Sample-Models/2.0/EnvironmentTest/glTF/EnvironmentTest.gltf",
                 "data/glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf",
                 "data/glTF-Sample-Models/2.0/GearboxAssy/glTF/GearboxAssy.gltf",
                 "data/glTF-Sample-Models/2.0/Lantern/glTF/Lantern.gltf",
