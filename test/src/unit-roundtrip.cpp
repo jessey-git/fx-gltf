@@ -25,7 +25,7 @@ bool FindExtension(std::string const & extensionName, nlohmann::json const & jso
 
 void RoundtripCompare(std::string const & filePath, bool checkExtensions = false)
 {
-    INFO(filePath);
+    CAPTURE(filePath);
 
     std::string errorString = "Failed: ";
     errorString.append(filePath).append("\n");
@@ -37,9 +37,7 @@ void RoundtripCompare(std::string const & filePath, bool checkExtensions = false
         nlohmann::json current = doc;
         nlohmann::json original = utility::LoadJsonFromFile(filePath);
 
-        nlohmann::json diff = nlohmann::json::diff(current, original);
-        nlohmann::json filteredDiff = utility::FilterDefaultElements(diff);
-
+        nlohmann::json filteredDiff = utility::DiffAndFilter(current, original);
         if (!filteredDiff.empty())
         {
             throw std::runtime_error(errorString.append(filteredDiff.dump(2)));
@@ -80,7 +78,7 @@ void RoundtripCompare(std::string const & filePath, bool checkExtensions = false
 
 void CheckBinary(std::string const & filePath)
 {
-    INFO(filePath);
+    CAPTURE(filePath);
 
     std::string errorString = "Failed: ";
     errorString.append(filePath).append("\n");
@@ -135,6 +133,7 @@ TEST_CASE("roundtrip")
                 "data/glTF-Sample-Models/2.0/Cube/glTF/Cube.gltf",
                 "data/glTF-Sample-Models/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf",
                 "data/glTF-Sample-Models/2.0/Duck/glTF/Duck.gltf",
+                "data/glTF-Sample-Models/2.0/EnvironmentTest/glTF/EnvironmentTest.gltf",
                 "data/glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf",
                 "data/glTF-Sample-Models/2.0/GearboxAssy/glTF/GearboxAssy.gltf",
                 "data/glTF-Sample-Models/2.0/Lantern/glTF/Lantern.gltf",

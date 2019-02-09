@@ -94,10 +94,11 @@ private:
 
                 Mouse::ProcessMessage(message, wParam, lParam);
             }
+
             return 0;
 
         case WM_PAINT:
-            if (engine)
+            if (engine != nullptr)
             {
                 engine->Tick();
             }
@@ -105,7 +106,7 @@ private:
             return 0;
 
         case WM_SIZE:
-            if (engine)
+            if (engine != nullptr)
             {
                 engine->ChangeWindowSize(LOWORD(lParam), HIWORD(lParam));
             }
@@ -179,7 +180,7 @@ private:
         {
             app.parse(args);
         }
-        catch (CLI::CallForHelp)
+        catch (CLI::CallForHelp const &)
         {
             showHelp = true;
         }

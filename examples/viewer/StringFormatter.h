@@ -197,7 +197,7 @@ namespace fx::common
         class FormatState final
         {
         public:
-            FormatState(StringType & buffer) noexcept
+            explicit FormatState(StringType & buffer) noexcept
                 : ios_(), buffer_(buffer), index_(0), width_(0), leftJustify_(false)
             {
             }

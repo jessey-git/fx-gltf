@@ -125,7 +125,9 @@ void D3DEngine::Render()
 void D3DEngine::ChangeWindowSizeCore(int width, int height)
 {
     if (!m_deviceResources->WindowSizeChanged(width, height))
+    {
         return;
+    }
 
     CreateWindowSizeDependentResources();
 }
