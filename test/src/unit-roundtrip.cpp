@@ -52,15 +52,18 @@ void RoundtripCompare(std::string const & filePath, bool checkExtensions = false
         // Ensure used extensions are actually still referenced...
         if (checkExtensions)
         {
-            for (auto e : doc.extensionsUsed)
+            for (auto & e : doc.extensionsUsed)
             {
                 bool found = false;
-                for (auto & m : doc.materials)
+                for (auto & m : doc.meshes)
                 {
-                    found |= FindExtension(e, m.extensionsAndExtras);
-                    if (found)
+                    for (auto & p : m.primitives)
                     {
-                        break;
+                        found |= FindExtension(e, p.extensionsAndExtras);
+                        if (found)
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -217,29 +220,25 @@ TEST_CASE("roundtrip")
     {
         for (auto & filePath :
             {
-                "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-pbrSpecularGlossiness/2CylinderEngine.gltf",
-                "data/glTF-Sample-Models/2.0/Avocado/glTF-pbrSpecularGlossiness/Avocado.gltf",
-                "data/glTF-Sample-Models/2.0/BarramundiFish/glTF-pbrSpecularGlossiness/BarramundiFish.gltf",
-                "data/glTF-Sample-Models/2.0/BoomBox/glTF-pbrSpecularGlossiness/BoomBox.gltf",
-                "data/glTF-Sample-Models/2.0/Box/glTF-pbrSpecularGlossiness/Box.gltf",
-                "data/glTF-Sample-Models/2.0/BoxAnimated/glTF-pbrSpecularGlossiness/BoxAnimated.gltf",
-                //"data/glTF-Sample-Models/2.0/BoxInterleaved/glTF-pbrSpecularGlossiness/BoxInterleaved.gltf",  // Uses/Requires extension but does not actually use it
-                "data/glTF-Sample-Models/2.0/BoxTextured/glTF-pbrSpecularGlossiness/BoxTextured.gltf",
-                "data/glTF-Sample-Models/2.0/BoxTexturedNonPowerOfTwo/glTF-pbrSpecularGlossiness/BoxTexturedNonPowerOfTwo.gltf",
-                "data/glTF-Sample-Models/2.0/BrainStem/glTF-pbrSpecularGlossiness/BrainStem.gltf",
-                "data/glTF-Sample-Models/2.0/Buggy/glTF-pbrSpecularGlossiness/Buggy.gltf",
-                "data/glTF-Sample-Models/2.0/CesiumMan/glTF-pbrSpecularGlossiness/CesiumMan.gltf",
-                "data/glTF-Sample-Models/2.0/CesiumMilkTruck/glTF-pbrSpecularGlossiness/CesiumMilkTruck.gltf",
-                "data/glTF-Sample-Models/2.0/Corset/glTF-pbrSpecularGlossiness/Corset.gltf",
-                "data/glTF-Sample-Models/2.0/Duck/glTF-pbrSpecularGlossiness/Duck.gltf",
-                "data/glTF-Sample-Models/2.0/GearboxAssy/glTF-pbrSpecularGlossiness/GearboxAssy.gltf",
-                "data/glTF-Sample-Models/2.0/Lantern/glTF-pbrSpecularGlossiness/Lantern.gltf",
-                "data/glTF-Sample-Models/2.0/Monster/glTF-pbrSpecularGlossiness/Monster.gltf",
-                "data/glTF-Sample-Models/2.0/ReciprocatingSaw/glTF-pbrSpecularGlossiness/ReciprocatingSaw.gltf",
-                "data/glTF-Sample-Models/2.0/RiggedFigure/glTF-pbrSpecularGlossiness/RiggedFigure.gltf",
-                "data/glTF-Sample-Models/2.0/RiggedSimple/glTF-pbrSpecularGlossiness/RiggedSimple.gltf",
-                "data/glTF-Sample-Models/2.0/VC/glTF-pbrSpecularGlossiness/VC.gltf",
-                "data/glTF-Sample-Models/2.0/WaterBottle/glTF-pbrSpecularGlossiness/WaterBottle.gltf"
+                "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Draco/2CylinderEngine.gltf",
+                "data/glTF-Sample-Models/2.0/Avocado/glTF-Draco/Avocado.gltf",
+                "data/glTF-Sample-Models/2.0/BarramundiFish/glTF-Draco/BarramundiFish.gltf",
+                "data/glTF-Sample-Models/2.0/BoomBox/glTF-Draco/BoomBox.gltf",
+                "data/glTF-Sample-Models/2.0/Box/glTF-Draco/Box.gltf",
+                "data/glTF-Sample-Models/2.0/BrainStem/glTF-Draco/BrainStem.gltf",
+                "data/glTF-Sample-Models/2.0/Buggy/glTF-Draco/Buggy.gltf",
+                "data/glTF-Sample-Models/2.0/CesiumMan/glTF-Draco/CesiumMan.gltf",
+                "data/glTF-Sample-Models/2.0/CesiumMilkTruck/glTF-Draco/CesiumMilkTruck.gltf",
+                "data/glTF-Sample-Models/2.0/Corset/glTF-Draco/Corset.gltf",
+                "data/glTF-Sample-Models/2.0/Duck/glTF-Draco/Duck.gltf",
+                "data/glTF-Sample-Models/2.0/GearboxAssy/glTF-Draco/GearboxAssy.gltf",
+                "data/glTF-Sample-Models/2.0/Lantern/glTF-Draco/Lantern.gltf",
+                "data/glTF-Sample-Models/2.0/Monster/glTF-Draco/Monster.gltf",
+                "data/glTF-Sample-Models/2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf",
+                "data/glTF-Sample-Models/2.0/RiggedFigure/glTF-Draco/RiggedFigure.gltf",
+                "data/glTF-Sample-Models/2.0/RiggedSimple/glTF-Draco/RiggedSimple.gltf",
+                "data/glTF-Sample-Models/2.0/VC/glTF-Draco/VC.gltf",
+                "data/glTF-Sample-Models/2.0/WaterBottle/glTF-Draco/WaterBottle.gltf"
             })
         {
             RoundtripCompare(filePath, true);
