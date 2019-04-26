@@ -1,9 +1,35 @@
 ﻿cmake_minimum_required (VERSION 3.8)
+project(fx-gltf VERSION 1.0.1)
 
 ##
 ## Config
 ##
-set(FX_GLTF_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+set(FX_GLTF_LIB_TARGET_NAME ${PROJECT_NAME})
+set(FX_GLTF_TARGETS_EXPORT_NAME ${PROJECT_NAME}Targets)
+set(FX_GLTF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/)
+set(FX_GLTF_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include)
+set(FX_GLTF_INSTALL_CONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/${PROJECT_NAME})
+set(FX_GLTF_LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
+set(FX_GLTF_TARGETS_FILE ${PROJECT_NAME}Targets.cmake)
+set(FX_GLTF_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake)
+set(FX_GLTF_CONFIG_VERSION_FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake)
+set(FX_GLTF_CONFIG_TEMPLATE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in)
+
+##
+## Library target
+##
+add_library(${FX_GLTF_LIB_TARGET_NAME} INTERFACE)
+add_library(${PROJECT_NAME}::${FX_GLTF_LIB_TARGET_NAME} ALIAS ${FX_GLTF_LIB_TARGET_NAME})
+target_include_directories(${FX_GLTF_LIB_TARGET_NAME}
+    INTERFACE
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${FX_GLTF_INCLUDE_DIR}>
+)
+target_compile_features(${FX_GLTF_LIB_TARGET_NAME} INTERFACE cxx_std_14)
+
+## Dependencies
+find_package(nlohmann_json 3.5.0 REQUIRED)
+target_link_libraries(${FX_GLTF_LIB_TARGET_NAME} INTERFACE nlohmann_json::nlohmann_json)
 
 ##
 ## Testing
@@ -14,3 +40,53 @@ if(BUILD_TESTING)
     enable_testing()
     add_subdirectory(test)
 endif()
+
+##
+## Install
+##
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    ${FX_GLTF_CONFIG_VERSION_FILE}
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+configure_package_config_file(
+    ${FX_GLTF_CONFIG_TEMPLATE_FILE}
+    ${FX_GLTF_CONFIG_FILE}
+    INSTALL_DESTINATION ${FX_GLTF_INSTALL_CONFIG_DIR}
+)
+
+install(
+    TARGETS ${FX_GLTF_LIB_TARGET_NAME}
+    EXPORT ${FX_GLTF_TARGETS_EXPORT_NAME}
+)
+install(
+    DIRECTORY ${FX_GLTF_INCLUDE_DIR}
+    DESTINATION ${FX_GLTF_INSTALL_INCLUDE_DIR}
+)
+install(
+    EXPORT ${FX_GLTF_TARGETS_EXPORT_NAME}
+    FILE ${FX_GLTF_TARGETS_FILE}
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${FX_GLTF_INSTALL_CONFIG_DIR}
+)
+install(
+    FILES
+        ${FX_GLTF_CONFIG_FILE}
+        ${FX_GLTF_CONFIG_VERSION_FILE}
+    DESTINATION ${FX_GLTF_INSTALL_CONFIG_DIR}
+)
+install(
+    FILES ${FX_GLTF_LICENSE_FILE}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}
+)
+
+##
+## Export
+##
+export(
+    EXPORT ${FX_GLTF_TARGETS_EXPORT_NAME}
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/${FX_GLTF_TARGETS_FILE}
+    NAMESPACE ${PROJECT_NAME}::
+)
+export(PACKAGE ${PROJECT_NAME})
