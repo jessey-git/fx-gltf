@@ -78,7 +78,7 @@ script:
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTIONS} -DTEST_LanguageStandard=${TEST_LANGUAGE_STANDARD} -GNinja
+  - cmake .. ${CMAKE_OPTIONS} -DFX_GLTF_INSTALL=OFF -DTEST_LanguageStandard=${TEST_LANGUAGE_STANDARD} -GNinja
   - cmake --build . --config Release
   - ctest -C Release -V -j
   - cd ..
