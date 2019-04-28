@@ -65,7 +65,7 @@ foreach(file ${files})
 	endif()
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL GNU OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-        target_link_libraries(${testcase} stdc++fs)
+        target_link_libraries(${testcase} PRIVATE stdc++fs)
     endif()
 
     add_test(NAME "${testcase}"
