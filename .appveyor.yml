@@ -16,7 +16,7 @@ install:
  - git submodule update --init --recursive
 
 build_script:
-  - cmake . -G"Visual Studio 15 2017 Win64" -DTEST_LanguageStandard="%language_standard%"
+  - cmake . -G"Visual Studio 15 2017 Win64" -DFX_GLTF_INSTALL=OFF -DTEST_LanguageStandard="%language_standard%"
   - cmake --build . --config Release
 
 test_script:

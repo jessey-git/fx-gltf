@@ -6,7 +6,16 @@ set(TEST_LanguageStandard "17" CACHE STRING "14 or 17")
 # Catch library with the main function to speed up build
 #############################################################################
 add_library(catch2_main OBJECT "src/unit.cpp" "src/utility.cpp")
-target_include_directories(catch2_main PRIVATE ${THIRDPARTY_INCLUDE_DIR})
+target_include_directories(catch2_main PRIVATE "src")
+
+if(FX_GLTF_USE_INSTALLED_DEPS)
+	find_package(Catch2 2.6.0 REQUIRED)
+
+	target_link_libraries(catch2_main PRIVATE nlohmann_json::nlohmann_json)
+	target_link_libraries(catch2_main PRIVATE Catch2::Catch2)
+else()
+	target_include_directories(catch2_main PRIVATE ${THIRDPARTY_INCLUDE_DIR})
+endif()
 
 if(TEST_LanguageStandard STREQUAL "17")
     target_compile_features(catch2_main PUBLIC cxx_std_17)
@@ -47,11 +56,16 @@ foreach(file ${files})
     endif()
 
     target_compile_definitions(${testcase} PRIVATE CATCH_CONFIG_FAST_COMPILE)
-    target_include_directories(${testcase} PRIVATE ${THIRDPARTY_INCLUDE_DIR})
-    target_include_directories(${testcase} PRIVATE ${FX_GLTF_INCLUDE_DIR})
+    target_link_libraries(${testcase} PRIVATE ${FX_GLTF_LIB_TARGET_NAME})
+	if(FX_GLTF_USE_INSTALLED_DEPS)
+		target_link_libraries(${testcase} PRIVATE nlohmann_json::nlohmann_json)
+		target_link_libraries(${testcase} PRIVATE Catch2::Catch2)
+	else()
+		target_include_directories(${testcase} PRIVATE ${THIRDPARTY_INCLUDE_DIR})
+	endif()
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL GNU OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-        target_link_libraries(${testcase} stdc++fs)
+        target_link_libraries(${testcase} PRIVATE stdc++fs)
     endif()
 
     add_test(NAME "${testcase}"

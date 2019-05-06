@@ -1,0 +1,8 @@
+get_filename_component(fx-gltf_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include(CMakeFindDependencyMacro)
+
+find_dependency(nlohmann_json 3.5.0 REQUIRED)
+
+if(NOT TARGET fx-gltf::fx-gltf)
+	include("${fx-gltf_CMAKE_DIR}/fx-gltfTargets.cmake")
+endif()
