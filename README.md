@@ -91,7 +91,7 @@ See the DirectX 12 enabled [viewer](examples/viewer) example for a demonstration
 | ------------| -------------------------- |
 | .gltf files w/external resources  | 100% complete and passing  |
 | .gltf files w/embedded resources  | 100% complete and passing (2 models excluded due to out-of-spec mimetypes)  |
-| .gltf files w/pbrSpecularGlossiness extension | 100% complete and passing  |
+| .gltf files w/Draco extension     | 100% complete and passing  |
 | .glb files                        | 100% complete and passing  |
 
 * Safety

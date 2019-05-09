@@ -15,7 +15,7 @@
     <ProjectGuid>{D49DC3E4-3F9B-4F15-8767-C2CF5735182F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>viewer</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -27,7 +27,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -149,20 +149,24 @@
     <None Include=".clang-format" />
     <None Include="README.md" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="DirectX\Shaders\*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>DirectX\Shaders</TargetPath>
-    </None>
-    <None Include="Assets\*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Assets</TargetPath>
-    </None>
-    <None Include="Assets\Environment\*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Assets\Environment</TargetPath>
-    </None>
-  </ItemGroup>
+  <Target Name="CopyAdditionalFiles" BeforeTargets="PrepareForBuild">
+    <ItemGroup>
+      <Shaders_DirectX Include="DirectX\Shaders\*.*" />
+      <Assets Include="Assets\*.*" />
+      <Assets_Env Include="Assets\Environment\*.*" />
+    </ItemGroup>
+    <ItemGroup>
+      <CopyFileToFolders Include="@(Shaders_DirectX)">
+        <DestinationFolders>$(OutDir)\DirectX\Shaders</DestinationFolders>
+      </CopyFileToFolders>
+      <CopyFileToFolders Include="@(Assets)">
+        <DestinationFolders>$(OutDir)\Assets</DestinationFolders>
+      </CopyFileToFolders>
+      <CopyFileToFolders Include="@(Assets_Env)">
+        <DestinationFolders>$(OutDir)\Assets\Environment</DestinationFolders>
+      </CopyFileToFolders>
+    </ItemGroup>
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

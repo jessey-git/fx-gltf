@@ -1676,18 +1676,25 @@ namespace gltf
                 }
                 else if (dataContext.binaryData != nullptr)
                 {
-                    detail::ChunkHeader header;
-
                     std::vector<uint8_t> & binary = *dataContext.binaryData;
+
+                    const std::size_t HeaderEndOffset = dataContext.binaryOffset + detail::ChunkHeaderSize;
+                    if (binary.size() < HeaderEndOffset)
+                    {
+                        throw invalid_gltf_document("Invalid GLB buffer data");
+                    }
+
+                    detail::ChunkHeader header;
                     std::memcpy(&header, &binary[dataContext.binaryOffset], detail::ChunkHeaderSize);
 
-                    if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength)
+                    const std::size_t BufferEndOffset = HeaderEndOffset + buffer.byteLength;
+                    if (header.chunkType != detail::GLBChunkBIN || header.chunkLength < buffer.byteLength || binary.size() < BufferEndOffset)
                     {
                         throw invalid_gltf_document("Invalid GLB buffer data");
                     }
 
                     buffer.data.resize(buffer.byteLength);
-                    std::memcpy(&buffer.data[0], &binary[dataContext.binaryOffset + detail::ChunkHeaderSize], buffer.byteLength);
+                    std::memcpy(&buffer.data[0], &binary[HeaderEndOffset], buffer.byteLength);
                 }
             }
 
@@ -1863,7 +1870,8 @@ namespace gltf
             std::memcpy(&header, &binary[0], detail::HeaderSize);
             if (header.magic != detail::GLBHeaderMagic ||
                 header.jsonHeader.chunkType != detail::GLBChunkJSON ||
-                header.jsonHeader.chunkLength + detail::HeaderSize > header.length)
+                header.jsonHeader.chunkLength + detail::HeaderSize > header.length ||
+                header.jsonHeader.chunkLength + detail::HeaderSize > binary.size())
             {
                 throw invalid_gltf_document("Invalid GLB header");
             }
