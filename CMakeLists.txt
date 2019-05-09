@@ -1,5 +1,5 @@
-﻿cmake_minimum_required (VERSION 3.8)
-project(fx-gltf VERSION 1.0.1)
+cmake_minimum_required (VERSION 3.8)
+project(fx-gltf VERSION 1.0.2)
 
 option(FX_GLTF_INSTALL "If the library should be installed" ON)
 option(FX_GLTF_USE_INSTALLED_DEPS "If installed or repo local dependencies should be used" OFF)
