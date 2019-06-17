@@ -1739,7 +1739,7 @@ namespace gltf
             }
         }
 
-        inline void Save(Document const & document, std::string const & documentFilePath, bool useBinaryFormat)
+        inline void SaveToStream(Document const & document, std::ostream & os, std::string const & bufferRootPath, bool useBinaryFormat)
         {
             nlohmann::json json = document;
 
@@ -1760,8 +1760,7 @@ namespace gltf
                 const uint32_t headerPadding = static_cast<uint32_t>(header.jsonHeader.chunkLength - jsonText.length());
                 header.length = detail::HeaderSize + header.jsonHeader.chunkLength + detail::ChunkHeaderSize + binHeader.chunkLength;
 
-                std::ofstream fileData(documentFilePath, std::ios::binary);
-                if (!fileData.good())
+                if (!os.good())
                 {
                     throw std::system_error(std::make_error_code(std::errc::io_error));
                 }
@@ -1769,35 +1768,32 @@ namespace gltf
                 const char spaces[3] = { ' ', ' ', ' ' };
                 const char nulls[3] = { 0, 0, 0 };
 
-                fileData.write(reinterpret_cast<char *>(&header), detail::HeaderSize);
-                fileData.write(jsonText.c_str(), jsonText.length());
-                fileData.write(&spaces[0], headerPadding);
-                fileData.write(reinterpret_cast<char *>(&binHeader), detail::ChunkHeaderSize);
-                fileData.write(reinterpret_cast<char const *>(&binBuffer.data[0]), binBuffer.byteLength);
-                fileData.write(&nulls[0], binPadding);
+                os.write(reinterpret_cast<char *>(&header), detail::HeaderSize);
+                os.write(jsonText.c_str(), jsonText.length());
+                os.write(&spaces[0], headerPadding);
+                os.write(reinterpret_cast<char *>(&binHeader), detail::ChunkHeaderSize);
+                os.write(reinterpret_cast<char const *>(&binBuffer.data[0]), binBuffer.byteLength);
+                os.write(&nulls[0], binPadding);
 
                 externalBufferIndex = 1;
             }
             else
             {
-                std::ofstream file(documentFilePath);
-                if (!file.is_open())
+                if (!os.good())
                 {
                     throw std::system_error(std::make_error_code(std::errc::io_error));
                 }
-
-                file << json.dump(2);
+                os << json.dump(2);
             }
 
             // The glTF 2.0 spec allows a document to have more than 1 buffer. However, only the first one will be included in the .glb
             // All others must be considered as External/Embedded resources. Process them if necessary...
-            std::string documentRootPath = detail::GetDocumentRootPath(documentFilePath);
             for (; externalBufferIndex < document.buffers.size(); externalBufferIndex++)
             {
                 Buffer const & buffer = document.buffers[externalBufferIndex];
                 if (!buffer.IsEmbeddedResource())
                 {
-                    std::ofstream fileData(detail::CreateBufferUriPath(documentRootPath, buffer.uri), std::ios::binary);
+                    std::ofstream fileData(detail::CreateBufferUriPath(bufferRootPath, buffer.uri), std::ios::binary);
                     if (!fileData.good())
                     {
                         throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
@@ -1806,6 +1802,16 @@ namespace gltf
                     fileData.write(reinterpret_cast<char const *>(&buffer.data[0]), buffer.byteLength);
                 }
             }
+        }
+
+        inline void Save(Document const & document, std::string const & documentFilePath, bool useBinaryFormat)
+        {
+            std::ofstream file(documentFilePath, std::ios::binary);
+            if (!file.good())
+            {
+                throw std::system_error(std::make_error_code(std::errc::io_error));
+            }
+            SaveToStream(document, file, detail::GetDocumentRootPath(documentFilePath), useBinaryFormat);
         }
     } // namespace detail
 
@@ -1937,6 +1943,27 @@ namespace gltf
                 throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
             }
             return LoadFromBinaryStream(file, detail::GetDocumentRootPath(documentFilePath), readQuotas);
+        }
+        catch (std::system_error &)
+        {
+            throw;
+        }
+        catch (...)
+        {
+            std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
+        }
+    }
+
+    inline void SaveToStream(Document const & document, std::ostream & os, std::string const & bufferRootPath, bool useBinaryFormat)
+    {
+        try
+        {
+            detail::ValidateBuffers(document, useBinaryFormat);
+            detail::SaveToStream(document, os, bufferRootPath, useBinaryFormat);
+        }
+        catch (invalid_gltf_document &)
+        {
+            throw;
         }
         catch (std::system_error &)
         {
