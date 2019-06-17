@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstring>
+#include <iostream>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -1808,22 +1809,109 @@ namespace gltf
         }
     } // namespace detail
 
-    inline Document LoadFromText(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
+    inline Document LoadFromTextStream(std::istream & is, std::string const & bufferRootPath = "", ReadQuotas const & readQuotas = {})
     {
         try
         {
             nlohmann::json json;
             {
-                std::ifstream file(documentFilePath);
-                if (!file.is_open())
-                {
-                    throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
-                }
+                is >> json;
+            }
+            return detail::Create(json, { bufferRootPath, readQuotas });
+        }
+        catch (invalid_gltf_document &)
+        {
+            throw;
+        }
+        catch (std::system_error &)
+        {
+            throw;
+        }
+        catch (...)
+        {
+            std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
+        }
+    }
 
-                file >> json;
+    inline Document LoadFromText(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
+    {
+        try
+        {
+            std::ifstream file(documentFilePath);
+            if (!file.is_open())
+            {
+                throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
+            }
+            return LoadFromTextStream(file, detail::GetDocumentRootPath(documentFilePath), readQuotas);
+        }
+        catch (std::system_error &)
+        {
+            throw;
+        }
+        catch (...)
+        {
+            std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
+        }
+    }
+
+    inline Document LoadFromBinaryStream(std::istream & is, std::string const & bufferRootPath = "", ReadQuotas const & readQuotas = {})
+    {
+        try
+        {
+            std::vector<uint8_t> binary(detail::HeaderSize);
+            detail::GLBHeader header;
+            {
+                is.read(reinterpret_cast<char *>(&binary[0]), detail::HeaderSize);
+                if (!is.good())
+                {
+                    throw std::system_error(std::make_error_code(std::errc::io_error));
+                }
+                std::memcpy(&header, &binary[0], detail::HeaderSize);
+                if (header.magic != detail::GLBHeaderMagic ||
+                    header.jsonHeader.chunkType != detail::GLBChunkJSON ||
+                    header.jsonHeader.chunkLength + detail::HeaderSize > header.length)
+                {
+                    throw invalid_gltf_document("Invalid GLB header");
+                }
+                std::size_t totalSize = detail::HeaderSize + header.jsonHeader.chunkLength;
+                if (totalSize > readQuotas.MaxFileSize)
+                {
+                    throw invalid_gltf_document("Quota exceeded : file size > MaxFileSize");
+                }
+                binary.resize(totalSize);
+                is.read(reinterpret_cast<char *>(&binary[detail::HeaderSize]), header.jsonHeader.chunkLength);
+                if (!is.good())
+                {
+                    throw std::system_error(std::make_error_code(std::errc::io_error));
+                }
+                if (!is.eof())
+                {
+                    detail::ChunkHeader binHeader;
+                    is.read(reinterpret_cast<char *>(&binHeader), detail::ChunkHeaderSize);
+                    if (!is.good())
+                    {
+                        throw std::system_error(std::make_error_code(std::errc::io_error));
+                    }
+                    totalSize += detail::ChunkHeaderSize + binHeader.chunkLength;
+                    if (totalSize > readQuotas.MaxFileSize)
+                    {
+                        throw invalid_gltf_document("Quota exceeded : file size > MaxFileSize");
+                    }
+                    binary.resize(totalSize);
+                    std::size_t binOffset = detail::HeaderSize + header.jsonHeader.chunkLength;
+                    std::memcpy(&binary[binOffset], &binHeader, detail::ChunkHeaderSize);
+                    binOffset += detail::ChunkHeaderSize;
+                    is.read(reinterpret_cast<char *>(&binary[binOffset]), binHeader.chunkLength);
+                    if (!is.good())
+                    {
+                        throw std::system_error(std::make_error_code(std::errc::io_error));
+                    }
+                }
             }
 
-            return detail::Create(json, { detail::GetDocumentRootPath(documentFilePath), readQuotas });
+            return detail::Create(
+                nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
+                { bufferRootPath, readQuotas, &binary, detail::HeaderSize + header.jsonHeader.chunkLength });
         }
         catch (invalid_gltf_document &)
         {
@@ -1843,46 +1931,12 @@ namespace gltf
     {
         try
         {
-            std::vector<uint8_t> binary{};
+            std::ifstream file(documentFilePath, std::ios::binary);
+            if (!file.is_open())
             {
-                std::ifstream file(documentFilePath, std::ios::binary);
-                if (!file.is_open())
-                {
-                    throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
-                }
-
-                const std::size_t fileSize = detail::GetFileSize(file);
-                if (fileSize < detail::HeaderSize)
-                {
-                    throw invalid_gltf_document("Invalid GLB file");
-                }
-
-                if (fileSize > readQuotas.MaxFileSize)
-                {
-                    throw invalid_gltf_document("Quota exceeded : file size > MaxFileSize");
-                }
-
-                binary.resize(fileSize);
-                file.read(reinterpret_cast<char *>(&binary[0]), fileSize);
+                throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
             }
-
-            detail::GLBHeader header;
-            std::memcpy(&header, &binary[0], detail::HeaderSize);
-            if (header.magic != detail::GLBHeaderMagic ||
-                header.jsonHeader.chunkType != detail::GLBChunkJSON ||
-                header.jsonHeader.chunkLength + detail::HeaderSize > header.length ||
-                header.jsonHeader.chunkLength + detail::HeaderSize > binary.size())
-            {
-                throw invalid_gltf_document("Invalid GLB header");
-            }
-
-            return detail::Create(
-                nlohmann::json::parse({ &binary[detail::HeaderSize], header.jsonHeader.chunkLength }),
-                { detail::GetDocumentRootPath(documentFilePath), readQuotas, &binary, header.jsonHeader.chunkLength + detail::HeaderSize });
-        }
-        catch (invalid_gltf_document &)
-        {
-            throw;
+            return LoadFromBinaryStream(file, detail::GetDocumentRootPath(documentFilePath), readQuotas);
         }
         catch (std::system_error &)
         {
