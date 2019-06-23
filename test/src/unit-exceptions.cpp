@@ -144,7 +144,7 @@ TEST_CASE("exceptions")
         REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromText(externalFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxBufferByteLength", true));
 
         readQuotas.MaxFileSize = 500;
-        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary(glbFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxFileSize", true));
+        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary(glbFile, readQuotas), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("MaxFileSize"));
 
         readQuotas = {};
         readQuotas.MaxBufferCount = 1;
@@ -156,7 +156,7 @@ TEST_CASE("exceptions")
     SECTION("load : mismatched")
     {
         REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromText("data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("json.exception", true));
-        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary("data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf"), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("GLB header", true));
+        REQUIRE_THROWS_MATCHES(fx::gltf::LoadFromBinary("data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf"), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("GLB header"));
     }
 
     SECTION("load / save : invalid path")

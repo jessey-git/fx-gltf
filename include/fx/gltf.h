@@ -1807,10 +1807,6 @@ namespace gltf
         inline void Save(Document const & document, std::string const & documentFilePath, bool useBinaryFormat)
         {
             std::ofstream file(documentFilePath, std::ios::binary);
-            if (!file.good())
-            {
-                throw std::system_error(std::make_error_code(std::errc::io_error));
-            }
             SaveToStream(document, file, detail::GetDocumentRootPath(documentFilePath), useBinaryFormat);
         }
     } // namespace detail
@@ -1867,6 +1863,10 @@ namespace gltf
             std::vector<uint8_t> binary(detail::HeaderSize);
             detail::GLBHeader header;
             {
+                if (!is.good())
+                {
+                    throw std::system_error(std::make_error_code(std::errc::io_error));
+                }
                 is.read(reinterpret_cast<char *>(&binary[0]), detail::HeaderSize);
                 if (!is.good())
                 {
@@ -1935,23 +1935,8 @@ namespace gltf
 
     inline Document LoadFromBinary(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
-        try
-        {
-            std::ifstream file(documentFilePath, std::ios::binary);
-            if (!file.is_open())
-            {
-                throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
-            }
-            return LoadFromBinaryStream(file, detail::GetDocumentRootPath(documentFilePath), readQuotas);
-        }
-        catch (std::system_error &)
-        {
-            throw;
-        }
-        catch (...)
-        {
-            std::throw_with_nested(invalid_gltf_document("Invalid glTF document. See nested exception for details."));
-        }
+        std::ifstream file(documentFilePath, std::ios::binary);
+        return LoadFromBinaryStream(file, detail::GetDocumentRootPath(documentFilePath), readQuotas);
     }
 
     inline void SaveToStream(Document const & document, std::ostream & os, std::string const & bufferRootPath, bool useBinaryFormat)
