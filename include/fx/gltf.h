@@ -8,6 +8,8 @@
 #include <array>
 #include <cstring>
 #include <fstream>
+#include <istream>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <system_error>
