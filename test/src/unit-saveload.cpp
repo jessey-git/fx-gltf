@@ -7,6 +7,7 @@
 #include <catch2/catch.hpp>
 #include <fx/gltf.h>
 #include <nlohmann/json.hpp>
+#include <sstream>
 #include <string>
 
 #include "utility.h"
@@ -158,6 +159,50 @@ TEST_CASE("saveload")
         REQUIRE(newDocument.buffers.front().data == originalDocument.buffers.front().data);
         REQUIRE(newDocument.buffers.back().data == newBytes);
         REQUIRE(newDocument.buffers.back().IsEmbeddedResource());
+    }
+
+    SECTION("load text - save text streams")
+    {
+        std::string originalFile1{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
+        std::string originalFile2{ "data/glTF-Sample-Models/2.0/BoxVertexColors/glTF/BoxVertexColors.gltf" };
+
+        fx::gltf::Document originalDocument1 = fx::gltf::LoadFromText(originalFile1);
+        fx::gltf::Document originalDocument2 = fx::gltf::LoadFromText(originalFile2);
+
+        // Roundtrip 2 different files in the same stream...
+        std::stringstream ss{}; 
+        fx::gltf::Save(originalDocument1, ss, utility::GetTestOutputDir(), false);
+        fx::gltf::Save(originalDocument2, ss, utility::GetTestOutputDir(), false);
+
+        ss.seekg(0, std::stringstream::beg);
+
+        fx::gltf::Document copy1 = fx::gltf::LoadFromText(ss, utility::GetTestOutputDir());
+        fx::gltf::Document copy2 = fx::gltf::LoadFromText(ss, utility::GetTestOutputDir());
+
+        REQUIRE(copy1.buffers.front().data == originalDocument1.buffers.front().data);
+        REQUIRE(copy2.buffers.front().data == originalDocument2.buffers.front().data);
+    }
+
+    SECTION("load binary - save binary streams")
+    {
+        std::string originalFile1{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
+        std::string originalFile2{ "data/glTF-Sample-Models/2.0/BoxVertexColors/glTF-Binary/BoxVertexColors.glb" };
+
+        fx::gltf::Document originalDocument1 = fx::gltf::LoadFromBinary(originalFile1);
+        fx::gltf::Document originalDocument2 = fx::gltf::LoadFromBinary(originalFile2);
+
+        // Roundtrip 2 different files in the same stream...
+        std::stringstream ss{};
+        fx::gltf::Save(originalDocument1, ss, "", true);
+        fx::gltf::Save(originalDocument2, ss, "", true);
+
+        ss.seekg(0, std::stringstream::beg);
+
+        fx::gltf::Document copy1 = fx::gltf::LoadFromBinary(ss, "");
+        fx::gltf::Document copy2 = fx::gltf::LoadFromBinary(ss, "");
+
+        REQUIRE(copy1.buffers.front().data == originalDocument1.buffers.front().data);
+        REQUIRE(copy2.buffers.front().data == originalDocument2.buffers.front().data);
     }
 
     utility::CleanupTestOutputDir();
