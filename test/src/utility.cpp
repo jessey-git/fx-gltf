@@ -33,7 +33,7 @@ namespace utility
     {
         std::error_code err{};
         int attempts = 5;
-        while (--attempts)
+        while (--attempts >= 0)
         {
             if (FX_GLTF_FILESYSTEM::create_directory(GetTestOutputDir(), err))
             {
@@ -46,7 +46,7 @@ namespace utility
     {
         std::error_code err{};
         int attempts = 5;
-        while (--attempts)
+        while (--attempts >= 0)
         {
             if (FX_GLTF_FILESYSTEM::remove_all(GetTestOutputDir(), err) != static_cast<std::uintmax_t>(-1))
             {
@@ -71,7 +71,8 @@ namespace utility
     // https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
     union Float_t
     {
-        Float_t(float num = 0.0f) : f(num) {}
+        explicit Float_t(float num = 0.0f)
+            : f(num) {}
         bool Negative() const { return i < 0; }
 
         int32_t i;
@@ -169,7 +170,7 @@ namespace utility
                     }
                 }
 
-                if (element["value"].size() == 0)
+                if (element["value"].empty())
                 {
                     continue;
                 }

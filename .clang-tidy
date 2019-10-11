@@ -1,1 +1,1 @@
-Checks: '*,-abseil-*,-fuchsia-*,-readability-named-parameter,-google-runtime-references,-hicpp-use-auto,-modernize-use-auto,-llvm-header-guard'
+Checks: '*,-abseil-*,-fuchsia-*,-readability-magic-numbers,-readability-named-parameter,-readability-uppercase-literal-suffix,-google-runtime-references,-hicpp-use-auto,-hicpp-uppercase-literal-suffix,-cppcoreguidelines-avoid-magic-numbers,-modernize-use-auto,-llvm-header-guard'

@@ -44,7 +44,7 @@ void RoundtripCompare(std::string const & filePath, bool checkExtensions = false
         }
 
         // Ensure all the buffers have data...
-        for (auto b : doc.buffers)
+        for (auto const & b : doc.buffers)
         {
             REQUIRE(b.data.size() == b.byteLength);
         }
