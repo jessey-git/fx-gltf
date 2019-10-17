@@ -246,6 +246,12 @@ namespace gltf
         }
 
         template <typename TValue>
+        inline void WriteFieldRequired(std::string const & key, nlohmann::json & json, TValue const & value)
+        {
+            json[key] = value;
+        }
+
+        template <typename TValue>
         inline void WriteField(std::string const & key, nlohmann::json & json, TValue const & value, TValue const & defaultValue)
         {
             if (value != defaultValue)
@@ -1496,7 +1502,7 @@ namespace gltf
     inline void to_json(nlohmann::json & json, Mesh const & mesh)
     {
         detail::WriteField("name", json, mesh.name);
-        detail::WriteField("primitives", json, mesh.primitives);
+        detail::WriteFieldRequired("primitives", json, mesh.primitives);
         detail::WriteField("weights", json, mesh.weights);
         detail::WriteExtensions(json, mesh.extensionsAndExtras);
     }
