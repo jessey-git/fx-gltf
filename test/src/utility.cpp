@@ -139,6 +139,7 @@ namespace utility
                     (path.find("wrapS") != std::string::npos && element["value"] == 10497) ||
                     (path.find("wrapT") != std::string::npos && element["value"] == 10497) ||
                     (path.find("doubleSided") != std::string::npos && element["value"] == false) ||
+                    (path.find("metallicFactor") != std::string::npos && element["value"] == 1.0f) ||
                     (path.find("roughnessFactor") != std::string::npos && element["value"] == 1.0f) ||
                     (path.find("alphaMode") != std::string::npos && element["value"] == "OPAQUE") ||
                     (path.find("texCoord") != std::string::npos && element["value"] == 0))
