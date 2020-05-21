@@ -46,7 +46,7 @@ foreach(file ${files})
     add_executable(${testcase} $<TARGET_OBJECTS:catch2_main> ${file})
     set_target_properties(${testcase} PROPERTIES
         COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
-        COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
+        COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc>"
     )
 
     if(TEST_LanguageStandard STREQUAL "17")
