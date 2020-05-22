@@ -230,11 +230,15 @@ TEST_CASE("roundtrip")
                  "data/glTF-Sample-Models/2.0/Box/glTF-Draco/Box.gltf",
                  "data/glTF-Sample-Models/2.0/BrainStem/glTF-Draco/BrainStem.gltf",
                  "data/glTF-Sample-Models/2.0/Buggy/glTF-Draco/Buggy.gltf",
+                 "data/glTF-Sample-Models/2.0/CesiumMan/glTF-Draco/CesiumMan.gltf",
+                 "data/glTF-Sample-Models/2.0/CesiumMilkTruck/glTF-Draco/CesiumMilkTruck.gltf",
                  "data/glTF-Sample-Models/2.0/Corset/glTF-Draco/Corset.gltf",
                  "data/glTF-Sample-Models/2.0/Duck/glTF-Draco/Duck.gltf",
                  "data/glTF-Sample-Models/2.0/GearboxAssy/glTF-Draco/GearboxAssy.gltf",
                  "data/glTF-Sample-Models/2.0/Lantern/glTF-Draco/Lantern.gltf",
                  "data/glTF-Sample-Models/2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf",
+                 "data/glTF-Sample-Models/2.0/RiggedFigure/glTF-Draco/RiggedFigure.gltf",
+                 "data/glTF-Sample-Models/2.0/RiggedSimple/glTF-Draco/RiggedSimple.gltf",
                  "data/glTF-Sample-Models/2.0/VC/glTF-Draco/VC.gltf",
                  "data/glTF-Sample-Models/2.0/WaterBottle/glTF-Draco/WaterBottle.gltf" })
         {
