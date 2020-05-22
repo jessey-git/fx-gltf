@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 #pragma once
 #include <fx/gltf.h>
+#include <array>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -57,7 +58,7 @@ private:
     D3DOrbitCamera                                  m_camera{};
 
     Light                                           m_directionalLight{};
-    Light                                           m_pointLights[2]{ {} };
+    std::array<Light, 2>                            m_pointLights{};
 
     D3DEnvironmentIBL                               m_environment{};
     std::vector<D3DTexture>                         m_textures{};

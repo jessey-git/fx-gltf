@@ -15,9 +15,9 @@
 class ExceptionContainsMatcher : public Catch::MatcherBase<std::exception>
 {
 public:
-    ExceptionContainsMatcher(std::string const & text, bool shouldBeNested = false) : text_(text), shouldBeNested_(shouldBeNested) {}
+    explicit ExceptionContainsMatcher(std::string const & text, bool shouldBeNested = false) : text_(text), shouldBeNested_(shouldBeNested) {}
 
-    virtual bool match(std::exception const & e) const override
+    bool match(std::exception const & e) const override
     {
         fx::FormatException(message_, e);
 
@@ -26,7 +26,7 @@ public:
         return properlyNested && message_.find(text_) != std::string::npos;
     }
 
-    virtual std::string describe() const override
+    std::string describe() const override
     {
         std::ostringstream str;
         str << "Message '" << message_ << "' contains text '" << text_ << "' (should be nested: " << shouldBeNested_ << ")";
