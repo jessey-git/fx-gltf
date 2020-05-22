@@ -1304,10 +1304,17 @@ namespace gltf
             }
         }
 
-        inline void WriteAccessorConvert(nlohmann::json & json, Accessor const & accessor)
+        inline void WriteAccessorMinMax(nlohmann::json & json, Accessor const & accessor)
         {
             switch (accessor.componentType)
             {
+            // fast path
+            case Accessor::ComponentType::Float:
+                detail::WriteField("max", json, accessor.max);
+                detail::WriteField("min", json, accessor.min);
+                break;
+
+            // slow path conversions...
             case Accessor::ComponentType::Byte:
                 WriteMinMaxConvert<int8_t>(json, accessor);
                 break;
@@ -1333,16 +1340,7 @@ namespace gltf
         detail::WriteField("byteOffset", json, accessor.byteOffset, {});
         detail::WriteField("componentType", json, accessor.componentType, Accessor::ComponentType::None);
         detail::WriteField("count", json, accessor.count, {});
-        if (accessor.componentType == Accessor::ComponentType::Float)
-        {
-            detail::WriteField("max", json, accessor.max);
-            detail::WriteField("min", json, accessor.min);
-        }
-        else
-        {
-            detail::WriteAccessorConvert(json, accessor);
-        }
-
+        detail::WriteAccessorMinMax(json, accessor);
         detail::WriteField("name", json, accessor.name);
         detail::WriteField("normalized", json, accessor.normalized, false);
         detail::WriteField("sparse", json, accessor.sparse);
