@@ -8,6 +8,8 @@
 #include <d3d12.h>
 #include "d3dx12.h"
 
+#include "Platform/COMUtil.h"
+
 template <typename T>
 class D3DUploadBuffer
 {

@@ -16,7 +16,7 @@
 class Engine
 {
 public:
-    Engine(EngineOptions const & config)
+    explicit Engine(EngineOptions const & config)
         : Config(config)
     {
     }
