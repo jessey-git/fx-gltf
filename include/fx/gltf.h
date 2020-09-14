@@ -21,6 +21,18 @@
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L) && (_MSC_VER >= 1911))
 #define FX_GLTF_HAS_CPP_17
 #include <string_view>
+
+#ifdef _MSC_VER
+#if __has_include(<filesystem>)
+#define FX_GLTF_HAS_STD_FILESYSTEM
+#include <filesystem>
+#define FX_GLTF_UTF8_PATH(x) std::filesystem::u8path(x)
+#endif
+#endif
+#endif
+
+#ifndef FX_GLTF_UTF8_PATH
+#define FX_GLTF_UTF8_PATH
 #endif
 
 namespace fx
@@ -1659,7 +1671,7 @@ namespace gltf
                     }
                     else
                     {
-                        std::ifstream fileData(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri), std::ios::binary);
+                        std::ifstream fileData(FX_GLTF_UTF8_PATH(detail::CreateBufferUriPath(dataContext.bufferRootPath, buffer.uri)), std::ios::binary);
                         if (!fileData.good())
                         {
                             throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
@@ -1771,7 +1783,7 @@ namespace gltf
                 Buffer const & buffer = document.buffers[externalBufferIndex];
                 if (!buffer.IsEmbeddedResource())
                 {
-                    std::ofstream fileData(detail::CreateBufferUriPath(documentRootPath, buffer.uri), std::ios::binary);
+                    std::ofstream fileData(FX_GLTF_UTF8_PATH(detail::CreateBufferUriPath(documentRootPath, buffer.uri)), std::ios::binary);
                     if (!fileData.good())
                     {
                         throw invalid_gltf_document("Invalid buffer.uri value", buffer.uri);
@@ -1810,7 +1822,7 @@ namespace gltf
 
     inline Document LoadFromText(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
-        std::ifstream input(documentFilePath);
+        std::ifstream input(FX_GLTF_UTF8_PATH(documentFilePath));
         if (!input.is_open())
         {
             throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
@@ -1879,7 +1891,7 @@ namespace gltf
 
     inline Document LoadFromBinary(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
-        std::ifstream input(documentFilePath, std::ios::binary);
+        std::ifstream input(FX_GLTF_UTF8_PATH(documentFilePath), std::ios::binary);
         if (!input.is_open())
         {
             throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
@@ -1912,7 +1924,7 @@ namespace gltf
 
     inline void Save(Document const & document, std::string const & documentFilePath, bool useBinaryFormat)
     {
-        std::ofstream output(documentFilePath, useBinaryFormat ? std::ios::binary : std::ios::out);
+        std::ofstream output(FX_GLTF_UTF8_PATH(documentFilePath), useBinaryFormat ? std::ios::binary : std::ios::out);
         Save(document, output, detail::GetDocumentRootPath(documentFilePath), useBinaryFormat);
     }
 } // namespace gltf
