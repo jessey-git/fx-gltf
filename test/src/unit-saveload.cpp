@@ -1,4 +1,4 @@
-// ------------------------------------------------------------
+﻿// ------------------------------------------------------------
 // Copyright(c) 2019 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
@@ -204,6 +204,24 @@ TEST_CASE("saveload")
         REQUIRE(copy1.buffers.front().data == originalDocument1.buffers.front().data);
         REQUIRE(copy2.buffers.front().data == originalDocument2.buffers.front().data);
     }
+
+#ifdef FX_GLTF_HAS_STD_FILESYSTEM
+    SECTION("load embedded from unicode path - save binary with unicode name")
+    {
+        std::string originalFile{ u8"data/Unicde-Path-岩瀬竜也/Box.gltf" };
+        std::string newFile{ utility::GetTestOutputDir() + u8"/Unicde-Name-岩瀬竜也.glb" };
+
+        fx::gltf::Document originalDocument = fx::gltf::LoadFromText(originalFile);
+
+        originalDocument.buffers.front().uri.clear();
+        fx::gltf::Save(originalDocument, newFile, true);
+
+        fx::gltf::Document newDocument = fx::gltf::LoadFromBinary(newFile);
+
+        REQUIRE(newDocument.buffers.front().data == originalDocument.buffers.front().data);
+        REQUIRE(newDocument.buffers.front().uri.empty());
+    }
+#endif
 
     utility::CleanupTestOutputDir();
 }
