@@ -37,7 +37,7 @@ target_compile_features(${FX_GLTF_LIB_TARGET_NAME} INTERFACE cxx_std_14)
 
 ## Dependencies
 if(FX_GLTF_USE_INSTALLED_DEPS)
-	find_package(nlohmann_json 3.5.0 REQUIRED)
+	find_package(nlohmann_json 3.8.0 REQUIRED)
 	target_link_libraries(${FX_GLTF_LIB_TARGET_NAME} INTERFACE nlohmann_json::nlohmann_json)
 endif()
 
