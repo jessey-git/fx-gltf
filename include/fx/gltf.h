@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Copyright(c) 2019 Jesse Yurkovich
+// Copyright(c) 2018-2020 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
@@ -1284,14 +1284,63 @@ namespace gltf
         detail::WriteExtensions(json, sparse.extensionsAndExtras);
     }
 
+    namespace detail
+    {
+        template <typename TType>
+        inline void WriteMinMaxConvert(nlohmann::json & json, Accessor const & accessor)
+        {
+            if (!accessor.min.empty())
+            {
+                auto & item = json["min"];
+                for (float v : accessor.min)
+                    item.push_back(static_cast<TType>(v));
+            }
+
+            if (!accessor.max.empty())
+            {
+                auto & item = json["max"];
+                for (float v : accessor.max)
+                    item.push_back(static_cast<TType>(v));
+            }
+        }
+
+        inline void WriteAccessorMinMax(nlohmann::json & json, Accessor const & accessor)
+        {
+            switch (accessor.componentType)
+            {
+            // fast path
+            case Accessor::ComponentType::Float:
+                detail::WriteField("max", json, accessor.max);
+                detail::WriteField("min", json, accessor.min);
+                break;
+
+            // slow path conversions...
+            case Accessor::ComponentType::Byte:
+                WriteMinMaxConvert<int8_t>(json, accessor);
+                break;
+            case Accessor::ComponentType::UnsignedByte:
+                WriteMinMaxConvert<uint8_t>(json, accessor);
+                break;
+            case Accessor::ComponentType::Short:
+                WriteMinMaxConvert<int16_t>(json, accessor);
+                break;
+            case Accessor::ComponentType::UnsignedShort:
+                WriteMinMaxConvert<uint16_t>(json, accessor);
+                break;
+            case Accessor::ComponentType::UnsignedInt:
+                WriteMinMaxConvert<uint32_t>(json, accessor);
+                break;
+            }
+        }
+    } // namespace detail
+
     inline void to_json(nlohmann::json & json, Accessor const & accessor)
     {
         detail::WriteField("bufferView", json, accessor.bufferView, -1);
         detail::WriteField("byteOffset", json, accessor.byteOffset, {});
         detail::WriteField("componentType", json, accessor.componentType, Accessor::ComponentType::None);
         detail::WriteField("count", json, accessor.count, {});
-        detail::WriteField("max", json, accessor.max);
-        detail::WriteField("min", json, accessor.min);
+        detail::WriteAccessorMinMax(json, accessor);
         detail::WriteField("name", json, accessor.name);
         detail::WriteField("normalized", json, accessor.normalized, false);
         detail::WriteField("sparse", json, accessor.sparse);
