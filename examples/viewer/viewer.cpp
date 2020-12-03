@@ -64,7 +64,7 @@ public:
 
         ShowWindow(hwnd, nCmdShow);
 
-        // Main sample loop.
+        // Main loop.
         MSG msg{};
         while (msg.message != WM_QUIT)
         {
@@ -210,43 +210,19 @@ private:
     }
 };
 
-int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int nCmdShow)
+int wmain()
 {
-    FILE * attachedOut{};
-    FILE * attachedIn{};
-    if (AllocConsole() == TRUE)
-    {
-        freopen_s(&attachedOut, "CONOUT$", "w", stdout);
-        freopen_s(&attachedIn, "CONIN$", "r", stdin);
-    }
-
     int result = -1;
     try
     {
         COMUtil::Init();
-        result = Win32Application::Run(hInstance, nCmdShow);
+        result = Win32Application::Run(GetModuleHandle(nullptr), SW_SHOWDEFAULT);
     }
     catch (std::exception const & e)
     {
         std::string message;
         fx::FormatException(message, e);
         std::cout << message << std::endl;
-    }
-
-    if (result < 0)
-    {
-        std::cout << "Press [ENTER] to continue" << std::endl;
-        std::cin.get();
-    }
-
-    if (attachedOut != nullptr)
-    {
-        fclose(attachedOut);
-    }
-
-    if (attachedIn != nullptr)
-    {
-        fclose(attachedIn);
     }
 
     return result;
