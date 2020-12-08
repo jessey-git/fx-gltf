@@ -23,7 +23,7 @@
 #define FX_GLTF_NODISCARD [[nodiscard]]
 #include <string_view>
 
-#elif
+#else
 #define FX_GLTF_NODISCARD
 #endif
 
