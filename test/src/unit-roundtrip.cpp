@@ -108,7 +108,7 @@ TEST_CASE("roundtrip")
 {
     SECTION("roundtrip - .gltf files w/external resources")
     {
-        for (auto & filePath :
+        for (auto const & filePath :
              {
                  "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF/2CylinderEngine.gltf",
                  "data/glTF-Sample-Models/2.0/AlphaBlendModeTest/glTF/AlphaBlendModeTest.gltf",
@@ -177,7 +177,7 @@ TEST_CASE("roundtrip")
 
     SECTION("roundtrip - .gltf files w/embedded resources")
     {
-        for (auto & filePath :
+        for (auto const & filePath :
              {
                  "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Embedded/2CylinderEngine.gltf",
                  "data/glTF-Sample-Models/2.0/AlphaBlendModeTest/glTF-Embedded/AlphaBlendModeTest.gltf",
@@ -221,7 +221,7 @@ TEST_CASE("roundtrip")
 
     SECTION("roundtrip - .gltf files w/extensions")
     {
-        for (auto & filePath :
+        for (auto const & filePath :
              {
                  "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Draco/2CylinderEngine.gltf",
                  "data/glTF-Sample-Models/2.0/Avocado/glTF-Draco/Avocado.gltf",
@@ -248,7 +248,7 @@ TEST_CASE("roundtrip")
 
     SECTION("load - .glb files")
     {
-        for (auto & filePath :
+        for (auto const & filePath :
              {
                  "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Binary/2CylinderEngine.glb",
                  "data/glTF-Sample-Models/2.0/AlphaBlendModeTest/glTF-Binary/AlphaBlendModeTest.glb",

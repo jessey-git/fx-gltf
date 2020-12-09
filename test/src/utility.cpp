@@ -110,12 +110,8 @@ namespace utility
 
         // Find the difference in ULPs.
         int ulpsDiff = abs(uA.i - uB.i);
-        if (ulpsDiff <= 2)
-        {
-            return true;
-        }
 
-        return false;
+        return ulpsDiff <= 2;
     }
 
     nlohmann::json DiffAndFilter(nlohmann::json const & current, nlohmann::json const & original)
