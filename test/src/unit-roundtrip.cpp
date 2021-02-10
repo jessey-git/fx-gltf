@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Copyright(c) 2018-2020 Jesse Yurkovich
+// Copyright(c) 2018-2021 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
@@ -108,7 +108,7 @@ TEST_CASE("roundtrip")
 {
     SECTION("roundtrip - .gltf files w/external resources")
     {
-        for (auto & filePath :
+        for (auto const & filePath :
              {
                  "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF/2CylinderEngine.gltf",
                  "data/glTF-Sample-Models/2.0/AlphaBlendModeTest/glTF/AlphaBlendModeTest.gltf",
@@ -177,7 +177,7 @@ TEST_CASE("roundtrip")
 
     SECTION("roundtrip - .gltf files w/embedded resources")
     {
-        for (auto & filePath :
+        for (auto const & filePath :
              {
                  "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Embedded/2CylinderEngine.gltf",
                  "data/glTF-Sample-Models/2.0/AlphaBlendModeTest/glTF-Embedded/AlphaBlendModeTest.gltf",
@@ -221,7 +221,7 @@ TEST_CASE("roundtrip")
 
     SECTION("roundtrip - .gltf files w/extensions")
     {
-        for (auto & filePath :
+        for (auto const & filePath :
              {
                  "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Draco/2CylinderEngine.gltf",
                  "data/glTF-Sample-Models/2.0/Avocado/glTF-Draco/Avocado.gltf",
@@ -248,7 +248,7 @@ TEST_CASE("roundtrip")
 
     SECTION("load - .glb files")
     {
-        for (auto & filePath :
+        for (auto const & filePath :
              {
                  "data/glTF-Sample-Models/2.0/2CylinderEngine/glTF-Binary/2CylinderEngine.glb",
                  "data/glTF-Sample-Models/2.0/AlphaBlendModeTest/glTF-Binary/AlphaBlendModeTest.glb",

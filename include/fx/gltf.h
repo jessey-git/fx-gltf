@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Copyright(c) 2018-2020 Jesse Yurkovich
+// Copyright(c) 2018-2021 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
@@ -20,7 +20,11 @@
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L) && (_MSC_VER >= 1911))
 #define FX_GLTF_HAS_CPP_17
+#define FX_GLTF_NODISCARD [[nodiscard]]
 #include <string_view>
+
+#else
+#define FX_GLTF_NODISCARD
 #endif
 
 namespace fx
@@ -181,7 +185,7 @@ namespace gltf
         }
 
     private:
-        std::string CreateMessage(char const * message, std::string const & extra)
+        static std::string CreateMessage(char const * message, std::string const & extra)
         {
             return std::string(message).append(" : ").append(extra);
         }
@@ -344,7 +348,7 @@ namespace gltf
 
     struct NeverEmpty
     {
-        bool empty() const noexcept
+        FX_GLTF_NODISCARD static bool empty() noexcept
         {
             return false;
         }
@@ -400,7 +404,7 @@ namespace gltf
 
             nlohmann::json extensionsAndExtras{};
 
-            bool empty() const noexcept
+            FX_GLTF_NODISCARD bool empty() const noexcept
             {
                 return count == 0;
             }
@@ -413,7 +417,7 @@ namespace gltf
 
         ComponentType componentType{ ComponentType::None };
         Type type{ Type::None };
-        Sparse sparse{};
+        Sparse sparse;
 
         std::string name;
         std::vector<float> max{};
@@ -485,7 +489,7 @@ namespace gltf
 
         std::vector<uint8_t> data{};
 
-        bool IsEmbeddedResource() const noexcept
+        FX_GLTF_NODISCARD bool IsEmbeddedResource() const noexcept
         {
             return uri.find(detail::MimetypeApplicationOctet) == 0;
         }
@@ -565,7 +569,7 @@ namespace gltf
 
         nlohmann::json extensionsAndExtras{};
 
-        bool IsEmbeddedResource() const noexcept
+        FX_GLTF_NODISCARD bool IsEmbeddedResource() const noexcept
         {
             return uri.find(detail::MimetypeImagePNG) == 0 || uri.find(detail::MimetypeImageJPG) == 0;
         }
@@ -604,7 +608,7 @@ namespace gltf
 
             nlohmann::json extensionsAndExtras{};
 
-            bool empty() const noexcept
+            FX_GLTF_NODISCARD bool empty() const noexcept
             {
                 return index == -1;
             }
@@ -631,7 +635,7 @@ namespace gltf
 
             nlohmann::json extensionsAndExtras{};
 
-            bool empty() const
+            FX_GLTF_NODISCARD bool empty() const
             {
                 return baseColorTexture.empty() && metallicRoughnessTexture.empty() && metallicFactor == 1.0f && roughnessFactor == 1.0f && baseColorFactor == defaults::IdentityVec4;
             }
@@ -743,7 +747,7 @@ namespace gltf
 
         nlohmann::json extensionsAndExtras{};
 
-        bool empty() const noexcept
+        FX_GLTF_NODISCARD bool empty() const noexcept
         {
             return name.empty() && magFilter == MagFilter::None && minFilter == MinFilter::None && wrapS == WrappingMode::Repeat && wrapT == WrappingMode::Repeat && extensionsAndExtras.empty();
         }
@@ -1293,14 +1297,18 @@ namespace gltf
             {
                 auto & item = json["min"];
                 for (float v : accessor.min)
+                {
                     item.push_back(static_cast<TType>(v));
+                }
             }
 
             if (!accessor.max.empty())
             {
                 auto & item = json["max"];
                 for (float v : accessor.max)
+                {
                     item.push_back(static_cast<TType>(v));
+                }
             }
         }
 
@@ -1796,8 +1804,8 @@ namespace gltf
                 const uint32_t headerPadding = static_cast<uint32_t>(header.jsonHeader.chunkLength - jsonText.length());
                 header.length = detail::HeaderSize + header.jsonHeader.chunkLength + detail::ChunkHeaderSize + binHeader.chunkLength;
 
-                const char spaces[3] = { ' ', ' ', ' ' };
-                const char nulls[3] = { 0, 0, 0 };
+                constexpr std::array<char, 3> spaces = { ' ', ' ', ' ' };
+                constexpr std::array<char, 3> nulls = { 0, 0, 0 };
 
                 output.write(reinterpret_cast<char *>(&header), detail::HeaderSize);
                 output.write(jsonText.c_str(), jsonText.length());
@@ -1983,3 +1991,4 @@ inline void FormatException(std::string & output, std::exception const & ex, int
 } // namespace fx
 
 #undef FX_GLTF_HAS_CPP_17
+#undef FX_GLTF_NODISCARD

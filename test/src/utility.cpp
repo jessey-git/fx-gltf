@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Copyright(c) 2018-2020 Jesse Yurkovich
+// Copyright(c) 2018-2021 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
@@ -110,12 +110,8 @@ namespace utility
 
         // Find the difference in ULPs.
         int ulpsDiff = abs(uA.i - uB.i);
-        if (ulpsDiff <= 2)
-        {
-            return true;
-        }
 
-        return false;
+        return ulpsDiff <= 2;
     }
 
     nlohmann::json DiffAndFilter(nlohmann::json const & current, nlohmann::json const & original)
