@@ -137,6 +137,7 @@ namespace utility
                     (path.find("doubleSided") != std::string::npos && element["value"] == false) ||
                     (path.find("metallicFactor") != std::string::npos && element["value"] == 1.0f) ||
                     (path.find("roughnessFactor") != std::string::npos && element["value"] == 1.0f) ||
+                    (path.find("strength") != std::string::npos && element["value"] == 1.0f) ||
                     (path.find("alphaMode") != std::string::npos && element["value"] == "OPAQUE") ||
                     (path.find("texCoord") != std::string::npos && element["value"] == 0))
                 {
@@ -154,6 +155,17 @@ namespace utility
             }
             else if (element["op"] == "replace")
             {
+                if (path.find("nodes") != std::string::npos)
+                {
+                    if (element["value"].find("rotation") != element["value"].end())
+                    {
+                        if (element["value"]["rotation"].get<std::vector<float>>() == std::vector<float>{ 0.0f, 0.0f, 0.0f, 1.0f })
+                        {
+                            continue;
+                        }
+                    }
+                }
+
                 if (element["value"].is_number_float())
                 {
                     // The text-based json diff says our numbers are mismatched but that could be

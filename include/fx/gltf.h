@@ -324,6 +324,7 @@ namespace gltf
         constexpr uint32_t GLBChunkBIN = 0x004e4942u;
 
         constexpr char const * const MimetypeApplicationOctet = "data:application/octet-stream;base64";
+        constexpr char const * const MimetypeGLTFBuffer = "data:application/gltf-buffer;base64";
         constexpr char const * const MimetypeImagePNG = "data:image/png;base64";
         constexpr char const * const MimetypeImageJPG = "data:image/jpeg;base64";
     } // namespace detail
@@ -491,7 +492,7 @@ namespace gltf
 
         FX_GLTF_NODISCARD bool IsEmbeddedResource() const noexcept
         {
-            return uri.find(detail::MimetypeApplicationOctet) == 0;
+            return uri.find(detail::MimetypeApplicationOctet) == 0 || uri.find(detail::MimetypeGLTFBuffer) == 0;
         }
 
         void SetEmbeddedResource()
@@ -1668,10 +1669,19 @@ namespace gltf
 
         inline void MaterializeData(Buffer & buffer)
         {
-            const std::size_t startPos = std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1;
+            std::size_t startPos = 0;
+            if (buffer.uri.find(detail::MimetypeApplicationOctet) == 0)
+            {
+                startPos = std::char_traits<char>::length(detail::MimetypeApplicationOctet) + 1;
+            }
+            else if (buffer.uri.find(detail::MimetypeGLTFBuffer) == 0)
+            {
+                startPos = std::char_traits<char>::length(detail::MimetypeGLTFBuffer) + 1;
+            }
+
             const std::size_t base64Length = buffer.uri.length() - startPos;
             const std::size_t decodedEstimate = base64Length / 4 * 3;
-            if ((decodedEstimate - 2) > buffer.byteLength) // we need to give room for padding...
+            if (startPos == 0 || (decodedEstimate - 2) > buffer.byteLength) // we need to give room for padding...
             {
                 throw invalid_gltf_document("Invalid buffer.uri value", "malformed base64");
             }
