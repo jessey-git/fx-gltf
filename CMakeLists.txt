@@ -1,5 +1,13 @@
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required(VERSION 3.8)
 project(fx-gltf VERSION 1.0.2)
+
+if (POLICY CMP0054)
+    cmake_policy(SET CMP0054 NEW)
+endif()
+
+if (POLICY CMP0077)
+    cmake_policy(SET CMP0077 NEW)
+endif()
 
 option(FX_GLTF_BUILD_TESTS "If the tests should be built" ON)
 option(FX_GLTF_INSTALL "If the library should be installed" ON)
