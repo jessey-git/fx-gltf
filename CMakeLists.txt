@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.8)
 project(fx-gltf VERSION 1.0.2)
 
+option(FX_GLTF_BUILD_TESTS "If the tests should be built" ON)
 option(FX_GLTF_INSTALL "If the library should be installed" ON)
 option(FX_GLTF_USE_INSTALLED_DEPS "If installed or repo local dependencies should be used" OFF)
 
@@ -46,7 +47,7 @@ endif()
 ##
 include(CTest)
 
-if(BUILD_TESTING)
+if(FX_GLTF_BUILD_TESTS AND BUILD_TESTING)
     enable_testing()
     add_subdirectory(test)
 endif()
