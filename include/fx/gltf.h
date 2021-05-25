@@ -1339,6 +1339,8 @@ namespace gltf
             case Accessor::ComponentType::UnsignedInt:
                 WriteMinMaxConvert<uint32_t>(json, accessor);
                 break;
+            case Accessor::ComponentType::None:
+                break;
             }
         }
     } // namespace detail
