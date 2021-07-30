@@ -12,19 +12,9 @@
 #include <fstream>
 #include <system_error>
 
-#if (defined(__clang__)) || \
-    (defined(__GNUC__) && ((__GNUC__ < 8) || (defined(__cplusplus) && __cplusplus < 201703L))) || \
-    (defined(_MSC_VER) && ((_MSC_VER < 1914) || (!defined(_HAS_CXX17) || (defined(_HAS_CXX17) && _HAS_CXX17 == 0))))
-    #include <experimental/filesystem>
-    #define FX_GLTF_FILESYSTEM std::experimental::filesystem::v1
-#else
-    #include <filesystem>
-    #define FX_GLTF_FILESYSTEM std::filesystem
-#endif
-
 namespace utility
 {
-    std::string GetTestOutputDir()
+    FX_GLTF_FILESYSTEM::path GetTestOutputDir()
     {
         return "output";
     }
@@ -55,7 +45,7 @@ namespace utility
         }
     }
 
-    nlohmann::json LoadJsonFromFile(std::string const & filePath)
+    nlohmann::json LoadJsonFromFile(FX_GLTF_FILESYSTEM::path const & filePath)
     {
         nlohmann::json result{};
         std::ifstream file(filePath);

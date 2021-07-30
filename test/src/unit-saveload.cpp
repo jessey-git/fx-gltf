@@ -19,8 +19,8 @@ TEST_CASE("saveload")
 
     SECTION("load text external - save text embedded")
     {
-        std::string originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
-        std::string newFile{ utility::GetTestOutputDir() + "/test1.gltf" };
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "test1.gltf" };
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromText(originalFile);
         std::string originalUri = originalDocument.buffers.front().uri;
@@ -37,8 +37,8 @@ TEST_CASE("saveload")
 
     SECTION("load text external - save binary")
     {
-        std::string originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
-        std::string newFile{ utility::GetTestOutputDir() + "/test2.glb" };
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "test2.glb" };
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromText(originalFile);
 
@@ -53,8 +53,8 @@ TEST_CASE("saveload")
 
     SECTION("load text embedded - save text external")
     {
-        std::string originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Embedded/Box.gltf" };
-        std::string newFile{ utility::GetTestOutputDir() + "/test3.gltf" };
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Embedded/Box.gltf" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "test3.gltf" };
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromText(originalFile);
         std::string originalUri = originalDocument.buffers.front().uri;
@@ -71,8 +71,8 @@ TEST_CASE("saveload")
 
     SECTION("load text embedded - save binary")
     {
-        std::string originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Embedded/Box.gltf" };
-        std::string newFile{ utility::GetTestOutputDir() + "/test4.glb" };
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Embedded/Box.gltf" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "test4.glb" };
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromText(originalFile);
 
@@ -87,8 +87,8 @@ TEST_CASE("saveload")
 
     SECTION("load binary - save text external")
     {
-        std::string originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
-        std::string newFile{ utility::GetTestOutputDir() + "/test5.gltf" };
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "test5.gltf" };
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromBinary(originalFile);
 
@@ -103,8 +103,8 @@ TEST_CASE("saveload")
 
     SECTION("load binary - save text embedded")
     {
-        std::string originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
-        std::string newFile{ utility::GetTestOutputDir() + "/test6.gltf" };
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "test6.gltf" };
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromBinary(originalFile);
 
@@ -119,8 +119,8 @@ TEST_CASE("saveload")
 
     SECTION("load binary - save binary + additional as external")
     {
-        std::string originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
-        std::string newFile{ utility::GetTestOutputDir() + "/test7.glb" };
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "test7.glb" };
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromBinary(originalFile);
 
@@ -140,8 +140,8 @@ TEST_CASE("saveload")
 
     SECTION("load binary - save binary + additional as embedded")
     {
-        std::string originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
-        std::string newFile{ utility::GetTestOutputDir() + "/test8.glb" };
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "test8.glb" };
 
         fx::gltf::Document originalDocument = fx::gltf::LoadFromBinary(originalFile);
 
@@ -163,14 +163,14 @@ TEST_CASE("saveload")
 
     SECTION("load text - save text streams")
     {
-        std::string originalFile1{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
-        std::string originalFile2{ "data/glTF-Sample-Models/2.0/BoxVertexColors/glTF/BoxVertexColors.gltf" };
+        FX_GLTF_FILESYSTEM::path originalFile1{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
+        FX_GLTF_FILESYSTEM::path originalFile2{ "data/glTF-Sample-Models/2.0/BoxVertexColors/glTF/BoxVertexColors.gltf" };
 
         fx::gltf::Document originalDocument1 = fx::gltf::LoadFromText(originalFile1);
         fx::gltf::Document originalDocument2 = fx::gltf::LoadFromText(originalFile2);
 
         // Roundtrip 2 different files in the same stream...
-        std::stringstream ss{}; 
+        std::stringstream ss{};
         fx::gltf::Save(originalDocument1, ss, utility::GetTestOutputDir(), false);
         fx::gltf::Save(originalDocument2, ss, utility::GetTestOutputDir(), false);
 
@@ -185,8 +185,8 @@ TEST_CASE("saveload")
 
     SECTION("load binary - save binary streams")
     {
-        std::string originalFile1{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
-        std::string originalFile2{ "data/glTF-Sample-Models/2.0/BoxVertexColors/glTF-Binary/BoxVertexColors.glb" };
+        FX_GLTF_FILESYSTEM::path originalFile1{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
+        FX_GLTF_FILESYSTEM::path originalFile2{ "data/glTF-Sample-Models/2.0/BoxVertexColors/glTF-Binary/BoxVertexColors.glb" };
 
         fx::gltf::Document originalDocument1 = fx::gltf::LoadFromBinary(originalFile1);
         fx::gltf::Document originalDocument2 = fx::gltf::LoadFromBinary(originalFile2);
@@ -203,6 +203,27 @@ TEST_CASE("saveload")
 
         REQUIRE(copy1.buffers.front().data == originalDocument1.buffers.front().data);
         REQUIRE(copy2.buffers.front().data == originalDocument2.buffers.front().data);
+    }
+
+    SECTION("load from unicode path - save to unicode path")
+    {
+#ifdef __cpp_lib_char8_t
+        FX_GLTF_FILESYSTEM::path originalFile{ "data/unιcode-ρath/Box.gltf" };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / "unιcodeFile.glb" };
+#else
+        FX_GLTF_FILESYSTEM::path originalFile{ FX_GLTF_FILESYSTEM::u8path("data/unιcode-ρath/Box.gltf") };
+        FX_GLTF_FILESYSTEM::path newFile{ utility::GetTestOutputDir() / FX_GLTF_FILESYSTEM::u8path("unιcodeFile.glb") };
+#endif
+
+        fx::gltf::Document originalDocument = fx::gltf::LoadFromText(originalFile);
+
+        originalDocument.buffers.front().uri.clear();
+        fx::gltf::Save(originalDocument, newFile, true);
+
+        fx::gltf::Document newDocument = fx::gltf::LoadFromBinary(newFile);
+
+        REQUIRE(newDocument.buffers.front().data == originalDocument.buffers.front().data);
+        REQUIRE(newDocument.buffers.front().uri.empty());
     }
 
     utility::CleanupTestOutputDir();
