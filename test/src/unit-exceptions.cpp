@@ -16,7 +16,8 @@
 class ExceptionContainsMatcher : public Catch::MatcherBase<std::exception>
 {
 public:
-    explicit ExceptionContainsMatcher(std::string const & text, bool shouldBeNested = false) : text_(text), shouldBeNested_(shouldBeNested) {}
+    explicit ExceptionContainsMatcher(std::string const & text, bool shouldBeNested = false)
+        : text_(text), shouldBeNested_(shouldBeNested) {}
 
     bool match(std::exception const & e) const override
     {
@@ -87,49 +88,88 @@ TEST_CASE("exceptions")
 
     SECTION("load : missing required fields")
     {
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0].erase("componentType"); }, "componentType");
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0].erase("count"); }, "count");
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0].erase("type"); }, "type");
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0]["sparse"].erase("count"); }, "count");
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0]["sparse"].erase("indices"); }, "indices");
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0]["sparse"]["indices"].erase("bufferView"); }, "bufferView");
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0]["sparse"]["indices"].erase("componentType"); }, "componentType");
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0]["sparse"].erase("values"); }, "values");
-        Mutate(json, [](nlohmann::json & m) { m["animations"][0].erase("channels"); }, "channels");
-        Mutate(json, [](nlohmann::json & m) { m["animations"][0].erase("samplers"); }, "samplers");
-        Mutate(json, [](nlohmann::json & m) { m["animations"][0]["channels"][0].erase("sampler"); }, "sampler");
-        Mutate(json, [](nlohmann::json & m) { m["animations"][0]["channels"][0].erase("target"); }, "target");
-        Mutate(json, [](nlohmann::json & m) { m["animations"][0]["channels"][0]["target"].erase("path"); }, "path");
-        Mutate(json, [](nlohmann::json & m) { m["animations"][0]["samplers"][0].erase("input"); }, "input");
-        Mutate(json, [](nlohmann::json & m) { m["animations"][0]["samplers"][0].erase("output"); }, "output");
-        Mutate(json, [](nlohmann::json & m) { m["asset"].erase("version"); }, "version");
-        Mutate(json, [](nlohmann::json & m) { m["buffers"][0].erase("byteLength"); }, "byteLength");
-        Mutate(json, [](nlohmann::json & m) { m["bufferViews"][0].erase("buffer"); }, "buffer");
-        Mutate(json, [](nlohmann::json & m) { m["bufferViews"][0].erase("byteLength"); }, "byteLength");
-        Mutate(json, [](nlohmann::json & m) { m["cameras"][0].erase("type"); }, "type");
-        Mutate(json, [](nlohmann::json & m) { m["cameras"][0]["perspective"].erase("yfov"); }, "yfov");
-        Mutate(json, [](nlohmann::json & m) { m["cameras"][0]["perspective"].erase("znear"); }, "znear");
-        Mutate(json, [](nlohmann::json & m) { m["materials"][0]["emissiveTexture"].erase("index"); }, "index");
-        Mutate(json, [](nlohmann::json & m) { m["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"].erase("index"); }, "index");
-        Mutate(json, [](nlohmann::json & m) { m["materials"][0]["pbrMetallicRoughness"]["metallicRoughnessTexture"].erase("index"); }, "index");
-        Mutate(json, [](nlohmann::json & m) { m["materials"][0]["normalTexture"].erase("index"); }, "index");
-        Mutate(json, [](nlohmann::json & m) { m["materials"][0]["occlusionTexture"].erase("index"); }, "index");
-        Mutate(json, [](nlohmann::json & m) { m["meshes"][0].erase("primitives"); }, "primitives");
-        Mutate(json, [](nlohmann::json & m) { m["meshes"][0]["primitives"][0].erase("attributes"); }, "attributes");
-        Mutate(json, [](nlohmann::json & m) { m["skins"][0].erase("joints"); }, "joints");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0].erase("componentType"); }, "componentType");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0].erase("count"); }, "count");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0].erase("type"); }, "type");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0]["sparse"].erase("count"); }, "count");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0]["sparse"].erase("indices"); }, "indices");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0]["sparse"]["indices"].erase("bufferView"); }, "bufferView");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0]["sparse"]["indices"].erase("componentType"); }, "componentType");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0]["sparse"].erase("values"); }, "values");
+        Mutate(
+            json, [](nlohmann::json & m) { m["animations"][0].erase("channels"); }, "channels");
+        Mutate(
+            json, [](nlohmann::json & m) { m["animations"][0].erase("samplers"); }, "samplers");
+        Mutate(
+            json, [](nlohmann::json & m) { m["animations"][0]["channels"][0].erase("sampler"); }, "sampler");
+        Mutate(
+            json, [](nlohmann::json & m) { m["animations"][0]["channels"][0].erase("target"); }, "target");
+        Mutate(
+            json, [](nlohmann::json & m) { m["animations"][0]["channels"][0]["target"].erase("path"); }, "path");
+        Mutate(
+            json, [](nlohmann::json & m) { m["animations"][0]["samplers"][0].erase("input"); }, "input");
+        Mutate(
+            json, [](nlohmann::json & m) { m["animations"][0]["samplers"][0].erase("output"); }, "output");
+        Mutate(
+            json, [](nlohmann::json & m) { m["asset"].erase("version"); }, "version");
+        Mutate(
+            json, [](nlohmann::json & m) { m["buffers"][0].erase("byteLength"); }, "byteLength");
+        Mutate(
+            json, [](nlohmann::json & m) { m["bufferViews"][0].erase("buffer"); }, "buffer");
+        Mutate(
+            json, [](nlohmann::json & m) { m["bufferViews"][0].erase("byteLength"); }, "byteLength");
+        Mutate(
+            json, [](nlohmann::json & m) { m["cameras"][0].erase("type"); }, "type");
+        Mutate(
+            json, [](nlohmann::json & m) { m["cameras"][0]["perspective"].erase("yfov"); }, "yfov");
+        Mutate(
+            json, [](nlohmann::json & m) { m["cameras"][0]["perspective"].erase("znear"); }, "znear");
+        Mutate(
+            json, [](nlohmann::json & m) { m["materials"][0]["emissiveTexture"].erase("index"); }, "index");
+        Mutate(
+            json, [](nlohmann::json & m) { m["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"].erase("index"); }, "index");
+        Mutate(
+            json, [](nlohmann::json & m) { m["materials"][0]["pbrMetallicRoughness"]["metallicRoughnessTexture"].erase("index"); }, "index");
+        Mutate(
+            json, [](nlohmann::json & m) { m["materials"][0]["normalTexture"].erase("index"); }, "index");
+        Mutate(
+            json, [](nlohmann::json & m) { m["materials"][0]["occlusionTexture"].erase("index"); }, "index");
+        Mutate(
+            json, [](nlohmann::json & m) { m["meshes"][0].erase("primitives"); }, "primitives");
+        Mutate(
+            json, [](nlohmann::json & m) { m["meshes"][0]["primitives"][0].erase("attributes"); }, "attributes");
+        Mutate(
+            json, [](nlohmann::json & m) { m["skins"][0].erase("joints"); }, "joints");
     }
 
     SECTION("load : invalid field values")
     {
-        Mutate(json, [](nlohmann::json & m) { m["accessors"][0]["type"] = "vec3"; }, "accessor.type");
-        Mutate(json, [](nlohmann::json & m) { m["animations"][0]["samplers"][0]["interpolation"] = "linear"; }, "animation.sampler.interpolation");
-        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 0; }, "buffer.byteLength");
-        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 2; }, "malformed base64");
-        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "data:application/octet-stream;base64,$$$$"; }, "malformed base64");
-        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "../dir/traversal.bin"; }, "buffer.uri");
-        Mutate(json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "nonexistant.bin"; }, "buffer.uri");
-        Mutate(json, [](nlohmann::json & m) { m["cameras"][0]["type"] = "D-SLR"; }, "camera.type");
-        Mutate(json, [](nlohmann::json & m) { m["materials"][0]["alphaMode"] = "opaque"; }, "material.alphaMode");
+        Mutate(
+            json, [](nlohmann::json & m) { m["accessors"][0]["type"] = "vec3"; }, "accessor.type");
+        Mutate(
+            json, [](nlohmann::json & m) { m["animations"][0]["samplers"][0]["interpolation"] = "linear"; }, "animation.sampler.interpolation");
+        Mutate(
+            json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 0; }, "buffer.byteLength");
+        Mutate(
+            json, [](nlohmann::json & m) { m["buffers"][0]["byteLength"] = 2; }, "malformed base64");
+        Mutate(
+            json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "data:application/octet-stream;base64,$$$$"; }, "malformed base64");
+        Mutate(
+            json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "../dir/traversal.bin"; }, "buffer.uri");
+        Mutate(
+            json, [](nlohmann::json & m) { m["buffers"][0]["uri"] = "nonexistant.bin"; }, "buffer.uri");
+        Mutate(
+            json, [](nlohmann::json & m) { m["cameras"][0]["type"] = "D-SLR"; }, "camera.type");
+        Mutate(
+            json, [](nlohmann::json & m) { m["materials"][0]["alphaMode"] = "opaque"; }, "material.alphaMode");
 
         std::vector<uint8_t> data{};
         REQUIRE_THROWS_MATCHES(mainDocument.images[0].MaterializeData(data), fx::gltf::invalid_gltf_document, ExceptionContainsMatcher("malformed base64"));

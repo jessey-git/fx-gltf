@@ -26,6 +26,7 @@ ContinuationIndentWidth: 4
 Cpp11BracedListStyle: false
 
 IndentCaseLabels: false
+IndentPPDirectives: BeforeHash
 
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: Inner

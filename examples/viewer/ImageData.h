@@ -15,7 +15,7 @@
 
 #ifdef VIEWER_EXPERIMENTAL_FILESYSTEM
     #include <experimental/filesystem>
-#define VIEWER_FILESYSTEM std::experimental::filesystem::v1
+    #define VIEWER_FILESYSTEM std::experimental::filesystem::v1
 #else
     #include <filesystem>
     #define VIEWER_FILESYSTEM std::filesystem

@@ -25,7 +25,9 @@ ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
 Cpp11BracedListStyle: false
 
+IndentCaseBlocks: true
 IndentCaseLabels: false
+IndentPPDirectives: BeforeHash
 
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: All

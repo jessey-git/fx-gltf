@@ -63,7 +63,10 @@ namespace utility
     {
         explicit Float_t(float num = 0.0f)
             : f(num) {}
-        bool Negative() const { return i < 0; }
+        bool Negative() const
+        {
+            return i < 0;
+        }
 
         int32_t i;
         float f;

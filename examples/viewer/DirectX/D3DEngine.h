@@ -4,8 +4,8 @@
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
 #pragma once
-#include <fx/gltf.h>
 #include <array>
+#include <fx/gltf.h>
 #include <memory>
 #include <unordered_map>
 #include <vector>
