@@ -23,12 +23,12 @@ bool FindExtension(std::string const & extensionName, nlohmann::json const & jso
     return false;
 }
 
-void RoundtripCompare(std::string const & filePath, bool checkExtensions = false)
+void RoundtripCompare(FX_GLTF_FILESYSTEM::path const & filePath, bool checkExtensions = false)
 {
     CAPTURE(filePath);
 
     std::string errorString = "Failed: ";
-    errorString.append(filePath).append("\n");
+    errorString.append(filePath.string()).append("\n");
 
     try
     {
@@ -79,12 +79,12 @@ void RoundtripCompare(std::string const & filePath, bool checkExtensions = false
     }
 }
 
-void CheckBinary(std::string const & filePath)
+void CheckBinary(FX_GLTF_FILESYSTEM::path const & filePath)
 {
     CAPTURE(filePath);
 
     std::string errorString = "Failed: ";
-    errorString.append(filePath).append("\n");
+    errorString.append(filePath.string()).append("\n");
 
     try
     {

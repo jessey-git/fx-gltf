@@ -27,6 +27,28 @@
 #define FX_GLTF_NODISCARD
 #endif
 
+#if defined(__clang__)
+    #if __clang_major__ < 7 || (defined(__cplusplus) && __cplusplus < 201703L)
+        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
+    #endif
+#elif defined(__GNUC__)
+    #if __GNUC__ < 8 || (defined(__cplusplus) && __cplusplus < 201703L)
+        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
+    #endif
+#elif defined(_MSC_VER)
+    #if _MSC_VER < 1914 || (!defined(_HAS_CXX17) || (defined(_HAS_CXX17) && _HAS_CXX17 == 0))
+        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
+    #endif
+#endif
+
+#ifdef FX_GLTF_EXPERIMENTAL_FILESYSTEM
+    #include <experimental/filesystem>
+    #define FX_GLTF_FILESYSTEM std::experimental::filesystem::v1
+#else
+    #include <filesystem>
+    #define FX_GLTF_FILESYSTEM std::filesystem
+#endif
+
 namespace fx
 {
 namespace base64
@@ -269,18 +291,12 @@ namespace gltf
             }
         }
 
-        inline std::string GetDocumentRootPath(std::string const & documentFilePath)
+        inline FX_GLTF_FILESYSTEM::path GetDocumentRootPath(FX_GLTF_FILESYSTEM::path const & documentFilePath)
         {
-            const std::size_t pos = documentFilePath.find_last_of("/\\");
-            if (pos != std::string::npos)
-            {
-                return documentFilePath.substr(0, pos);
-            }
-
-            return {};
+            return documentFilePath.parent_path();
         }
 
-        inline std::string CreateBufferUriPath(std::string const & documentRootPath, std::string const & bufferUri)
+        inline FX_GLTF_FILESYSTEM::path CreateBufferUriPath(FX_GLTF_FILESYSTEM::path const & documentRootPath, std::string const & bufferUri)
         {
             // Prevent simple forms of path traversal from malicious uri references...
             if (bufferUri.empty() || bufferUri.find("..") != std::string::npos || bufferUri.front() == '/' || bufferUri.front() == '\\')
@@ -288,16 +304,7 @@ namespace gltf
                 throw invalid_gltf_document("Invalid buffer.uri value", bufferUri);
             }
 
-            std::string documentRoot = documentRootPath;
-            if (documentRoot.length() > 0)
-            {
-                if (documentRoot.back() != '/')
-                {
-                    documentRoot.push_back('/');
-                }
-            }
-
-            return documentRoot + bufferUri;
+            return documentRootPath / bufferUri;
         }
 
         struct ChunkHeader
@@ -1655,7 +1662,7 @@ namespace gltf
     {
         struct DataContext
         {
-            std::string bufferRootPath{};
+            FX_GLTF_FILESYSTEM::path bufferRootPath{};
             ReadQuotas readQuotas;
 
             std::vector<uint8_t> * binaryData{};
@@ -1791,7 +1798,7 @@ namespace gltf
             }
         }
 
-        inline void Save(Document const & document, std::ostream & output, std::string const & documentRootPath, bool useBinaryFormat)
+        inline void Save(Document const & document, std::ostream & output, FX_GLTF_FILESYSTEM::path const & documentRootPath, bool useBinaryFormat)
         {
             // There is no way to check if an ostream has been opened in binary mode or not. Just checking
             // if it's "good" is the best we can do from here...
@@ -1852,7 +1859,7 @@ namespace gltf
         }
     } // namespace detail
 
-    inline Document LoadFromText(std::istream & input, std::string const & documentRootPath, ReadQuotas const & readQuotas = {})
+    inline Document LoadFromText(std::istream & input, FX_GLTF_FILESYSTEM::path const & documentRootPath, ReadQuotas const & readQuotas = {})
     {
         try
         {
@@ -1877,7 +1884,7 @@ namespace gltf
         }
     }
 
-    inline Document LoadFromText(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
+    inline Document LoadFromText(FX_GLTF_FILESYSTEM::path const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
         std::ifstream input(documentFilePath);
         if (!input.is_open())
@@ -1888,7 +1895,7 @@ namespace gltf
         return LoadFromText(input, detail::GetDocumentRootPath(documentFilePath), readQuotas);
     }
 
-    inline Document LoadFromBinary(std::istream & input, std::string const & documentRootPath, ReadQuotas const & readQuotas = {})
+    inline Document LoadFromBinary(std::istream & input, FX_GLTF_FILESYSTEM::path const & documentRootPath, ReadQuotas const & readQuotas = {})
     {
         try
         {
@@ -1946,7 +1953,7 @@ namespace gltf
         }
     }
 
-    inline Document LoadFromBinary(std::string const & documentFilePath, ReadQuotas const & readQuotas = {})
+    inline Document LoadFromBinary(FX_GLTF_FILESYSTEM::path const & documentFilePath, ReadQuotas const & readQuotas = {})
     {
         std::ifstream input(documentFilePath, std::ios::binary);
         if (!input.is_open())
@@ -1957,7 +1964,7 @@ namespace gltf
         return LoadFromBinary(input, detail::GetDocumentRootPath(documentFilePath), readQuotas);
     }
 
-    inline void Save(Document const & document, std::ostream & output, std::string const & documentRootPath, bool useBinaryFormat)
+    inline void Save(Document const & document, std::ostream & output, FX_GLTF_FILESYSTEM::path const & documentRootPath, bool useBinaryFormat)
     {
         try
         {
@@ -1979,7 +1986,7 @@ namespace gltf
         }
     }
 
-    inline void Save(Document const & document, std::string const & documentFilePath, bool useBinaryFormat)
+    inline void Save(Document const & document, FX_GLTF_FILESYSTEM::path const & documentFilePath, bool useBinaryFormat)
     {
         std::ofstream output(documentFilePath, useBinaryFormat ? std::ios::binary : std::ios::out);
         Save(document, output, detail::GetDocumentRootPath(documentFilePath), useBinaryFormat);
@@ -2004,3 +2011,5 @@ inline void FormatException(std::string & output, std::exception const & ex, int
 
 #undef FX_GLTF_HAS_CPP_17
 #undef FX_GLTF_NODISCARD
+#undef FX_GLTF_EXPERIMENTAL_FILESYSTEM
+#undef FX_GLTF_FILESYSTEM

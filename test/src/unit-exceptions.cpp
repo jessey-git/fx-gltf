@@ -8,6 +8,7 @@
 #include <fx/gltf.h>
 #include <nlohmann/json.hpp>
 #include <sstream>
+#include <string>
 
 #include "utility.h"
 
@@ -136,8 +137,8 @@ TEST_CASE("exceptions")
 
     SECTION("load : quotas")
     {
-        std::string externalFile{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
-        std::string glbFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
+        FX_GLTF_FILESYSTEM::path externalFile{ "data/glTF-Sample-Models/2.0/Box/glTF/Box.gltf" };
+        FX_GLTF_FILESYSTEM::path glbFile{ "data/glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb" };
 
         fx::gltf::ReadQuotas readQuotas{};
         readQuotas.MaxBufferByteLength = 500;
@@ -170,11 +171,11 @@ TEST_CASE("exceptions")
         REQUIRE_THROWS_AS(fx::gltf::LoadFromText("not-exist"), std::system_error);
         REQUIRE_THROWS_AS(fx::gltf::LoadFromBinary("not-exist"), std::system_error);
 
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/./", false), std::system_error);
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/./", true), std::system_error);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir(), false), std::system_error);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir(), true), std::system_error);
 
         doc.buffers[1].uri = "./";
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", true), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() / "nop", true), fx::gltf::invalid_gltf_document);
     }
 
     SECTION("save : invalid buffers")
@@ -184,18 +185,18 @@ TEST_CASE("exceptions")
         INFO("No buffers");
         doc = json;
         doc.buffers.clear();
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() / "nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Buffer byteLength = 0");
         doc = json;
         doc.buffers[0].byteLength = 0;
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() / "nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Buffer byteLength != data size");
         doc = json;
         doc.buffers[0].byteLength = 20;
         doc.buffers[0].data.resize(10);
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() / "nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("A second buffer with empty uri");
         doc = json;
@@ -206,14 +207,14 @@ TEST_CASE("exceptions")
         doc.buffers[1].uri.clear();
         doc.buffers[1].byteLength = 20;
         doc.buffers[1].data.resize(20);
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", false), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() / "nop", false), fx::gltf::invalid_gltf_document);
 
         INFO("Binary save with invalid buffer uri");
         doc = json;
         doc.buffers[0].uri = "not empty";
         doc.buffers[0].byteLength = 20;
         doc.buffers[0].data.resize(20);
-        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() + "/nop", true), fx::gltf::invalid_gltf_document);
+        REQUIRE_THROWS_AS(fx::gltf::Save(doc, utility::GetTestOutputDir() / "nop", true), fx::gltf::invalid_gltf_document);
     }
 
     utility::CleanupTestOutputDir();
