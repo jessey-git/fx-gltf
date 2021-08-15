@@ -19,25 +19,24 @@
 #include <nlohmann/json.hpp>
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L) && (_MSC_VER >= 1911))
-#define FX_GLTF_HAS_CPP_17
-#define FX_GLTF_NODISCARD [[nodiscard]]
-#include <string_view>
-
+    #define FX_GLTF_HAS_CPP_17
+    #define FX_GLTF_NODISCARD [[nodiscard]]
+    #include <string_view>
 #else
-#define FX_GLTF_NODISCARD
+    #define FX_GLTF_NODISCARD
 #endif
 
 #if defined(__clang__)
     #if __clang_major__ < 7 || (defined(__cplusplus) && __cplusplus < 201703L)
-        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
+        #define FX_GLTF_EXPERIMENTAL_FILESYSTEM
     #endif
 #elif defined(__GNUC__)
     #if __GNUC__ < 8 || (defined(__cplusplus) && __cplusplus < 201703L)
-        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
+        #define FX_GLTF_EXPERIMENTAL_FILESYSTEM
     #endif
 #elif defined(_MSC_VER)
     #if _MSC_VER < 1914 || (!defined(_HAS_CXX17) || (defined(_HAS_CXX17) && _HAS_CXX17 == 0))
-        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
+        #define FX_GLTF_EXPERIMENTAL_FILESYSTEM
     #endif
 #endif
 

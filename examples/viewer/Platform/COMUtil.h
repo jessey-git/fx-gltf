@@ -5,9 +5,9 @@
 // ------------------------------------------------------------
 #pragma once
 
+#include <Platform/platform.h>
 #include <cstdio>
 #include <exception>
-#include <Platform/platform.h>
 
 namespace COMUtil
 {
@@ -42,4 +42,4 @@ namespace COMUtil
     {
         ThrowIfFailed(CoInitializeEx(nullptr, 0));
     }
-}
+} // namespace COMUtil

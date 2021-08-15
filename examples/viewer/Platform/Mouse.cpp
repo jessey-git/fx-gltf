@@ -259,40 +259,40 @@ void Mouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case (WAIT_OBJECT_0 + 1):
-    {
-        pImpl->mMode = MODE_ABSOLUTE;
-        ClipCursor(nullptr);
-
-        POINT point;
-        point.x = pImpl->mLastX;
-        point.y = pImpl->mLastY;
-
-        // We show the cursor before moving it to support Remote Desktop
-        ShowCursor(TRUE);
-
-        if (MapWindowPoints(pImpl->mWindow, nullptr, &point, 1) != 0)
         {
-            SetCursorPos(point.x, point.y);
+            pImpl->mMode = MODE_ABSOLUTE;
+            ClipCursor(nullptr);
+
+            POINT point;
+            point.x = pImpl->mLastX;
+            point.y = pImpl->mLastY;
+
+            // We show the cursor before moving it to support Remote Desktop
+            ShowCursor(TRUE);
+
+            if (MapWindowPoints(pImpl->mWindow, nullptr, &point, 1) != 0)
+            {
+                SetCursorPos(point.x, point.y);
+            }
+            pImpl->mState.x = pImpl->mLastX;
+            pImpl->mState.y = pImpl->mLastY;
         }
-        pImpl->mState.x = pImpl->mLastX;
-        pImpl->mState.y = pImpl->mLastY;
-    }
-    break;
+        break;
 
     case (WAIT_OBJECT_0 + 2):
-    {
-        ResetEvent(pImpl->mRelativeRead.get());
+        {
+            ResetEvent(pImpl->mRelativeRead.get());
 
-        pImpl->mMode = MODE_RELATIVE;
-        pImpl->mState.x = pImpl->mState.y = 0;
-        pImpl->mRelativeX = INT32_MAX;
-        pImpl->mRelativeY = INT32_MAX;
+            pImpl->mMode = MODE_RELATIVE;
+            pImpl->mState.x = pImpl->mState.y = 0;
+            pImpl->mRelativeX = INT32_MAX;
+            pImpl->mRelativeY = INT32_MAX;
 
-        ShowCursor(FALSE);
+            ShowCursor(FALSE);
 
-        pImpl->ClipToWindow();
-    }
-    break;
+            pImpl->ClipToWindow();
+        }
+        break;
 
     case WAIT_FAILED:
         throw std::exception("WaitForMultipleObjectsEx");

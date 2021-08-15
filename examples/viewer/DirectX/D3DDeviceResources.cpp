@@ -124,16 +124,15 @@ void D3DDeviceResources::CreateDeviceResources()
     ComPtr<ID3D12InfoQueue> d3dInfoQueue;
     if (SUCCEEDED(m_d3dDevice.As(&d3dInfoQueue)))
     {
-#ifdef _DEBUG
+    #ifdef _DEBUG
         d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
         d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-#endif
+    #endif
 
-        D3D12_MESSAGE_ID hide[] =
-            {
-                D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
-            };
+        D3D12_MESSAGE_ID hide[] = {
+            D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+            D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+        };
         D3D12_INFO_QUEUE_FILTER filter = {};
         filter.DenyList.NumIDs = static_cast<UINT>(std::size(hide));
         filter.DenyList.pIDList = hide;
@@ -142,18 +141,16 @@ void D3DDeviceResources::CreateDeviceResources()
 #endif
 
     // Determine maximum supported feature level for this device
-    static const D3D_FEATURE_LEVEL s_featureLevels[] =
-        {
-            D3D_FEATURE_LEVEL_12_1,
-            D3D_FEATURE_LEVEL_12_0,
-            D3D_FEATURE_LEVEL_11_1,
-            D3D_FEATURE_LEVEL_11_0,
-        };
+    static const D3D_FEATURE_LEVEL s_featureLevels[] = {
+        D3D_FEATURE_LEVEL_12_1,
+        D3D_FEATURE_LEVEL_12_0,
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0,
+    };
 
-    D3D12_FEATURE_DATA_FEATURE_LEVELS featLevels =
-        {
-            static_cast<UINT>(std::size(s_featureLevels)), s_featureLevels, D3D_FEATURE_LEVEL_11_0
-        };
+    D3D12_FEATURE_DATA_FEATURE_LEVELS featLevels = {
+        static_cast<UINT>(std::size(s_featureLevels)), s_featureLevels, D3D_FEATURE_LEVEL_11_0
+    };
 
     const HRESULT hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
     if (SUCCEEDED(hr))

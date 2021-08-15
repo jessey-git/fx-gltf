@@ -9,27 +9,27 @@
 #include <nlohmann/json.hpp>
 
 #ifndef FX_GLTF_FILESYSTEM
-#if defined(__clang__)
-    #if __clang_major__ < 7 || (defined(__cplusplus) && __cplusplus < 201703L)
-        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
+    #if defined(__clang__)
+        #if __clang_major__ < 7 || (defined(__cplusplus) && __cplusplus < 201703L)
+            #define FX_GLTF_EXPERIMENTAL_FILESYSTEM
+        #endif
+    #elif defined(__GNUC__)
+        #if __GNUC__ < 8 || (defined(__cplusplus) && __cplusplus < 201703L)
+            #define FX_GLTF_EXPERIMENTAL_FILESYSTEM
+        #endif
+    #elif defined(_MSC_VER)
+        #if _MSC_VER < 1914 || (!defined(_HAS_CXX17) || (defined(_HAS_CXX17) && _HAS_CXX17 == 0))
+            #define FX_GLTF_EXPERIMENTAL_FILESYSTEM
+        #endif
     #endif
-#elif defined(__GNUC__)
-    #if __GNUC__ < 8 || (defined(__cplusplus) && __cplusplus < 201703L)
-        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
-    #endif
-#elif defined(_MSC_VER)
-    #if _MSC_VER < 1914 || (!defined(_HAS_CXX17) || (defined(_HAS_CXX17) && _HAS_CXX17 == 0))
-        #define  FX_GLTF_EXPERIMENTAL_FILESYSTEM
-    #endif
-#endif
 
-#ifdef FX_GLTF_EXPERIMENTAL_FILESYSTEM
-    #include <experimental/filesystem>
-    #define FX_GLTF_FILESYSTEM std::experimental::filesystem::v1
-#else
-    #include <filesystem>
-    #define FX_GLTF_FILESYSTEM std::filesystem
-#endif
+    #ifdef FX_GLTF_EXPERIMENTAL_FILESYSTEM
+        #include <experimental/filesystem>
+        #define FX_GLTF_FILESYSTEM std::experimental::filesystem::v1
+    #else
+        #include <filesystem>
+        #define FX_GLTF_FILESYSTEM std::filesystem
+    #endif
 #endif
 
 namespace utility

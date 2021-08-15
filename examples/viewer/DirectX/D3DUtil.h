@@ -5,8 +5,8 @@
 // ------------------------------------------------------------
 #pragma once
 
-#include <DirectXMath.h>
 #include <DXGIFormat.h>
+#include <DirectXMath.h>
 #include <fx/gltf.h>
 #include <string>
 #include <wrl.h>
