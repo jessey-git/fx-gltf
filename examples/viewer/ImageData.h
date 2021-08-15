@@ -6,14 +6,27 @@
 #pragma once
 
 #include <fx/gltf.h>
-#include <string>
+
+#if defined(_MSC_VER)
+    #if _MSC_VER < 1914 || (!defined(_HAS_CXX17) || (defined(_HAS_CXX17) && _HAS_CXX17 == 0))
+        #define VIEWER_EXPERIMENTAL_FILESYSTEM
+    #endif
+#endif
+
+#ifdef VIEWER_EXPERIMENTAL_FILESYSTEM
+    #include <experimental/filesystem>
+#define VIEWER_FILESYSTEM std::experimental::filesystem::v1
+#else
+    #include <filesystem>
+    #define VIEWER_FILESYSTEM std::filesystem
+#endif
 
 class ImageData
 {
 public:
     struct ImageInfo
     {
-        std::string FileName{};
+        VIEWER_FILESYSTEM::path FileName{};
 
         uint32_t BinarySize{};
         uint8_t const * BinaryData{};
@@ -36,7 +49,7 @@ public:
         const bool isEmbedded = image.IsEmbeddedResource();
         if (!image.uri.empty() && !isEmbedded)
         {
-            m_info.FileName = fx::gltf::detail::GetDocumentRootPath(modelPath) + "/" + image.uri;
+            m_info.FileName = fx::gltf::detail::GetDocumentRootPath(modelPath) / image.uri;
         }
         else
         {

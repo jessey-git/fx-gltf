@@ -32,7 +32,7 @@ void D3DTextureSet::Initialize(std::vector<ImageData> const & textures)
         }
         else
         {
-            std::wstring texture(imageInfo.FileName.begin(), imageInfo.FileName.end());
+            std::wstring texture(imageInfo.FileName.generic_wstring());
             COMUtil::ThrowIfFailed(factory->CreateDecoderFromFilename(texture.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, decoder.GetAddressOf()));
         }
 
