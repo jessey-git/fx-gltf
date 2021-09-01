@@ -42,7 +42,7 @@ namespace Graph
                 graphNode.CurrentTransform = DirectX::XMMatrixScalingFromVector(DirectX::XMLoadFloat3(&local)) * graphNode.CurrentTransform;
             }
 
-            if (node.rotation != fx::gltf::defaults::IdentityVec4)
+            if (node.rotation != fx::gltf::defaults::IdentityRotation)
             {
                 const DirectX::XMFLOAT4 local(node.rotation.data());
                 graphNode.CurrentTransform = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&local)) * graphNode.CurrentTransform;
