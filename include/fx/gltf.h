@@ -21,9 +21,11 @@
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L) && (_MSC_VER >= 1911))
     #define FX_GLTF_HAS_CPP_17
     #define FX_GLTF_NODISCARD [[nodiscard]]
+    #define FX_GLTF_INLINE_CONSTEXPR inline constexpr
     #include <string_view>
 #else
     #define FX_GLTF_NODISCARD
+    #define FX_GLTF_INLINE_CONSTEXPR constexpr
 #endif
 
 #if defined(__clang__)
@@ -55,7 +57,7 @@ namespace base64
     namespace detail
     {
         // clang-format off
-        constexpr std::array<char, 64> EncodeMap =
+        FX_GLTF_INLINE_CONSTEXPR std::array<char, 64> EncodeMap =
         {
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
             'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
@@ -63,7 +65,7 @@ namespace base64
             'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
         };
 
-        constexpr std::array<char, 256> DecodeMap =
+        FX_GLTF_INLINE_CONSTEXPR std::array<char, 256> DecodeMap =
         {
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -321,34 +323,34 @@ namespace gltf
             ChunkHeader jsonHeader{};
         };
 
-        constexpr uint32_t DefaultMaxBufferCount = 8;
-        constexpr uint32_t DefaultMaxMemoryAllocation = 32 * 1024 * 1024;
-        constexpr std::size_t HeaderSize{ sizeof(GLBHeader) };
-        constexpr std::size_t ChunkHeaderSize{ sizeof(ChunkHeader) };
-        constexpr uint32_t GLBHeaderMagic = 0x46546c67u;
-        constexpr uint32_t GLBChunkJSON = 0x4e4f534au;
-        constexpr uint32_t GLBChunkBIN = 0x004e4942u;
+        FX_GLTF_INLINE_CONSTEXPR uint32_t DefaultMaxBufferCount = 8;
+        FX_GLTF_INLINE_CONSTEXPR uint32_t DefaultMaxMemoryAllocation = 32 * 1024 * 1024;
+        FX_GLTF_INLINE_CONSTEXPR std::size_t HeaderSize{ sizeof(GLBHeader) };
+        FX_GLTF_INLINE_CONSTEXPR std::size_t ChunkHeaderSize{ sizeof(ChunkHeader) };
+        FX_GLTF_INLINE_CONSTEXPR uint32_t GLBHeaderMagic = 0x46546c67u;
+        FX_GLTF_INLINE_CONSTEXPR uint32_t GLBChunkJSON = 0x4e4f534au;
+        FX_GLTF_INLINE_CONSTEXPR uint32_t GLBChunkBIN = 0x004e4942u;
 
-        constexpr char const * const MimetypeApplicationOctet = "data:application/octet-stream;base64";
-        constexpr char const * const MimetypeGLTFBuffer = "data:application/gltf-buffer;base64";
-        constexpr char const * const MimetypeImagePNG = "data:image/png;base64";
-        constexpr char const * const MimetypeImageJPG = "data:image/jpeg;base64";
+        FX_GLTF_INLINE_CONSTEXPR char const * const MimetypeApplicationOctet = "data:application/octet-stream;base64";
+        FX_GLTF_INLINE_CONSTEXPR char const * const MimetypeGLTFBuffer = "data:application/gltf-buffer;base64";
+        FX_GLTF_INLINE_CONSTEXPR char const * const MimetypeImagePNG = "data:image/png;base64";
+        FX_GLTF_INLINE_CONSTEXPR char const * const MimetypeImageJPG = "data:image/jpeg;base64";
     } // namespace detail
 
     namespace defaults
     {
-        constexpr std::array<float, 16> IdentityMatrix{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
-        constexpr std::array<float, 4> IdentityRotation{ 0, 0, 0, 1 };
-        constexpr std::array<float, 4> IdentityVec4{ 1, 1, 1, 1 };
-        constexpr std::array<float, 3> IdentityVec3{ 1, 1, 1 };
-        constexpr std::array<float, 3> NullVec3{ 0, 0, 0 };
-        constexpr float IdentityScalar = 1;
-        constexpr float FloatSentinel = 10000;
+        FX_GLTF_INLINE_CONSTEXPR std::array<float, 16> IdentityMatrix{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
+        FX_GLTF_INLINE_CONSTEXPR std::array<float, 4> IdentityRotation{ 0, 0, 0, 1 };
+        FX_GLTF_INLINE_CONSTEXPR std::array<float, 4> IdentityVec4{ 1, 1, 1, 1 };
+        FX_GLTF_INLINE_CONSTEXPR std::array<float, 3> IdentityVec3{ 1, 1, 1 };
+        FX_GLTF_INLINE_CONSTEXPR std::array<float, 3> NullVec3{ 0, 0, 0 };
+        FX_GLTF_INLINE_CONSTEXPR float IdentityScalar = 1;
+        FX_GLTF_INLINE_CONSTEXPR float FloatSentinel = 10000;
 
-        constexpr bool AccessorNormalized = false;
+        FX_GLTF_INLINE_CONSTEXPR bool AccessorNormalized = false;
 
-        constexpr float MaterialAlphaCutoff = 0.5f;
-        constexpr bool MaterialDoubleSided = false;
+        FX_GLTF_INLINE_CONSTEXPR float MaterialAlphaCutoff = 0.5f;
+        FX_GLTF_INLINE_CONSTEXPR bool MaterialDoubleSided = false;
     } // namespace defaults
 
     using Attributes = std::unordered_map<std::string, uint32_t>;
@@ -2010,5 +2012,6 @@ inline void FormatException(std::string & output, std::exception const & ex, int
 
 #undef FX_GLTF_HAS_CPP_17
 #undef FX_GLTF_NODISCARD
+#undef FX_GLTF_INLINE_CONSTEXPR
 #undef FX_GLTF_EXPERIMENTAL_FILESYSTEM
 #undef FX_GLTF_FILESYSTEM
