@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Copyright(c) 2018-2021 Jesse Yurkovich
+// Copyright(c) 2018-2022 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
@@ -8,20 +8,20 @@
 
 struct VS_INPUT
 {
-    float3 Pos      : POSITION;
-    float3 Normal   : NORMAL;
-    float4 Tangent  : TANGENT;
-    float2 TexC     : TEXCOORD;
+    float3 Pos : POSITION;
+    float3 Normal : NORMAL;
+    float4 Tangent : TANGENT;
+    float2 TexC : TEXCOORD;
 };
 
 struct PS_INPUT
 {
-    float4 PosH     : SV_POSITION;
-    float3 PosW     : POSITION;
-    float3 NormalW  : NORMAL;
+    float4 PosH : SV_POSITION;
+    float3 PosW : POSITION;
+    float3 NormalW : NORMAL;
     float3 TangentW : TANGENT;
-    float3 BinormalW: BINORMAL;
-    float2 TexC     : TEXCOORD;
+    float3 BinormalW : BINORMAL;
+    float2 TexC : TEXCOORD;
 };
 
 //--------------------------------------------------------------------------------------
@@ -59,20 +59,20 @@ float4 UberPS(PS_INPUT input)
     finalColor += float4(saturate(dot(DirectionalLight.Direction, input.NormalW) * DirectionalLight.Strength), 1.0f);
 #else
 
-#if HAS_BASECOLORMAP
+    #if HAS_BASECOLORMAP
     float4 baseColor = SRGBtoLINEAR(Textures[matData.BaseColorIndex].Sample(SampAnisotropicWrap, input.TexC)) * matData.BaseColorFactor;
-#else
+    #else
     float4 baseColor = matData.BaseColorFactor;
-#endif
+    #endif
 
-#if HAS_METALROUGHNESSMAP
+    #if HAS_METALROUGHNESSMAP
     float4 metalRoughSample = Textures[matData.MetalRoughIndex].Sample(SampAnisotropicWrap, input.TexC);
     float perceptualRoughness = metalRoughSample.g * matData.RoughnessFactor;
     float metallic = metalRoughSample.b * matData.MetallicFactor;
-#else
+    #else
     float perceptualRoughness = matData.RoughnessFactor;
     float metallic = matData.MetallicFactor;
-#endif
+    #endif
 
     perceptualRoughness = clamp(perceptualRoughness, MinRoughness, 1.0);
     metallic = clamp(metallic, 0.0, 1.0);
@@ -91,9 +91,9 @@ float4 UberPS(PS_INPUT input)
     float3 specularEnvironmentR0 = specularColor.rgb;
     float3 specularEnvironmentR90 = reflectance90;
 
-#if HAS_TANGENTS
+    #if HAS_TANGENTS
     float3x3 TBN = float3x3(normalize(input.TangentW), normalize(input.BinormalW), input.NormalW);
-#else
+    #else
     float3 pos_dx = ddx(input.PosW);
     float3 pos_dy = ddy(input.PosW);
     float3 tex_dx = ddx(float3(input.TexC, 0.0));
@@ -105,17 +105,17 @@ float4 UberPS(PS_INPUT input)
     float3 b = normalize(cross(n, t));
 
     float3x3 TBN = float3x3(t, b, n);
-#endif
+    #endif
 
-#if HAS_NORMALMAP
+    #if HAS_NORMALMAP
     float4 normalMapSample = Textures[matData.NormalIndex].Sample(SampAnisotropicWrap, input.TexC);
     normalMapSample.g = 1.0f - normalMapSample.g;
 
     float3 normal = (2.0f * normalMapSample.rgb - 1.0f) * float3(matData.NormalScale, matData.NormalScale, 1.0f);
     float3 N = normalize(mul(normal, TBN));
-#else
+    #else
     float3 N = TBN[2].xyz;
-#endif
+    #endif
 
     float3 V = normalize(Camera.xyz - input.PosW); // Vector from surface point to camera
     float3 L = normalize(DirectionalLight.Direction); // Vector from surface point to light
@@ -138,25 +138,25 @@ float4 UberPS(PS_INPUT input)
     float3 color = NdL * (diffuseContrib + specContrib);
 
     // Calculate lighting contribution from image based lighting source (IBL)
-#if USE_IBL
+    #if USE_IBL
     color += IBLContribution(diffuseColor, specularColor, perceptualRoughness, NdV, N, reflection);
-#endif
+    #endif
 
     // Apply optional PBR terms for additional (optional) shading
-#if HAS_OCCLUSIONMAP
-#if HAS_OCCLUSIONMAP_COMBINED
+    #if HAS_OCCLUSIONMAP
+        #if HAS_OCCLUSIONMAP_COMBINED
     float ao = metalRoughSample.r;
-#else
+        #else
     float ao = Textures[matData.AOIndex].Sample(SampAnisotropicWrap, input.TexC).r;
-#endif
+        #endif
 
     color = lerp(color, color * ao, matData.AOStrength);
-#endif
+    #endif
 
-#if HAS_EMISSIVEMAP
+    #if HAS_EMISSIVEMAP
     float3 emissive = SRGBtoLINEAR(Textures[matData.EmissiveIndex].Sample(SampAnisotropicWrap, input.TexC)).rgb * matData.EmissiveFactor;
     color += emissive;
-#endif
+    #endif
 
     finalColor = float4(LINEARtoSRGB(color), baseColor.a);
 #endif
