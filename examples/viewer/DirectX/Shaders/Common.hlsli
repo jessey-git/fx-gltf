@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Copyright(c) 2018-2021 Jesse Yurkovich
+// Copyright(c) 2018-2022 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
@@ -8,10 +8,10 @@ struct Light
 {
     float3 Strength;
     float FalloffStart; // point/spot light only
-    float3 Direction;   // directional/spot light only
-    float FalloffEnd;   // point/spot light only
-    float3 Position;    // point light only
-    float SpotPower;    // spot light only
+    float3 Direction; // directional/spot light only
+    float FalloffEnd; // point/spot light only
+    float3 Position; // point light only
+    float SpotPower; // spot light only
 };
 
 cbuffer SceneConstants : register(b0)
@@ -83,7 +83,6 @@ float3 LINEARtoSRGB(float3 linearColor)
 #else
     return linearColor;
 #endif
-
 }
 
 float3 Diffuse_Lambert(float3 diffuseColor)

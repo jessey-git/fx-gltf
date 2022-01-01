@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Copyright(c) 2018-2021 Jesse Yurkovich
+// Copyright(c) 2018-2022 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
@@ -21,11 +21,10 @@
 #include <DirectXMath.h>
 
 #ifdef _DEBUG
-#include <dxgidebug.h>
+    #include <dxgidebug.h>
 #endif
 
 #include "DirectX/d3dx12.h"
 
 #include "Logger.h"
 #include "StringFormatter.h"
-

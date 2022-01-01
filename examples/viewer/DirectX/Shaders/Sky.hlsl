@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// Copyright(c) 2018-2021 Jesse Yurkovich
+// Copyright(c) 2018-2022 Jesse Yurkovich
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // See the LICENSE file in the repo root for full license information.
 // ------------------------------------------------------------
@@ -8,9 +8,9 @@
 
 struct VS_INPUT
 {
-    float3 PosL    : POSITION;
+    float3 PosL : POSITION;
     float3 NormalL : NORMAL;
-    float2 TexC    : TEXCOORD;
+    float2 TexC : TEXCOORD;
 };
 
 struct PS_INPUT
@@ -38,7 +38,8 @@ PS_INPUT VS(VS_INPUT input)
     return output;
 }
 
-float4 PS(PS_INPUT input) : SV_Target
+float4 PS(PS_INPUT input)
+    : SV_Target
 {
     return Environment.Sample(SampAnisotropicWrap, input.PosL.xy);
 }
